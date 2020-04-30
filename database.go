@@ -5,13 +5,19 @@ import (
 )
 
 type Database struct {
-	*pgxpool.Pool
-	Logger Logger
+	ArchiveChannel  *ArchiveChannel
+	Blacklist       *Blacklist
+	ChannelCategory *ChannelCategory
+	Prefix          *Prefix
+	Tag             *Tag
 }
 
-func NewDatabase(pool *pgxpool.Pool, logger Logger) *Database {
+func NewDatabase(pool *pgxpool.Pool) *Database {
 	return &Database{
-		Pool: pool,
-		Logger: logger,
+		ArchiveChannel:  newArchiveChannel(pool),
+		Blacklist:       newBlacklist(pool),
+		ChannelCategory: newChannelCategory(pool),
+		Prefix:          newPrefix(pool),
+		Tag:             newTag(pool),
 	}
 }
