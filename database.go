@@ -17,17 +17,18 @@ type Database struct {
 	PingEveryone      *PingEveryone
 	Prefix            *Prefix
 	PremiumGuilds     *PremiumGuilds
-	PremiumKeys     *PremiumKeys
-	RolePermissions *RolePermissions
-	Tag             *Tag
-	TicketLimit     *TicketLimit
-	TicketMembers   *TicketMembers
-	Tickets         *TicketTable
-	UsedKeys        *UsedKeys
-	UsersCanClose   *UsersCanClose
-	Votes           *Votes
-	Webhooks        *WebhookTable
-	WelcomeMessages *WelcomeMessages
+	PremiumKeys       *PremiumKeys
+	RolePermissions   *RolePermissions
+	Tag               *Tag
+	TicketLimit       *TicketLimit
+	TicketMembers     *TicketMembers
+	Tickets           *TicketTable
+	UsedKeys          *UsedKeys
+	UsersCanClose     *UsersCanClose
+	UserGuilds        *UserGuildsTable
+	Votes             *Votes
+	Webhooks          *WebhookTable
+	WelcomeMessages   *WelcomeMessages
 }
 
 func NewDatabase(pool *pgxpool.Pool) *Database {
@@ -43,17 +44,18 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PingEveryone:      newPingEveryone(pool),
 		Prefix:            newPrefix(pool),
 		PremiumGuilds:     newPremiumGuilds(pool),
-		PremiumKeys:     newPremiumKeys(pool),
-		RolePermissions: newRolePermissions(pool),
-		Tag:             newTag(pool),
-		TicketLimit:     newTicketLimit(pool),
-		TicketMembers:   newTicketMembers(pool),
-		Tickets:         newTicketTable(pool),
-		UsedKeys:        newUsedKeys(pool),
-		UsersCanClose:   newUsersCanClose(pool),
-		Votes:           newVotes(pool),
-		Webhooks:        newWebhookTable(pool),
-		WelcomeMessages: newWelcomeMessages(pool),
+		PremiumKeys:       newPremiumKeys(pool),
+		RolePermissions:   newRolePermissions(pool),
+		Tag:               newTag(pool),
+		TicketLimit:       newTicketLimit(pool),
+		TicketMembers:     newTicketMembers(pool),
+		Tickets:           newTicketTable(pool),
+		UsedKeys:          newUsedKeys(pool),
+		UsersCanClose:     newUsersCanClose(pool),
+		UserGuilds:        newUserGuildsTable(pool),
+		Votes:             newVotes(pool),
+		Webhooks:          newWebhookTable(pool),
+		WelcomeMessages:   newWelcomeMessages(pool),
 	}
 }
 
@@ -87,4 +89,3 @@ func mustCreate(pool *pgxpool.Pool, table Table) {
 		panic(err)
 	}
 }
-

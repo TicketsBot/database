@@ -21,7 +21,7 @@ func (c ChannelCategory) Schema() string {
 }
 
 func (c *ChannelCategory) Get(guildId uint64) (channelCategory uint64, e error) {
-	if err := c.QueryRow(context.Background(), `SELECT "category_id" from channel_category WHERE "guild_id" = $1`, guildId).Scan(&channelCategory); err != nil && err != pgx.ErrNoRows {
+	if err := c.QueryRow(context.Background(), `SELECT "category_id" from channel_category WHERE "guild_id" = $1;`, guildId).Scan(&channelCategory); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
