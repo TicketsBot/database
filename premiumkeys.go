@@ -22,7 +22,7 @@ func (k PremiumKeys) Schema() string {
 }
 
 func (k *PremiumKeys) Create(key string, length time.Duration) (err error) {
-	_, err = k.Exec(context.Background(), `INSERT INTO premium_keys("key", "length") VALUES($1, $2) ON CONFLICT("key") DO UPDATE SET "length" = $2;`, key, len())
+	_, err = k.Exec(context.Background(), `INSERT INTO premium_keys("key", "length") VALUES($1, $2) ON CONFLICT("key") DO UPDATE SET "length" = $2;`, key, length)
 	return
 }
 
@@ -33,3 +33,4 @@ func (k *PremiumKeys) Delete(key string) (length time.Duration, e error) {
 
 	return
 }
+z

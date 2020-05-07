@@ -21,7 +21,7 @@ func (t Prefix) Schema() string {
 }
 
 func (t *Prefix) Get(guildId uint64) (prefix string, e error) {
-	query := `SELECT "prefix" from prefix WHERE "guild_id" = $1`
+	query := `SELECT "prefix" from prefix WHERE "guild_id" = $1;`
 	if err := t.QueryRow(context.Background(), query, guildId).Scan(&prefix); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
