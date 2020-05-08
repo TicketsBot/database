@@ -11,6 +11,8 @@ type Database struct {
 	ChannelCategory   *ChannelCategory
 	DmOnOpen          *DmOnOpen
 	FirstResponseTime *FirstResponseTime
+	ModmailArchive    *ModmailArchiveTable
+	ModmailSession    *ModmailSessionTable
 	NamingScheme      *TicketNamingScheme
 	Panel             *PanelTable
 	Permissions       *Permissions
@@ -38,6 +40,8 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ChannelCategory:   newChannelCategory(pool),
 		DmOnOpen:          newDmOnOpen(pool),
 		FirstResponseTime: newFirstResponseTime(pool),
+		ModmailArchive:    newModmailArchiveTable(pool),
+		ModmailSession:    newModmailSessionTable(pool),
 		NamingScheme:      newTicketNamingScheme(pool),
 		Panel:             newPanelTable(pool),
 		Permissions:       newPermissions(pool),
