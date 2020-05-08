@@ -33,4 +33,3 @@ func (k *PremiumKeys) Delete(key string) (length time.Duration, e error) {
 
 	return
 }
-z
