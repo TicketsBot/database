@@ -151,3 +151,9 @@ func (t *TicketTable) Close(ticketId int, guildId uint64) (err error) {
 	_, err = t.Exec(context.Background(), query, ticketId, guildId)
 	return
 }
+
+func (t *TicketTable) CloseByChannel(channelId uint64) (err error) {
+	query := `UPDATE tickets SET "open" = false WHERE "channel_id" = $1;`
+	_, err = t.Exec(context.Background(), query, channelId)
+	return
+}
