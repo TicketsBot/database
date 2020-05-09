@@ -2,13 +2,14 @@ package database
 
 import (
 	"context"
+	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
 )
 
 type ModmailArchive struct {
-	Uuid      string
+	Uuid      uuid.UUID
 	GuildId   uint64
 	UserId    uint64
 	CloseTime time.Time
@@ -25,10 +26,18 @@ func newModmailArchiveTable(db *pgxpool.Pool) *ModmailArchiveTable {
 }
 
 func (m ModmailArchiveTable) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS modmail_archive("uuid" varchar(36) NOT NULL UNIQUE, "guild_id" int8 NOT NULL, "user_id" int8 NOT NULL, "close_time" timestamp NOT NULL, PRIMARY KEY("uuid"));`
+	return `
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE IF NOT EXISTS modmail_archive(
+	"uuid" uuid NOT NULL UNIQUE,
+	"guild_id" int8 NOT NULL,
+	"user_id" int8 NOT NULL,
+	"close_time" timestamp NOT NULL,
+	PRIMARY KEY("uuid")
+);`
 }
 
-func (m *ModmailArchiveTable) Get(uuid string) (archive ModmailArchive, e error) {
+func (m *ModmailArchiveTable) Get(uuid uuid.UUID) (archive ModmailArchive, e error) {
 	query := `SELECT * from modmail_archive WHERE "uuid" = $1;`
 	if err := m.QueryRow(context.Background(), query, uuid).Scan(&archive.Uuid, &archive.GuildId, &archive.Uuid, &archive.CloseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
