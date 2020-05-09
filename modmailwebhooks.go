@@ -43,7 +43,7 @@ func (m *ModmailWebhookTable) Get(uuid uuid.UUID) (webhook ModmailWebhook, e err
 	return
 }
 
-func (m *ModmailWebhookTable) Create(webhook ModmailWebhook) (uuid uuid.UUID, err error) {
+func (m *ModmailWebhookTable) Create(webhook ModmailWebhook) (err error) {
 	query := `INSERT INTO modmail_webhooks("uuid", "webhook_id", "webhook_token") VALUES($1, $2, $3) ON CONFLICT("uuid") DO NOTHING;`
 	_, err = m.Exec(context.Background(), query, webhook.Uuid, webhook.WebhookId, webhook.WebhookToken)
 	return
