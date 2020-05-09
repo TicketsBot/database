@@ -13,6 +13,7 @@ type Database struct {
 	FirstResponseTime *FirstResponseTime
 	ModmailArchive    *ModmailArchiveTable
 	ModmailSession    *ModmailSessionTable
+	ModmailWebhook    *ModmailWebhookTable
 	NamingScheme      *TicketNamingScheme
 	Panel             *PanelTable
 	Permissions       *Permissions
@@ -42,6 +43,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		FirstResponseTime: newFirstResponseTime(pool),
 		ModmailArchive:    newModmailArchiveTable(pool),
 		ModmailSession:    newModmailSessionTable(pool),
+		ModmailWebhook:    newModmailWebhookTable(pool),
 		NamingScheme:      newTicketNamingScheme(pool),
 		Panel:             newPanelTable(pool),
 		Permissions:       newPermissions(pool),
@@ -69,6 +71,9 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.ChannelCategory)
 	mustCreate(pool, d.DmOnOpen)
 	mustCreate(pool, d.FirstResponseTime)
+	mustCreate(pool, d.ModmailArchive)
+	mustCreate(pool, d.ModmailSession)
+	mustCreate(pool, d.ModmailWebhook)
 	mustCreate(pool, d.NamingScheme)
 	mustCreate(pool, d.Panel)
 	mustCreate(pool, d.Permissions)
@@ -83,6 +88,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Tickets)
 	mustCreate(pool, d.UsedKeys)
 	mustCreate(pool, d.UsersCanClose)
+	mustCreate(pool, d.UserGuilds)
 	mustCreate(pool, d.Votes)
 	mustCreate(pool, d.Webhooks)
 	mustCreate(pool, d.WelcomeMessages)
