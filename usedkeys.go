@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/gofrs/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS used_keys(
 );`
 }
 
-func (k *UsedKeys) Set(key string, guildId, userId uint64) (err error) {
+func (k *UsedKeys) Set(key uuid.UUID, guildId, userId uint64) (err error) {
 	_, err = k.Exec(context.Background(), `INSERT INTO used_keys("key", "guild_id", "activated_by") VALUES($1, $2, $3) ON CONFLICT("key") DO NOTHING;`, key, guildId, userId)
 	return
 }
