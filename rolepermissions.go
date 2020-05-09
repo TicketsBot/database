@@ -91,9 +91,9 @@ func (p *RolePermissions) AddAdmin(guildId, roleId uint64) (err error) {
 	return
 }
 
-func (p *RolePermissions) AddSupport(guildId, userId uint64) (err error) {
+func (p *RolePermissions) AddSupport(guildId, roleId uint64) (err error) {
 	query := `INSERT INTO role_permissions("guild_id", "role_id", "support", "admin") VALUES($1, $2, true, false) ON CONFLICT("role_id") DO UPDATE SET "admin" = false, "support" = true;`
-	_, err = p.Exec(context.Background(), query, guildId, userId)
+	_, err = p.Exec(context.Background(), query, guildId, roleId)
 	return
 }
 

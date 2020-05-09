@@ -29,9 +29,9 @@ func (t *Tag) Get(guildId uint64, tagId string) (content string, e error) {
 	return
 }
 
-func (t *Tag) GetTagIds(guildId uint64, tagId string) (ids []string, e error) {
+func (t *Tag) GetTagIds(guildId uint64) (ids []string, e error) {
 	query := `SELECT "tag_id" from tags WHERE "guild_id"=$1;`
-	rows, err := t.Query(context.Background(), query, guildId, tagId)
+	rows, err := t.Query(context.Background(), query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
