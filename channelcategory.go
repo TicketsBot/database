@@ -32,3 +32,9 @@ func (c *ChannelCategory) Set(guildId, channelCategory uint64) (err error) {
 	_, err = c.Exec(context.Background(), `INSERT INTO channel_category("guild_id", "category_id") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "category_id" = $2;`, guildId, channelCategory)
 	return
 }
+
+func (c *ChannelCategory) Delete(guildId uint64) (err error) {
+	_, err = c.Exec(context.Background(), `DELETE FROM channel_category WHERE "guild_id" = $1;`, guildId)
+	return
+}
+
