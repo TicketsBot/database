@@ -69,10 +69,10 @@ func (t *TicketTable) GetByChannel(channelId uint64) (ticket Ticket, e error) {
 	return
 }
 
-func (t *TicketTable) GetAllByUser(userId uint64) (tickets []Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "user_id" = $1;`
+func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e error) {
+	query := `SELECT * FROM tickets WHERE "guild_id" = $1 AND "user_id" = $2;`
 
-	rows, err := t.Query(context.Background(), query, userId)
+	rows, err := t.Query(context.Background(), query, guildId, userId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
