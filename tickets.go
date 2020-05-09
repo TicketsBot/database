@@ -92,10 +92,10 @@ func (t *TicketTable) GetAllByUser(userId uint64) (tickets []Ticket, e error) {
 	return
 }
 
-func (t *TicketTable) GetOpenByUser(userId uint64) (tickets []Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "user_id" = $1 AND "open" = true;`
+func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e error) {
+	query := `SELECT * FROM tickets WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
-	rows, err := t.Query(context.Background(), query, userId)
+	rows, err := t.Query(context.Background(), query, userId, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
