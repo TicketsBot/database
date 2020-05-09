@@ -16,7 +16,14 @@ func newUsedKeys(db *pgxpool.Pool) *UsedKeys {
 }
 
 func (k UsedKeys) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS used_keys("key" varchar(36) NOT NULL UNIQUE, "guild_id" int8 NOT NULL, "activated_by" int8 NOT NULL, PRIMARY KEY("key"));`
+	return `
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE IF NOT EXISTS used_keys(
+	"key" uuid NOT NULL UNIQUE,
+	"guild_id" int8 NOT NULL,
+	"activated_by" int8 NOT NULL,
+	PRIMARY KEY("key")
+);`
 }
 
 func (k *UsedKeys) Set(key string, guildId, userId uint64) (err error) {
