@@ -57,9 +57,9 @@ func (m *ModmailSessionTable) GetByChannel(channelId uint64) (session ModmailSes
 	return
 }
 
-func (m *ModmailSessionTable) Create(session ModmailSession) (err error) {
-	query := `INSERT INTO modmail_sessions("guild_id", "user_id", "staff_channel", "welcome_message_id") VALUES($1, $2, $3, $4) ON CONFLICT("uuid") DO NOTHING;`
-	_, err = m.Exec(context.Background(), query, session.GuildId, session.UserId, session.StaffChannelId, session.WelcomeMessageId)
+func (m *ModmailSessionTable) Create(session ModmailSession) (uuid uuid.UUID, err error) {
+	query := `INSERT INTO modmail_sessions("guild_id", "user_id", "staff_channel", "welcome_message_id") VALUES($1, $2, $3, $4) ON CONFLICT("uuid") DO NOTHING RETURNING "uuid";`
+	err = m.QueryRow(context.Background(), query, session.GuildId, session.UserId, session.StaffChannelId, session.WelcomeMessageId).Scan(&uuid)
 	return
 }
 
