@@ -103,9 +103,9 @@ func (p *RolePermissions) RemoveAdmin(guildId, roleId uint64) (err error) {
 	return
 }
 
-func (p *RolePermissions) RemoveSupport(roleId uint64) (err error) {
-	query := `UPDATE role_permissions SET "admin" = false AND "support" = false WHERE "role_id" = $1;`
-	_, err = p.Exec(context.Background(), query, roleId)
+func (p *RolePermissions) RemoveSupport(guildId, roleId uint64) (err error) {
+	query := `UPDATE role_permissions SET "admin" = false AND "support" = false WHERE "guild_id" = $1 AND "role_id" = $2;`
+	_, err = p.Exec(context.Background(), query, guildId, roleId)
 	return
 }
 
