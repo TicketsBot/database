@@ -16,7 +16,7 @@ func newBlacklist(db *pgxpool.Pool) *Blacklist {
 }
 
 func (b Blacklist) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS blacklist("guild_id" int8 NOT NULL, "user_id" int8 NOT NULL, PRIMARY KEY("guild_id", "user_id");`
+	return `CREATE TABLE IF NOT EXISTS blacklist("guild_id" int8 NOT NULL, "user_id" int8 NOT NULL, PRIMARY KEY("guild_id", "user_id"));`
 }
 
 func (b *Blacklist) IsBlacklisted(guildId, userId uint64) (exists bool, e error) {

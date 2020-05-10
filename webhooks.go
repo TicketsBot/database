@@ -35,7 +35,7 @@ func (w *WebhookTable) Get(guildId uint64, ticketId int) (webhook Webhook, e err
 }
 
 func (w *WebhookTable) Create(guildId uint64, ticketId int, webhook Webhook) (err error) {
-	query := `INSERT INTO tags("guild_id", "ticket_id", "webhook_id", "webhook_token") VALUES($1, $2, $3, $4) ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "webhook_id" = $3, "webhook_token" = $4;`
+	query := `INSERT INTO webhooks("guild_id", "ticket_id", "webhook_id", "webhook_token") VALUES($1, $2, $3, $4) ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "webhook_id" = $3, "webhook_token" = $4;`
 	_, err = w.Exec(context.Background(), query, guildId, ticketId, webhook.Id, webhook.Token)
 	return
 }

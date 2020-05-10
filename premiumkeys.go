@@ -34,7 +34,7 @@ func (k *PremiumKeys) Create(key uuid.UUID, length time.Duration) (err error) {
 }
 
 func (k *PremiumKeys) Delete(key uuid.UUID) (length time.Duration, e error) {
-	if err := k.QueryRow(context.Background(), `DELETE from premium_keys WHERE "key" = $1 RETURNING "expiry";`, key).Scan(&length); err != nil && err != pgx.ErrNoRows {
+	if err := k.QueryRow(context.Background(), `DELETE from premium_keys WHERE "key" = $1 RETURNING "length";`, key).Scan(&length); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 

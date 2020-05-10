@@ -84,8 +84,8 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.RolePermissions)
 	mustCreate(pool, d.Tag)
 	mustCreate(pool, d.TicketLimit)
+	mustCreate(pool, d.Tickets) // Must be created before members table
 	mustCreate(pool, d.TicketMembers)
-	mustCreate(pool, d.Tickets)
 	mustCreate(pool, d.UsedKeys)
 	mustCreate(pool, d.UsersCanClose)
 	mustCreate(pool, d.UserGuilds)

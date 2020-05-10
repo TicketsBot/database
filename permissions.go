@@ -19,7 +19,7 @@ func newPermissions(db *pgxpool.Pool) *Permissions {
 func (p Permissions) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS permissions("guild_id" int8 NOT NULL, "user_id" int8 NOT NULL, "support" bool NOT NULL, "admin" bool NOT NULL, PRIMARY KEY("guild_id", "user_id"));
-CREATE INDEX CONCURRENTLY IF NOT EXISTS permissions_guild_id ON permissions("guild_id");
+CREATE INDEX IF NOT EXISTS permissions_guild_id ON permissions("guild_id");
 `
 }
 
@@ -104,7 +104,7 @@ func (p *Permissions) RemoveAdmin(guildId, userId uint64) (err error) {
 }
 
 func (p *Permissions) RemoveSupport(guildId, userId uint64) (err error) {
-	query := `UPDATE permissions SET "admin" = false AND "support" = false WHERE "guild_id" = $1 AND "user_id" = $2;`
+	query := `UPDATE permissions SET "admin" = false, "support" = false WHERE "guild_id" = $1 AND "user_id" = $2;`
 	_, err = p.Exec(context.Background(), query, guildId, userId)
 	return
 }

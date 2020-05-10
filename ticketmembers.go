@@ -18,8 +18,15 @@ func newTicketMembers(db *pgxpool.Pool) *TicketMembers {
 
 func (m TicketMembers) Schema() string {
 	return `
-CREATE TABLE IF NOT EXISTS ticket_members("guild_id" int8 NOT NULL REFERENCES tickets("guild_id"), "ticket_id" int4 NOT NULL REFERENCES tickets("id"), "user_id" int8 NOT NULL, PRIMARY KEY("guild_id", "ticket_id", "user_id"));
-CREATE INDEX CONCURRENTLY IF NOT EXISTS ticket_members_guild_ticket ON ticket_members("guild_id", "ticket_id");
+CREATE TABLE IF NOT EXISTS ticket_members(
+	"guild_id" int8 NOT NULL,
+	"ticket_id" int4 NOT NULL,
+	"user_id" int8 NOT NULL,
+	FOREIGN KEY("guild_id", "ticket_id") REFERENCES tickets("guild_id", "id"),
+	PRIMARY KEY("guild_id", "ticket_id", "user_id")
+);
+
+CREATE INDEX IF NOT EXISTS ticket_members_guild_ticket ON ticket_members("guild_id", "ticket_id");
 `
 }
 

@@ -21,7 +21,7 @@ func (w WelcomeMessages) Schema() string {
 }
 
 func (w *WelcomeMessages) Get(guildId uint64) (welcomeMessage string, e error) {
-	query := `SELECT "welcome_message" from welcome_message WHERE "guild_id" = $1`
+	query := `SELECT "welcome_message" from welcome_messages WHERE "guild_id" = $1;`
 
 	if err := w.QueryRow(context.Background(), query, guildId).Scan(&welcomeMessage); err != nil && err != pgx.ErrNoRows {
 		e = err

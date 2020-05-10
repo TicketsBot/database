@@ -38,7 +38,7 @@ func (p PanelTable) Schema() string {
 "target_category" int8 NOT NULL,
 "reaction_emote" varchar(32) NOT NULL,
 PRIMARY KEY("message_id"));
-CREATE INDEX CONCURRENTLY IF NOT EXISTS panels_guild_id ON panels("guild_id");`
+CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");`
 }
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {

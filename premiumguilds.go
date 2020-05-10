@@ -39,6 +39,6 @@ func (p *PremiumGuilds) GetExpiry(guildId uint64) (expiry time.Time, e error) {
 }
 
 func (p *PremiumGuilds) Add(guildId uint64, interval time.Duration) (err error) {
-	_, err = p.Exec(context.Background(), `INSERT INTO premium_guilds("guild_id", "expiry") VALUES($1, NOW() + $2) ON CONFLICT("guild_id") DO UPDATE SET "expiry" = users.expiry + $2;`, guildId, interval)
+	_, err = p.Exec(context.Background(), `INSERT INTO premium_guilds("guild_id", "expiry") VALUES($1, NOW() + $2) ON CONFLICT("guild_id") DO UPDATE SET "expiry" = premium_guilds.expiry + $2;`, guildId, interval)
 	return
 }

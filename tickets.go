@@ -10,11 +10,11 @@ import (
 type Ticket struct {
 	Id               int
 	GuildId          uint64
-	ChannelId        uint64
+	ChannelId        *uint64
 	UserId           uint64
 	Open             bool
 	OpenTime         time.Time
-	WelcomeMessageId uint64
+	WelcomeMessageId *uint64
 }
 
 type TicketTable struct {
@@ -29,15 +29,16 @@ func newTicketTable(db *pgxpool.Pool) *TicketTable {
 
 func (t TicketTable) Schema() string {
 	return `CREATE TABLE IF NOT EXISTS tickets(
-"id" int4 NOT NULL,
-"guild_id" int8 NOT NULL,
-"channel_id" int8 UNIQUE,
-"user_id" int8 NOT NULL,
-"open" bool NOT NULL,
-"open_time" timestamp NOT NULL,
-"welcome_message_id" int8,
-PRIMARY KEY("id", "guild_id"));
-CREATE INDEX CONCURRENTLY IF NOT EXISTS tickets_channel_id ON tickets("channel_id");
+	"id" int4 NOT NULL,
+	"guild_id" int8 NOT NULL,
+	"channel_id" int8 UNIQUE,
+	"user_id" int8 NOT NULL,
+	"open" bool NOT NULL,
+	"open_time" timestamptz NOT NULL,
+	"welcome_message_id" int8,
+	PRIMARY KEY("id", "guild_id")
+);
+CREATE INDEX IF NOT EXISTS tickets_channel_id ON tickets("channel_id");
 `
 }
 
@@ -48,7 +49,7 @@ func (t *TicketTable) Create(guildId, userId uint64) (id int, err error) {
 }
 
 func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelId, welcomeMessageId uint64) (err error) {
-	query := `UPDATE tickets SET "channel_id" = $1 AND "welcome_message_id" = $2 WHERE "guild_id" = $3 AND "id" = $4;`
+	query := `UPDATE tickets SET "channel_id" = $1, "welcome_message_id" = $2 WHERE "guild_id" = $3 AND "id" = $4;`
 	_, err = t.Exec(context.Background(), query, channelId, welcomeMessageId, guildId, ticketId)
 	return
 }
