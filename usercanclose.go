@@ -21,14 +21,18 @@ func (u UsersCanClose) Schema() string {
 }
 
 func (u *UsersCanClose) Get(guildId uint64) (usersCanClose bool, e error) {
-	if err := u.QueryRow(context.Background(), `SELECT "users_can_close" from users_can_close WHERE "guild_id" = $1;`, guildId).Scan(&u); err != nil && err != pgx.ErrNoRows {
-		e = err
+	if err := u.QueryRow(context.Background(), `SELECT "users_can_close" from users_can_close WHERE "guild_id" = $1;`, guildId).Scan(&u); err != nil {
+		if err == pgx.ErrNoRows {
+			usersCanClose = true
+		} else {
+			e = err
+		}
 	}
 
 	return
 }
 
-func (u *UsersCanClose) Set(guildId, usersCanClose bool) (err error) {
+func (u *UsersCanClose) Set(guildId uint64, usersCanClose bool) (err error) {
 	_, err = u.Exec(context.Background(), `INSERT INTO users_can_close("guild_id", "users_can_close") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "users_can_close" = $2;`, guildId, usersCanClose)
 	return
 }

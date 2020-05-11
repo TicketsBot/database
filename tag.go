@@ -17,7 +17,13 @@ func newTag(db *pgxpool.Pool) *Tag {
 }
 
 func (t Tag) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS tags("guild_id" int8 NOT NULL, "tag_id" varchar(16) NOT NULL, "content" text NOT NULL, PRIMARY KEY("guild_id", "tag_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS tags(
+	"guild_id" int8 NOT NULL,
+	"tag_id" varchar(16) NOT NULL,
+	"content" text NOT NULL,
+	PRIMARY KEY("guild_id", "tag_id")
+);`
 }
 
 func (t *Tag) Get(guildId uint64, tagId string) (content string, e error) {
@@ -46,6 +52,30 @@ func (t *Tag) GetTagIds(guildId uint64) (ids []string, e error) {
 		}
 
 		ids = append(ids, id)
+	}
+
+	return
+}
+
+func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
+	tags = make(map[string]string)
+
+	query := `SELECT "tag_id", "content" from tags WHERE "guild_id"=$1;`
+	rows, err := t.Query(context.Background(), query, guildId)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var id, content string
+		if err := rows.Scan(&id, &content); err != nil {
+			e = err
+			continue
+		}
+
+		tags[id] = content
 	}
 
 	return

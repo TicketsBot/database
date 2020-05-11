@@ -28,6 +28,29 @@ func (b *Blacklist) IsBlacklisted(guildId, userId uint64) (exists bool, e error)
 	return
 }
 
+func (b *Blacklist) GetBlacklistedUsers(guildId uint64) (blacklisted []uint64, e error) {
+	query := `SELECT "user_id" FROM blacklist WHERE "guild_id" = $1;`
+
+	rows, err := b.Query(context.Background(), query, guildId)
+	defer rows.Close()
+	if err != nil {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var userId uint64
+		if err := rows.Scan(&userId); err != nil {
+			e = err
+			continue
+		}
+
+		blacklisted = append(blacklisted, userId)
+	}
+
+	return
+}
+
 func (b *Blacklist) Add(guildId, userId uint64) (err error) {
 	// on conflict, user is already blacklisted
 	query := `INSERT INTO blacklist("guild_id", "user_id") VALUES($1, $2) ON CONFLICT DO NOTHING;`

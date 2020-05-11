@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
@@ -120,6 +121,74 @@ func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e e
 	query := `SELECT * FROM tickets WHERE "guild_id" = $1 AND "open" = true;`
 
 	rows, err := t.Query(context.Background(), query, guildId)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket Ticket
+		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
+func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (tickets []Ticket, e error) {
+	var query string
+	var args []interface{}
+	if before == 0 {
+		query = `SELECT * FROM tickets WHERE "guild_id" = $1 AND "open" = false ORDER BY "id" DESC LIMIT $2;`
+		args = []interface{}{guildId, limit}
+	} else {
+		query = `SELECT * from tickets WHERE "guild_id" = $1 AND "open" = false AND "id" < $3 ORDER BY "id" DESC LIMIT $2;`
+		args = []interface{}{guildId, limit, before}
+	}
+
+	rows, err := t.Query(context.Background(), query, args...)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket Ticket
+		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
+func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, limit, before int) (tickets []Ticket, e error) {
+	// create array of user IDs
+	array := &pgtype.Int8Array{}
+	if e = array.Set(userIds); e != nil {
+		return
+	}
+
+	var query string
+	var args []interface{}
+	if before == 0 {
+		query = `SELECT * FROM tickets WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false ORDER BY "id" DESC LIMIT $3;`
+		args = []interface{}{guildId, array, limit}
+	} else {
+		query = `SELECT * from tickets WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false AND "id" < $4 ORDER BY "id" DESC LIMIT $3;`
+		args = []interface{}{guildId, array, limit, before}
+	}
+
+	rows, err := t.Query(context.Background(), query, args...)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err

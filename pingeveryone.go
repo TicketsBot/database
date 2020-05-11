@@ -21,14 +21,18 @@ func (p PingEveryone) Schema() string {
 }
 
 func (p *PingEveryone) Get(guildId uint64) (pingEveryone bool, e error) {
-	if err := p.QueryRow(context.Background(), `SELECT "ping_everyone" from ping_everyone WHERE "guild_id" = $1;`, guildId).Scan(&pingEveryone); err != nil && err != pgx.ErrNoRows {
-		e = err
+	if err := p.QueryRow(context.Background(), `SELECT "ping_everyone" from ping_everyone WHERE "guild_id" = $1;`, guildId).Scan(&pingEveryone); err != nil {
+		if err == pgx.ErrNoRows {
+			pingEveryone = true
+		} else {
+			e = err
+		}
 	}
 
 	return
 }
 
-func (p *PingEveryone) Set(guildId, pingEveryone bool) (err error) {
+func (p *PingEveryone) Set(guildId uint64, pingEveryone bool) (err error) {
 	_, err = p.Exec(context.Background(), `INSERT INTO pingEveryone("guild_id", "ping_everyone") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "ping_everyone" = $2;`, guildId, pingEveryone)
 	return
 }
