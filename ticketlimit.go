@@ -26,9 +26,13 @@ CREATE TABLE IF NOT EXISTS ticket_limit(
 }
 
 func (t *TicketLimit) Get(guildId uint64) (limit uint8, e error) {
-	query := `SELECT "limit" from ticket_limit WHERE "guild_id" = $1`
-	if err := t.QueryRow(context.Background(), query, guildId).Scan(&limit); err != nil && err != pgx.ErrNoRows {
-		e = err
+	query := `SELECT "limit" from ticket_limit WHERE "guild_id" = $1;`
+	if err := t.QueryRow(context.Background(), query, guildId).Scan(&limit); err != nil {
+		if err == pgx.ErrNoRows {
+			limit = 5
+		} else {
+			e = err
+		}
 	}
 
 	return
