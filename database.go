@@ -70,7 +70,6 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Blacklist)
 	mustCreate(pool, d.ChannelCategory)
 	mustCreate(pool, d.DmOnOpen)
-	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.ModmailArchive)
 	mustCreate(pool, d.ModmailSession)
 	mustCreate(pool, d.ModmailWebhook)
@@ -85,6 +84,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Tag)
 	mustCreate(pool, d.TicketLimit)
 	mustCreate(pool, d.Tickets) // Must be created before members table
+	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
 	mustCreate(pool, d.UsedKeys)
 	mustCreate(pool, d.UsersCanClose)

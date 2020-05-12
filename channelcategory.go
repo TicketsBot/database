@@ -17,7 +17,12 @@ func newChannelCategory(db *pgxpool.Pool) *ChannelCategory {
 }
 
 func (c ChannelCategory) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS channel_category("guild_id" int8 NOT NULL UNIQUE, "category_id" int8 NOT NULL UNIQUE, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS channel_category(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"category_id" int8 NOT NULL UNIQUE,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (c *ChannelCategory) Get(guildId uint64) (channelCategory uint64, e error) {

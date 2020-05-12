@@ -17,7 +17,12 @@ func newUsersCanClose(db *pgxpool.Pool) *UsersCanClose {
 }
 
 func (u UsersCanClose) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS users_can_close("guild_id" int8 NOT NULL UNIQUE, "users_can_close" bool NOT NULL, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS users_can_close(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"users_can_close" bool NOT NULL,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (u *UsersCanClose) Get(guildId uint64) (usersCanClose bool, e error) {

@@ -18,7 +18,13 @@ func newPermissions(db *pgxpool.Pool) *Permissions {
 
 func (p Permissions) Schema() string {
 	return `
-CREATE TABLE IF NOT EXISTS permissions("guild_id" int8 NOT NULL, "user_id" int8 NOT NULL, "support" bool NOT NULL, "admin" bool NOT NULL, PRIMARY KEY("guild_id", "user_id"));
+CREATE TABLE IF NOT EXISTS permissions(
+	"guild_id" int8 NOT NULL,
+	"user_id" int8 NOT NULL,
+	"support" bool NOT NULL,
+	"admin" bool NOT NULL,
+	PRIMARY KEY("guild_id", "user_id")
+);
 CREATE INDEX IF NOT EXISTS permissions_guild_id ON permissions("guild_id");
 `
 }

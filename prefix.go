@@ -17,7 +17,12 @@ func newPrefix(db *pgxpool.Pool) *Prefix {
 }
 
 func (t Prefix) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS prefix("guild_id" int8 NOT NULL UNIQUE, "prefix" varchar(8) NOT NULL, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS prefix(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"prefix" varchar(8) NOT NULL,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (t *Prefix) Get(guildId uint64) (prefix string, e error) {

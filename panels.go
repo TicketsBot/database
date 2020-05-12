@@ -28,16 +28,18 @@ func newPanelTable(db *pgxpool.Pool) *PanelTable {
 }
 
 func (p PanelTable) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS panels(
-"message_id" int8 NOT NULL UNIQUE,
-"channel_id" int8 NOT NULL,
-"guild_id" int8 NOT NULL,
-"title" varchar(255) NOT NULL,
-"content" text NOT NULL,
-"colour" int4 NOT NULL,
-"target_category" int8 NOT NULL,
-"reaction_emote" varchar(32) NOT NULL,
-PRIMARY KEY("message_id"));
+	return `
+CREATE TABLE IF NOT EXISTS panels(
+	"message_id" int8 NOT NULL UNIQUE,
+	"channel_id" int8 NOT NULL,
+	"guild_id" int8 NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"content" text NOT NULL,
+	"colour" int4 NOT NULL,
+	"target_category" int8 NOT NULL,
+	"reaction_emote" varchar(32) NOT NULL,
+	PRIMARY KEY("message_id")
+);
 CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");`
 }
 

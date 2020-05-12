@@ -17,7 +17,12 @@ func newWelcomeMessages(db *pgxpool.Pool) *WelcomeMessages {
 }
 
 func (w WelcomeMessages) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS welcome_messages("guild_id" int8 NOT NULL UNIQUE, "welcome_message" text NOT NULL, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS welcome_messages(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"welcome_message" text NOT NULL,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (w *WelcomeMessages) Get(guildId uint64) (welcomeMessage string, e error) {

@@ -22,7 +22,15 @@ func newWebhookTable(db *pgxpool.Pool) *WebhookTable {
 }
 
 func (w WebhookTable) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS webhooks("guild_id" int8 NOT NULL, "ticket_id" int4 NOT NULL, "webhook_id" int8 NOT NULL UNIQUE, "webhook_token" varchar(100) NOT NULL, PRIMARY KEY("guild_id", "ticket_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS webhooks(
+	"guild_id" int8 NOT NULL,
+	"ticket_id" int4 NOT NULL,
+	"webhook_id" int8 NOT NULL UNIQUE,
+	"webhook_token" varchar(100) NOT NULL,
+	FOREIGN KEY("guild_id", "ticket_id") REFERENCES tickets("guild_id", "id"),
+	PRIMARY KEY("guild_id", "ticket_id")
+);`
 }
 
 func (w *WebhookTable) Get(guildId uint64, ticketId int) (webhook Webhook, e error) {

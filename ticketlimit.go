@@ -17,7 +17,12 @@ func newTicketLimit(db *pgxpool.Pool) *TicketLimit {
 }
 
 func (t TicketLimit) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS ticket_limit("guild_id" int8 NOT NULL UNIQUE, "limit" int2 NOT NULL, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS ticket_limit(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"limit" int2 NOT NULL,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (t *TicketLimit) Get(guildId uint64) (limit uint8, e error) {

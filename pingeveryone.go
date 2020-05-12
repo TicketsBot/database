@@ -17,7 +17,12 @@ func newPingEveryone(db *pgxpool.Pool) *PingEveryone {
 }
 
 func (p PingEveryone) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS ping_everyone("guild_id" int8 NOT NULL UNIQUE, "ping_everyone" bool NOT NULL, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS ping_everyone(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"ping_everyone" bool NOT NULL,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (p *PingEveryone) Get(guildId uint64) (pingEveryone bool, e error) {

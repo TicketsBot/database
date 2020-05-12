@@ -18,7 +18,12 @@ func newVotes(db *pgxpool.Pool) *Votes {
 }
 
 func (v Votes) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS votes("user_id" int8 NOT NULL UNIQUE, "vote_time" timestamp NOT NULL, PRIMARY KEY("user_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS votes(
+	"user_id" int8 NOT NULL UNIQUE,
+	"vote_time" timestamp NOT NULL,
+	PRIMARY KEY("user_id")
+);`
 }
 
 func (v *Votes) Get(userId uint64) (voteTime time.Time, e error) {

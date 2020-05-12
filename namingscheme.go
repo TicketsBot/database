@@ -24,7 +24,12 @@ func newTicketNamingScheme(db *pgxpool.Pool) *TicketNamingScheme {
 }
 
 func (t TicketNamingScheme) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS naming_scheme("guild_id" int8 NOT NULL UNIQUE, "naming_scheme" varchar(16) NOT NULL, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS naming_scheme(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"naming_scheme" varchar(16) NOT NULL,
+	PRIMARY KEY("guild_id")
+);`
 }
 
 func (t *TicketNamingScheme) Get(guildId uint64) (ns NamingScheme, e error) {
