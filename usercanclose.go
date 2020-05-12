@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users_can_close(
 }
 
 func (u *UsersCanClose) Get(guildId uint64) (usersCanClose bool, e error) {
-	if err := u.QueryRow(context.Background(), `SELECT "users_can_close" from users_can_close WHERE "guild_id" = $1;`, guildId).Scan(&u); err != nil {
+	if err := u.QueryRow(context.Background(), `SELECT "users_can_close" from users_can_close WHERE "guild_id" = $1;`, guildId).Scan(&usersCanClose); err != nil {
 		if err == pgx.ErrNoRows {
 			usersCanClose = true
 		} else {
