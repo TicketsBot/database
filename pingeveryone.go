@@ -38,6 +38,6 @@ func (p *PingEveryone) Get(guildId uint64) (pingEveryone bool, e error) {
 }
 
 func (p *PingEveryone) Set(guildId uint64, pingEveryone bool) (err error) {
-	_, err = p.Exec(context.Background(), `INSERT INTO pingEveryone("guild_id", "ping_everyone") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "ping_everyone" = $2;`, guildId, pingEveryone)
+	_, err = p.Exec(context.Background(), `INSERT INTO ping_everyone("guild_id", "ping_everyone") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "ping_everyone" = $2;`, guildId, pingEveryone)
 	return
 }
