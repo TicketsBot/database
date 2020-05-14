@@ -38,13 +38,13 @@ func (c *TicketClaims) Get(guildId uint64, ticketId int) (userId uint64, e error
 }
 
 func (c *TicketClaims) Set(guildId uint64, ticketId int, userId uint64) (err error) {
-	query := `INSERT INTO ticket_claims("guild_id", "ticket_id", "user_id") VALUES($1, $2, $3) ON CONFLICT("guild_id", "ticket_id", "user_id") DO UPDATE SET "user_id" = $3;`
+	query := `INSERT INTO ticket_claims("guild_id", "ticket_id", "user_id") VALUES($1, $2, $3) ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "user_id" = $3;`
 	_, err = c.Exec(context.Background(), query, guildId, ticketId, userId)
 	return
 }
 
 func (c *TicketClaims) Delete(guildId uint64, ticketId int) (err error) {
-	query := `DELETE FROM ticket_claims WHERE "guild_id"=$1 AND "ticket_id"=$3;`
+	query := `DELETE FROM ticket_claims WHERE "guild_id"=$1 AND "ticket_id"=$2;`
 	_, err = c.Exec(context.Background(), query, guildId, ticketId)
 	return
 }
