@@ -91,6 +91,27 @@ func (p *Permissions) GetSupport(guildId uint64) (support []uint64, e error) {
 	return
 }
 
+func (p *Permissions) GetSupportOnly(guildId uint64) (support []uint64, e error) {
+	query := `SELECT "user_id" from permissions WHERE "guild_id" = $1 AND "admin" = false AND "support" = true;`
+	rows, err := p.Query(context.Background(), query, guildId)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+	}
+
+	for rows.Next() {
+		var userId uint64
+		if err := rows.Scan(&userId); err != nil {
+			e = err
+			continue
+		}
+
+		support = append(support, userId)
+	}
+
+	return
+}
+
 func (p *Permissions) AddAdmin(guildId, userId uint64) (err error) {
 	query := `INSERT INTO permissions("guild_id", "user_id", "support", "admin") VALUES($1, $2, true, true) ON CONFLICT("guild_id", "user_id") DO UPDATE SET "admin" = true, "support" = true;`
 	_, err = p.Exec(context.Background(), query, guildId, userId)

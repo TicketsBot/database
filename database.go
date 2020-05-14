@@ -9,6 +9,7 @@ type Database struct {
 	ArchiveChannel    *ArchiveChannel
 	Blacklist         *Blacklist
 	ChannelCategory   *ChannelCategory
+	ClaimSettings     *ClaimSettingsTable
 	DmOnOpen          *DmOnOpen
 	FirstResponseTime *FirstResponseTime
 	ModmailArchive    *ModmailArchiveTable
@@ -23,6 +24,7 @@ type Database struct {
 	PremiumKeys       *PremiumKeys
 	RolePermissions   *RolePermissions
 	Tag               *Tag
+	TicketClaims      *TicketClaims
 	TicketLimit       *TicketLimit
 	TicketMembers     *TicketMembers
 	Tickets           *TicketTable
@@ -39,6 +41,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ArchiveChannel:    newArchiveChannel(pool),
 		Blacklist:         newBlacklist(pool),
 		ChannelCategory:   newChannelCategory(pool),
+		ClaimSettings:     newClaimSettingsTable(pool),
 		DmOnOpen:          newDmOnOpen(pool),
 		FirstResponseTime: newFirstResponseTime(pool),
 		ModmailArchive:    newModmailArchiveTable(pool),
@@ -53,6 +56,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PremiumKeys:       newPremiumKeys(pool),
 		RolePermissions:   newRolePermissions(pool),
 		Tag:               newTag(pool),
+		TicketClaims:      newTicketClaims(pool),
 		TicketLimit:       newTicketLimit(pool),
 		TicketMembers:     newTicketMembers(pool),
 		Tickets:           newTicketTable(pool),
@@ -69,6 +73,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.ArchiveChannel)
 	mustCreate(pool, d.Blacklist)
 	mustCreate(pool, d.ChannelCategory)
+	mustCreate(pool, d.ClaimSettings)
 	mustCreate(pool, d.DmOnOpen)
 	mustCreate(pool, d.ModmailArchive)
 	mustCreate(pool, d.ModmailSession)
@@ -86,6 +91,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Tickets) // Must be created before members table
 	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
+	mustCreate(pool, d.TicketClaims)
 	mustCreate(pool, d.UsedKeys)
 	mustCreate(pool, d.UsersCanClose)
 	mustCreate(pool, d.UserGuilds)

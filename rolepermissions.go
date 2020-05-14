@@ -91,6 +91,27 @@ func (p *RolePermissions) GetSupportRoles(guildId uint64) (supportRoles []uint64
 	return
 }
 
+func (p *RolePermissions) GetSupportRolesOnly(guildId uint64) (supportRoles []uint64, e error) {
+	query := `SELECT "role_id" from role_permissions WHERE "guild_id" = $1 AND "admin" = false AND "support" = true;`
+	rows, err := p.Query(context.Background(), query, guildId)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+	}
+
+	for rows.Next() {
+		var roleId uint64
+		if err := rows.Scan(&roleId); err != nil {
+			e = err
+			continue
+		}
+
+		supportRoles = append(supportRoles, roleId)
+	}
+
+	return
+}
+
 func (p *RolePermissions) AddAdmin(guildId, roleId uint64) (err error) {
 	query := `INSERT INTO role_permissions("guild_id", "role_id", "support", "admin") VALUES($1, $2, true, true) ON CONFLICT("role_id") DO UPDATE SET "admin" = true, "support" = true;`
 	_, err = p.Exec(context.Background(), query, guildId, roleId)
