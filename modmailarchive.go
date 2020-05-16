@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS modmail_archive(
 
 func (m *ModmailArchiveTable) Get(uuid uuid.UUID) (archive ModmailArchive, e error) {
 	query := `SELECT * from modmail_archive WHERE "uuid" = $1;`
-	if err := m.QueryRow(context.Background(), query, uuid).Scan(&archive.Uuid, &archive.GuildId, &archive.Uuid, &archive.CloseTime); err != nil && err != pgx.ErrNoRows {
+	if err := m.QueryRow(context.Background(), query, uuid).Scan(&archive.Uuid, &archive.GuildId, &archive.UserId, &archive.CloseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
