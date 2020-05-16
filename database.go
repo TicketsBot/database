@@ -76,6 +76,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Blacklist)
 	mustCreate(pool, d.ChannelCategory)
 	mustCreate(pool, d.ClaimSettings)
+	mustCreate(pool, d.CloseConfirmation)
 	mustCreate(pool, d.DmOnOpen)
 	mustCreate(pool, d.ModmailArchive)
 	mustCreate(pool, d.ModmailSession)
