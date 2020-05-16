@@ -10,6 +10,7 @@ type Database struct {
 	Blacklist         *Blacklist
 	ChannelCategory   *ChannelCategory
 	ClaimSettings     *ClaimSettingsTable
+	CloseConfirmation *CloseConfirmation
 	DmOnOpen          *DmOnOpen
 	FirstResponseTime *FirstResponseTime
 	ModmailArchive    *ModmailArchiveTable
@@ -42,6 +43,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		Blacklist:         newBlacklist(pool),
 		ChannelCategory:   newChannelCategory(pool),
 		ClaimSettings:     newClaimSettingsTable(pool),
+		CloseConfirmation: newCloseConfirmation(pool),
 		DmOnOpen:          newDmOnOpen(pool),
 		FirstResponseTime: newFirstResponseTime(pool),
 		ModmailArchive:    newModmailArchiveTable(pool),
