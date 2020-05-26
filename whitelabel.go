@@ -74,8 +74,14 @@ func (w *WhitelabelBotTable) GetBotsBySharder(sharderCount, sharderId int) (res 
 	return
 }
 
-func (w *WhitelabelBotTable) Delete(guildId uint64, ticketId int) (err error) {
-	query := `DELETE FROM webhooks WHERE "guild_id"=$1 AND "ticket_id"=$2;`
-	_, err = w.Exec(context.Background(), query, guildId, ticketId)
+func (w *WhitelabelBotTable) Set(data WhitelabelBot) (err error) {
+	query := `INSERT INTO whitelabel("user_id", "bot_id", "token") VALUES($1, $2, $3) ON CONFLICT("user_id") DO UPDATE SET "bot_id" = $2, "token" = $3;`
+	_, err = w.Exec(context.Background(), query, data.UserId, data.BotId, data.Token)
+	return
+}
+
+func (w *WhitelabelBotTable) Delete(userId uint64) (err error) {
+	query := `DELETE FROM whitelabel WHERE "user_id"=$1;`
+	_, err = w.Exec(context.Background(), query, userId)
 	return
 }
