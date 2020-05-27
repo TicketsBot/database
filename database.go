@@ -36,6 +36,7 @@ type Database struct {
 	Webhooks          *WebhookTable
 	WelcomeMessages   *WelcomeMessages
 	Whitelabel        *WhitelabelBotTable
+	WhitelabelGuilds  *WhitelabelGuilds
 }
 
 func NewDatabase(pool *pgxpool.Pool) *Database {
@@ -70,6 +71,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		Webhooks:          newWebhookTable(pool),
 		WelcomeMessages:   newWelcomeMessages(pool),
 		Whitelabel:        newWhitelabelBotTable(pool),
+		WhitelabelGuilds:  newWhitelabelGuilds(pool),
 	}
 }
 
@@ -104,6 +106,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Webhooks)
 	mustCreate(pool, d.WelcomeMessages)
 	mustCreate(pool, d.Whitelabel)
+	mustCreate(pool, d.WhitelabelGuilds)
 }
 
 func mustCreate(pool *pgxpool.Pool, table Table) {

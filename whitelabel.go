@@ -28,9 +28,9 @@ CREATE TABLE IF NOT EXISTS whitelabel(
 	"user_id" int8 UNIQUE NOT NULL,
 	"bot_id" int8 UNIQUE NOT NULL,
 	"token" VARCHAR(84) NOT NULL UNIQUE,
-	PRIMARY KEY("bot_id")
+	PRIMARY KEY("user_id")
 );
-CREATE INDEX IF NOT EXISTS whitelabel_user_id ON whitelabel("user_id");
+CREATE INDEX IF NOT EXISTS whitelabel_bot_id ON whitelabel("bot_id");
 `
 }
 
@@ -81,7 +81,7 @@ func (w *WhitelabelBotTable) Set(data WhitelabelBot) (err error) {
 }
 
 func (w *WhitelabelBotTable) Delete(userId uint64) (err error) {
-	query := `DELETE FROM whitelabel WHERE "user_id"=$1;`
+	query := `DELETE FROM whitelabel_guilds WHERE "bot_id"=(SELECT "bot_id" FROM whitelabel WHERE "user_id" = $1); DELETE FROM whitelabel WHERE "user_id"=$1;`
 	_, err = w.Exec(context.Background(), query, userId)
 	return
 }
