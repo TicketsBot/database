@@ -55,10 +55,12 @@ func (w *WhitelabelGuilds) GetBotByGuild(guildId uint64) (botId uint64, found bo
 		if err == pgx.ErrNoRows {
 			found = false
 		} else {
-			e =err
+			e = err
 		}
 		return
 	}
+
+	found = true
 
 	return
 }
