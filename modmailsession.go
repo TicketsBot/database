@@ -51,9 +51,9 @@ func (m *ModmailSessionTable) GetByUser(botId, userId uint64) (session ModmailSe
 	return
 }
 
-func (m *ModmailSessionTable) GetByChannel(channelId uint64) (session ModmailSession, e error) {
-	query := `SELECT * from modmail_sessions WHERE "staff_channel" = $1;`
-	if err := m.QueryRow(context.Background(), query, channelId).Scan(&session.Uuid, &session.GuildId, &session.UserId, &session.StaffChannelId, &session.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
+func (m *ModmailSessionTable) GetByChannel(botId, channelId uint64) (session ModmailSession, e error) {
+	query := `SELECT * from modmail_sessions WHERE "bot_id" = $1 AND "staff_channel" = $2;`
+	if err := m.QueryRow(context.Background(), query, botId, channelId).Scan(&session.Uuid, &session.GuildId, &session.UserId, &session.StaffChannelId, &session.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
