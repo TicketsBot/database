@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -42,6 +43,21 @@ func (w *WhitelabelGuilds) GetGuilds(botId uint64) (guilds []uint64, e error) {
 		}
 
 		guilds = append(guilds, id)
+	}
+
+	return
+}
+
+func (w *WhitelabelGuilds) GetBotByGuild(guildId uint64) (botId uint64, found bool, e error) {
+	query := `SELECT "bot_id" from whitelabel_guilds WHERE "guild_id"=$1 LIMIT 1;`
+
+	if err := w.QueryRow(context.Background(), query, guildId).Scan(&botId); err != nil {
+		if err == pgx.ErrNoRows {
+			found = false
+		} else {
+			e =err
+		}
+		return
 	}
 
 	return
