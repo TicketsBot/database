@@ -21,7 +21,7 @@ func (w WhitelabelStatuses) Schema() string {
 CREATE TABLE IF NOT EXISTS whitelabel_statuses(
 	"bot_id" int8 UNIQUE NOT NULL,
 	"status" varchar(255) NOT NULL,
-	FOREIGN KEY("bot_id") REFERENCES whitelabel("bot_id") ON DELETE CASCADE,
+	FOREIGN KEY("bot_id") REFERENCES whitelabel("bot_id") ON DELETE CASCADE ON UPDATE CASCADE,
 	PRIMARY KEY("bot_id")
 );
 CREATE INDEX IF NOT EXISTS whitelabel_bot_id ON whitelabel("bot_id");
