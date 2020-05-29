@@ -81,13 +81,13 @@ func (w *WhitelabelBotTable) Set(data WhitelabelBot) (err error) {
 }
 
 func (w *WhitelabelBotTable) Delete(userId uint64) (err error) {
-	query := `DELETE FROM whitelabel_guilds WHERE "bot_id"=(SELECT "bot_id" FROM whitelabel WHERE "user_id" = $1); DELETE FROM whitelabel WHERE "user_id"=$1;`
+	query := `DELETE FROM whitelabel WHERE "user_id"=$1;`
 	_, err = w.Exec(context.Background(), query, userId)
 	return
 }
 
 func (w *WhitelabelBotTable) DeleteByToken(token string) (err error) {
-	query := `DELETE FROM whitelabel_guilds WHERE "bot_id"=(SELECT "bot_id" FROM whitelabel WHERE "token" = $1); DELETE FROM whitelabel WHERE "token"=$1;`
+	query := `DELETE FROM whitelabel WHERE "token"=$1;`
 	_, err = w.Exec(context.Background(), query, token)
 	return
 }
