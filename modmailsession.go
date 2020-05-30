@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS modmail_sessions(
 
 func (m *ModmailSessionTable) GetByUser(botId, userId uint64) (session ModmailSession, e error) {
 	query := `SELECT * from modmail_sessions WHERE "bot_id" = $1 AND "user_id" = $2;`
-	if err := m.QueryRow(context.Background(), query, botId, userId).Scan(&session.Uuid, &session.GuildId, &session.UserId, &session.StaffChannelId, &session.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
+	if err := m.QueryRow(context.Background(), query, botId, userId).Scan(&session.Uuid, &session.GuildId, &session.BotId, &session.UserId, &session.StaffChannelId, &session.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
@@ -53,7 +53,7 @@ func (m *ModmailSessionTable) GetByUser(botId, userId uint64) (session ModmailSe
 
 func (m *ModmailSessionTable) GetByChannel(botId, channelId uint64) (session ModmailSession, e error) {
 	query := `SELECT * from modmail_sessions WHERE "bot_id" = $1 AND "staff_channel" = $2;`
-	if err := m.QueryRow(context.Background(), query, botId, channelId).Scan(&session.Uuid, &session.GuildId, &session.UserId, &session.StaffChannelId, &session.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
+	if err := m.QueryRow(context.Background(), query, botId, channelId).Scan(&session.Uuid, &session.GuildId, &session.BotId, &session.UserId, &session.StaffChannelId, &session.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
