@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS tags(
 }
 
 func (t *Tag) Get(guildId uint64, tagId string) (content string, e error) {
-	query := `SELECT "content" from tags WHERE "guild_id"=$1 AND "tag_id"=$2;`
+	query := `SELECT "content" from tags WHERE "guild_id"=$1 AND LOWER("tag_id")=LOWER($2);`
 	if err := t.QueryRow(context.Background(), query, guildId, tagId).Scan(&content); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -36,7 +36,7 @@ func (t *Tag) Get(guildId uint64, tagId string) (content string, e error) {
 }
 
 func (t *Tag) GetTagIds(guildId uint64) (ids []string, e error) {
-	query := `SELECT "tag_id" from tags WHERE "guild_id"=$1;`
+	query := `SELECT LOWER("tag_id") from tags WHERE "guild_id"=$1;`
 	rows, err := t.Query(context.Background(), query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
@@ -60,7 +60,7 @@ func (t *Tag) GetTagIds(guildId uint64) (ids []string, e error) {
 func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
 	tags = make(map[string]string)
 
-	query := `SELECT "tag_id", "content" from tags WHERE "guild_id"=$1;`
+	query := `SELECT LOWER("tag_id"), "content" from tags WHERE "guild_id"=$1;`
 	rows, err := t.Query(context.Background(), query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
@@ -82,13 +82,13 @@ func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
 }
 
 func (t *Tag) Set(guildId uint64, tagId, content string) (err error) {
-	query := `INSERT INTO tags("guild_id", "tag_id", "content") VALUES($1, $2, $3) ON CONFLICT("guild_id", "tag_id") DO UPDATE SET "content"=$3;`
+	query := `INSERT INTO tags("guild_id", "tag_id", "content") VALUES($1, LOWER($2), $3) ON CONFLICT("guild_id", "tag_id") DO UPDATE SET "content"=$3;`
 	_, err = t.Exec(context.Background(), query, guildId, tagId, content)
 	return
 }
 
 func (t *Tag) Delete(guildId uint64, tagId string) (err error) {
-	query := `DELETE FROM tags WHERE "guild_id"=$1 AND "tag_id"=$2;`
+	query := `DELETE FROM tags WHERE "guild_id"=$1 AND "tag_id"=LOWER($2);`
 	_, err = t.Exec(context.Background(), query, guildId, tagId)
 	return
 }
