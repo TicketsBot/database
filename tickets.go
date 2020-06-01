@@ -29,7 +29,8 @@ func newTicketTable(db *pgxpool.Pool) *TicketTable {
 }
 
 func (t TicketTable) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS tickets(
+	return `
+CREATE TABLE IF NOT EXISTS tickets(
 	"id" int4 NOT NULL,
 	"guild_id" int8 NOT NULL,
 	"channel_id" int8 UNIQUE,

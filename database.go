@@ -7,6 +7,7 @@ import (
 
 type Database struct {
 	ArchiveChannel     *ArchiveChannel
+	AutoClose          *AutoCloseTable
 	Blacklist          *Blacklist
 	ChannelCategory    *ChannelCategory
 	ClaimSettings      *ClaimSettingsTable
@@ -26,6 +27,7 @@ type Database struct {
 	RolePermissions    *RolePermissions
 	Tag                *Tag
 	TicketClaims       *TicketClaims
+	TicketLastMessage  *TicketLastMessageTable
 	TicketLimit        *TicketLimit
 	TicketMembers      *TicketMembers
 	Tickets            *TicketTable
@@ -43,6 +45,7 @@ type Database struct {
 func NewDatabase(pool *pgxpool.Pool) *Database {
 	return &Database{
 		ArchiveChannel:     newArchiveChannel(pool),
+		AutoClose:          newAutoCloseTable(pool),
 		Blacklist:          newBlacklist(pool),
 		ChannelCategory:    newChannelCategory(pool),
 		ClaimSettings:      newClaimSettingsTable(pool),
@@ -62,6 +65,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		RolePermissions:    newRolePermissions(pool),
 		Tag:                newTag(pool),
 		TicketClaims:       newTicketClaims(pool),
+		TicketLastMessage:  newTicketLastMessageTable(pool),
 		TicketLimit:        newTicketLimit(pool),
 		TicketMembers:      newTicketMembers(pool),
 		Tickets:            newTicketTable(pool),
@@ -79,6 +83,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 
 func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.ArchiveChannel)
+	mustCreate(pool, d.AutoClose)
 	mustCreate(pool, d.Blacklist)
 	mustCreate(pool, d.ChannelCategory)
 	mustCreate(pool, d.ClaimSettings)
@@ -98,6 +103,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Tag)
 	mustCreate(pool, d.TicketLimit)
 	mustCreate(pool, d.Tickets) // Must be created before members table
+	mustCreate(pool, d.TicketLastMessage)
 	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
 	mustCreate(pool, d.TicketClaims)
