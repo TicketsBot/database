@@ -45,7 +45,7 @@ func (m *TicketLastMessageTable) Get(guildId uint64, ticketId int) (lastMessage 
 }
 
 func (m *TicketLastMessageTable) Set(guildId uint64, ticketId int, messageId uint64) (err error) {
-	query := `INSERT INTO ticket_last_message("guild_id", "ticket_id", "last_message_id") VALUES($1, $2, $3, NOW()) ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "last_message_id" = $3;`
+	query := `INSERT INTO ticket_last_message("guild_id", "ticket_id", "last_message_id", "last_message_time") VALUES($1, $2, $3, NOW()) ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "last_message_id" = $3;`
 	_, err = m.Exec(context.Background(), query, guildId, ticketId, messageId)
 	return
 }
