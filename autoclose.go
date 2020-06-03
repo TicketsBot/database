@@ -12,9 +12,9 @@ type AutoCloseTable struct {
 }
 
 type AutoCloseSettings struct {
-	Enabled                 bool       `json:"enabled"`
-	SinceOpenWithNoResponse *time.Time `json:"since_open_with_no_response"`
-	SinceLastMessage        *time.Time `json:"since_last_message"`
+	Enabled                 bool           `json:"enabled"`
+	SinceOpenWithNoResponse *time.Duration `json:"since_open_with_no_response"`
+	SinceLastMessage        *time.Duration `json:"since_last_message"`
 }
 
 func newAutoCloseTable(db *pgxpool.Pool) *AutoCloseTable {
