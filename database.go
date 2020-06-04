@@ -15,6 +15,7 @@ type Database struct {
 	DmOnOpen           *DmOnOpen
 	FirstResponseTime  *FirstResponseTime
 	ModmailArchive     *ModmailArchiveTable
+	ModmailEnabled     *ModmailEnabled
 	ModmailSession     *ModmailSessionTable
 	ModmailWebhook     *ModmailWebhookTable
 	NamingScheme       *TicketNamingScheme
@@ -53,6 +54,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		DmOnOpen:           newDmOnOpen(pool),
 		FirstResponseTime:  newFirstResponseTime(pool),
 		ModmailArchive:     newModmailArchiveTable(pool),
+		ModmailEnabled:     newModmailEnabled(pool),
 		ModmailSession:     newModmailSessionTable(pool),
 		ModmailWebhook:     newModmailWebhookTable(pool),
 		NamingScheme:       newTicketNamingScheme(pool),
@@ -90,6 +92,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.CloseConfirmation)
 	mustCreate(pool, d.DmOnOpen)
 	mustCreate(pool, d.ModmailArchive)
+	mustCreate(pool, d.ModmailEnabled)
 	mustCreate(pool, d.ModmailSession)
 	mustCreate(pool, d.ModmailWebhook)
 	mustCreate(pool, d.NamingScheme)
