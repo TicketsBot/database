@@ -15,6 +15,7 @@ type AutoCloseSettings struct {
 	Enabled                 bool           `json:"enabled"`
 	SinceOpenWithNoResponse *time.Duration `json:"since_open_with_no_response"`
 	SinceLastMessage        *time.Duration `json:"since_last_message"`
+	OnUserLeave             *bool          `json:"on_user_leave"`
 }
 
 func newAutoCloseTable(db *pgxpool.Pool) *AutoCloseTable {
@@ -30,14 +31,15 @@ CREATE TABLE IF NOT EXISTS auto_close(
 	"enabled" bool NOT NULL,
 	"since_open_with_no_response" interval,
 	"since_last_message" interval,
+	"on_user_leave" bool,
 	PRIMARY KEY("guild_id")
 );
 `
 }
 
 func (a *AutoCloseTable) Get(guildId uint64) (settings AutoCloseSettings, e error) {
-	query := `SELECT "enabled", "since_open_with_no_response", "since_last_message" FROM auto_close WHERE "guild_id" = $1;`
-	if err := a.QueryRow(context.Background(), query, guildId).Scan(&settings.Enabled, &settings.SinceOpenWithNoResponse, &settings.SinceLastMessage); err != nil && err != pgx.ErrNoRows { // defaults to nil if no rows
+	query := `SELECT "enabled", "since_open_with_no_response", "since_last_message", "on_user_leave" FROM auto_close WHERE "guild_id" = $1;`
+	if err := a.QueryRow(context.Background(), query, guildId).Scan(&settings.Enabled, &settings.SinceOpenWithNoResponse, &settings.SinceLastMessage, &settings.OnUserLeave); err != nil && err != pgx.ErrNoRows { // defaults to nil if no rows
 		e = err
 	}
 
@@ -45,7 +47,19 @@ func (a *AutoCloseTable) Get(guildId uint64) (settings AutoCloseSettings, e erro
 }
 
 func (a *AutoCloseTable) Set(guildId uint64, settings AutoCloseSettings) (err error) {
-	query := `INSERT INTO auto_close("guild_id", "enabled", "since_open_with_no_response", "since_last_message") VALUES($1, $2, $3, $4) ON CONFLICT("guild_id") DO UPDATE SET "enabled" = $2, "since_open_with_no_response" = $3, "since_last_message" = $4;`
-	_, err = a.Exec(context.Background(), query, guildId, settings.Enabled, settings.SinceOpenWithNoResponse, settings.SinceLastMessage)
+	query := `
+INSERT INTO
+	auto_close("guild_id", "enabled", "since_open_with_no_response", "since_last_message", "on_user_leave")
+VALUES
+	($1, $2, $3, $4, $5)
+ON CONFLICT("guild_id") DO
+	UPDATE SET
+		"enabled" = $2,
+		"since_open_with_no_response" = $3,
+		"since_last_message" = $4,
+		"on_user_leave" = $5
+;`
+
+	_, err = a.Exec(context.Background(), query, guildId, settings.Enabled, settings.SinceOpenWithNoResponse, settings.SinceLastMessage, settings.OnUserLeave)
 	return
 }
