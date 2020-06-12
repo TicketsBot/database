@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS whitelabel_errors(
 }
 
 func (w *WhitelabelErrors) GetRecent(botId uint64, limit int) (errors []string, e error) {
-	query := `SELECT "error" FROM whitelabel_statuses WHERE "bot_id" = $1 ORDER BY "error_id" DESC LIMIT $2;`
+	query := `SELECT "error" FROM whitelabel_errors WHERE "bot_id" = $1 ORDER BY "error_id" DESC LIMIT $2;`
 
 	rows, err := w.Query(context.Background(), query, botId, limit)
 	defer rows.Close()
