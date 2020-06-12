@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS whitelabel_statuses(
 	FOREIGN KEY("bot_id") REFERENCES whitelabel("bot_id") ON DELETE CASCADE ON UPDATE CASCADE,
 	PRIMARY KEY("bot_id")
 );
-CREATE INDEX IF NOT EXISTS whitelabel_bot_id ON whitelabel("bot_id");
 `
 }
 
