@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -28,10 +27,23 @@ CREATE TABLE IF NOT EXISTS whitelabel_errors(
 `
 }
 
-func (w *WhitelabelErrors) GetRecent(botId uint64, limit int) (status string, e error) {
+func (w *WhitelabelErrors) GetRecent(botId uint64, limit int) (errors []string, e error) {
 	query := `SELECT "error" FROM whitelabel_statuses WHERE "bot_id" = $1 ORDER BY "error_id" DESC LIMIT $2;`
-	if err := w.QueryRow(context.Background(), query, botId, limit).Scan(&status); err != nil && err != pgx.ErrNoRows {
+
+	rows, err := w.Query(context.Background(), query, botId, limit)
+	defer rows.Close()
+	if err != nil {
 		e = err
+		return
+	}
+
+	for rows.Next() {
+		var message string
+		if e = rows.Scan(&message); e != nil {
+			continue
+		}
+
+		errors = append(errors, message)
 	}
 
 	return
