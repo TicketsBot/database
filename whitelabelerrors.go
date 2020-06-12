@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS whitelabel_errors(
 	"error_id" serial,
 	"user_id" int8 NOT NULL,
 	"error" varchar(255) NOT NULL,
-	FOREIGN KEY("user_id") REFERENCES whitelabel("user_id") ON DELETE CASCADE ON UPDATE CASCADE,
 	PRIMARY KEY("error_id")
 );
 `
