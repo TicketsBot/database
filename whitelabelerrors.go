@@ -19,7 +19,7 @@ func (w WhitelabelErrors) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS whitelabel_errors(
 	"error_id" serial,
-	"bot_id" int8 UNIQUE NOT NULL,
+	"bot_id" int8 NOT NULL,
 	"error" varchar(255) NOT NULL,
 	FOREIGN KEY("bot_id") REFERENCES whitelabel("bot_id") ON DELETE CASCADE ON UPDATE CASCADE,
 	PRIMARY KEY("error_id")
