@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"time"
 )
 
 type WhitelabelErrors struct {
@@ -13,6 +14,11 @@ func newWhitelabelErrors(db *pgxpool.Pool) *WhitelabelErrors {
 	return &WhitelabelErrors{
 		db,
 	}
+}
+
+type WhitelabelError struct {
+	Message string
+	Time    time.Time
 }
 
 func (w WhitelabelErrors) Schema() string {
@@ -27,8 +33,8 @@ CREATE TABLE IF NOT EXISTS whitelabel_errors(
 `
 }
 
-func (w *WhitelabelErrors) GetRecent(userId uint64, limit int) (errors []string, e error) {
-	query := `SELECT "error" FROM whitelabel_errors WHERE "user_id" = $1 ORDER BY "error_id" DESC LIMIT $2;`
+func (w *WhitelabelErrors) GetRecent(userId uint64, limit int) (errors []WhitelabelError, e error) {
+	query := `SELECT "error", "error_time" FROM whitelabel_errors WHERE "user_id" = $1 ORDER BY "error_id" DESC LIMIT $2;`
 
 	rows, err := w.Query(context.Background(), query, userId, limit)
 	defer rows.Close()
@@ -38,12 +44,12 @@ func (w *WhitelabelErrors) GetRecent(userId uint64, limit int) (errors []string,
 	}
 
 	for rows.Next() {
-		var message string
-		if e = rows.Scan(&message); e != nil {
+		var error WhitelabelError
+		if e = rows.Scan(&error.Message, &error.Time); e != nil {
 			continue
 		}
 
-		errors = append(errors, message)
+		errors = append(errors, error)
 	}
 
 	return
