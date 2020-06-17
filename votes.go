@@ -37,7 +37,7 @@ func (v *Votes) Get(userId uint64) (voteTime time.Time, e error) {
 }
 
 func (v *Votes) Set(userId uint64) (err error) {
-	query := `INSERT INTO votes("guild_id", "vote_time") VALUES($1, NOW()) ON CONFLICT("guild_id") DO UPDATE SET "vote_time" = NOW();`
+	query := `INSERT INTO votes("user_id", "vote_time") VALUES($1, NOW()) ON CONFLICT("user_id") DO UPDATE SET "vote_time" = NOW();`
 	_, err = v.Exec(context.Background(), query, userId)
 	return
 }
