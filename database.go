@@ -21,6 +21,7 @@ type Database struct {
 	ModmailWebhook      *ModmailWebhookTable
 	NamingScheme        *TicketNamingScheme
 	Panel               *PanelTable
+	PanelMentions       *PanelMentionTable
 	Permissions         *Permissions
 	PingEveryone        *PingEveryone
 	Prefix              *Prefix
@@ -62,6 +63,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ModmailWebhook:      newModmailWebhookTable(pool),
 		NamingScheme:        newTicketNamingScheme(pool),
 		Panel:               newPanelTable(pool),
+		PanelMentions:       newPanelMentionTable(pool),
 		Permissions:         newPermissions(pool),
 		PingEveryone:        newPingEveryone(pool),
 		Prefix:              newPrefix(pool),
@@ -101,6 +103,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.ModmailWebhook)
 	mustCreate(pool, d.NamingScheme)
 	mustCreate(pool, d.Panel)
+	mustCreate(pool, d.PanelMentions)
 	mustCreate(pool, d.Permissions)
 	mustCreate(pool, d.PingEveryone)
 	mustCreate(pool, d.Prefix)
