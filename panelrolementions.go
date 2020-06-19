@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS panel_role_mentions(
 	FOREIGN KEY("panel_message_id") REFERENCES panels("message_id") ON DELETE CASCADE ON UPDATE CASCADE,
 	PRIMARY KEY("panel_message_id", "role_id")
 );
-CREATE INDEX IF NOT EXISTS panel_role_mentions_panel_message_id ON panel_mentions("panel_message_id");
+CREATE INDEX IF NOT EXISTS panel_role_mentions_panel_message_id ON panel_role_mentions("panel_message_id");
 `
 }
 
