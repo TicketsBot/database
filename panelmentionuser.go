@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -29,7 +30,7 @@ CREATE TABLE IF NOT EXISTS panel_user_mentions(
 func (p *PanelUserMention) ShouldMentionUser(panelMessageId uint64) (shouldMention bool, e error) {
 	query := `SELECT "should_mention_user" from panel_user_mentions WHERE "panel_message_id"=$1;`
 
-	if err := p.QueryRow(context.Background(), query, panelMessageId).Scan(&shouldMention); err != nil {
+	if err := p.QueryRow(context.Background(), query, panelMessageId).Scan(&shouldMention); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
