@@ -38,12 +38,12 @@ func (p *PanelRoleMentions) GetRoles(panelMessageId uint64) (roles []uint64, e e
 	}
 
 	for rows.Next() {
-		var roleId uint16
+		var roleId uint64
 		if err := rows.Scan(&roleId); err != nil {
 			continue
 		}
 
-		roles = append(role, roleId)
+		roles = append(roles, roleId)
 	}
 
 	return
