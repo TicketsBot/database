@@ -84,6 +84,24 @@ func (p *PanelTable) Create(panel Panel) (err error) {
 	return
 }
 
+func (p *PanelTable) Update(oldMessageId uint64, panel Panel) (err error) {
+	query := `
+UPDATE panels
+	SET "message_id" = $2,
+		"channel_id" = $3,
+		"title" = $4,
+		"content" = $5,
+		"colour" = $6,
+		"target_category" = $7,
+		"reaction_emote" = $8,
+		"welcome_message" = $9
+	WHERE
+		"message_id" = $1
+;`
+	_, err = p.Exec(context.Background(), query, oldMessageId, panel.MessageId, panel.ChannelId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage)
+	return
+}
+
 func (p *PanelTable) Delete(messageId uint64) (err error) {
 	query := `DELETE FROM panels WHERE "message_id"=$1;`
 	_, err = p.Exec(context.Background(), query, messageId)
