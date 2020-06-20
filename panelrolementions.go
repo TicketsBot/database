@@ -55,6 +55,12 @@ func (p *PanelRoleMentions) Add(panelMessageId, roleId uint64) (err error) {
 	return
 }
 
+func (p *PanelRoleMentions) DeleteAll(panelMessageId uint64) (err error) {
+	query := `DELETE FROM panel_mentions WHERE "panel_message_id"=$1;`
+	_, err = p.Exec(context.Background(), query, panelMessageId)
+	return
+}
+
 func (p *PanelRoleMentions) Delete(panelMessageId, roleId uint64) (err error) {
 	query := `DELETE FROM panel_mentions WHERE "panel_message_id"=$1 AND "role_id"=$2;`
 	_, err = p.Exec(context.Background(), query, panelMessageId, roleId)
