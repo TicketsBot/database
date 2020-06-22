@@ -32,3 +32,13 @@ func (c *ArchiveChannel) Set(guildId, archiveChannel uint64) (err error) {
 	_, err = c.Exec(context.Background(), `INSERT INTO archive_channel("guild_id", "channel_id") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "channel_id" = $2;`, guildId, archiveChannel)
 	return
 }
+
+func (c *ArchiveChannel) DeleteByGuild(guildId uint64) (err error) {
+	_, err = c.Exec(context.Background(), `DELETE FROM archive_channel WHERE "guild_id" = $1;`, guildId)
+	return
+}
+
+func (c *ArchiveChannel) DeleteByChannel(channelId uint64) (err error) {
+	_, err = c.Exec(context.Background(), `DELETE FROM archive_channel WHERE "channel_id" = $1;`, channelId)
+	return
+}

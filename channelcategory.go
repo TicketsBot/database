@@ -43,3 +43,8 @@ func (c *ChannelCategory) Delete(guildId uint64) (err error) {
 	return
 }
 
+func (c *ChannelCategory) DeleteByChannel(channelId uint64) (err error) {
+	_, err = c.Exec(context.Background(), `DELETE FROM channel_category WHERE "category_id" = $1;`, channelId)
+	return
+}
+
