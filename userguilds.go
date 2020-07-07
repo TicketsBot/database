@@ -12,6 +12,7 @@ type UserGuild struct {
 	Name            string
 	Owner           bool
 	UserPermissions int32
+	Icon            string
 }
 
 type UserGuildsTable struct {
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS user_guilds(
 	"name" varchar(100) NOT NULL,
 	"owner" bool NOT NULL,
 	"permissions" int4 NOT NULL,
+	"icon" varchar(32),
 	PRIMARY KEY("user_id", "guild_id")
 );`
 }
@@ -76,8 +78,8 @@ func (u *UserGuildsTable) Set(userId uint64, guilds []UserGuild) (err error) {
 	batch.Queue(`DELETE FROM user_guilds WHERE "user_id" = $1 AND NOT ("guild_id" = ANY($2));`, userId, guildIdArray)
 
 	for _, guild := range guilds {
-		query := `INSERT INTO user_guilds("user_id", "guild_id", "name", "owner", "permissions") VALUES($1, $2, $3, $4, $5) ON CONFLICT("user_id", "guild_id") DO UPDATE SET "name" = $3, "owner" = $4, "permissions" = $5;`
-		batch.Queue(query, userId, guild.GuildId, guild.Name, guild.Owner, guild.UserPermissions)
+		query := `INSERT INTO user_guilds("user_id", "guild_id", "name", "owner", "permissions", "icon") VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT("user_id", "guild_id") DO UPDATE SET "name" = $3, "owner" = $4, "permissions" = $5, "icon" = $6;`
+		batch.Queue(query, userId, guild.GuildId, guild.Name, guild.Owner, guild.UserPermissions, guild.Icon)
 	}
 
 	br := u.SendBatch(context.Background(), batch)
