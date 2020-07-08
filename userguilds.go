@@ -33,13 +33,13 @@ CREATE TABLE IF NOT EXISTS user_guilds(
 	"name" varchar(100) NOT NULL,
 	"owner" bool NOT NULL,
 	"permissions" int4 NOT NULL,
-	"icon" varchar(32),
+	"icon" varchar(34),
 	PRIMARY KEY("user_id", "guild_id")
 );`
 }
 
 func (u *UserGuildsTable) Get(userId uint64) (guilds []UserGuild, e error) {
-	query := `SELECT "guild_id", "name", "owner", "permissions" FROM user_guilds WHERE "user_id" = $1;`
+	query := `SELECT "guild_id", "name", "owner", "permissions", "icon" FROM user_guilds WHERE "user_id" = $1;`
 
 	rows, err := u.Query(context.Background(), query, userId)
 	defer rows.Close()
@@ -50,7 +50,7 @@ func (u *UserGuildsTable) Get(userId uint64) (guilds []UserGuild, e error) {
 
 	for rows.Next() {
 		var guild UserGuild
-		if err := rows.Scan(&guild.GuildId, &guild.Name, &guild.Owner, &guild.UserPermissions); err != nil {
+		if err := rows.Scan(&guild.GuildId, &guild.Name, &guild.Owner, &guild.UserPermissions, &guild.Icon); err != nil {
 			e = err
 			continue
 		}
