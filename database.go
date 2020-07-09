@@ -6,6 +6,7 @@ import (
 )
 
 type Database struct {
+	ActiveLanguage      *ActiveLanguage
 	ArchiveChannel      *ArchiveChannel
 	AutoClose           *AutoCloseTable
 	Blacklist           *Blacklist
@@ -35,6 +36,7 @@ type Database struct {
 	TicketLimit         *TicketLimit
 	TicketMembers       *TicketMembers
 	Tickets             *TicketTable
+	Translations        *Translations
 	UsedKeys            *UsedKeys
 	UsersCanClose       *UsersCanClose
 	UserGuilds          *UserGuildsTable
@@ -49,6 +51,7 @@ type Database struct {
 
 func NewDatabase(pool *pgxpool.Pool) *Database {
 	return &Database{
+		ActiveLanguage:      newActiveLanguage(pool),
 		ArchiveChannel:      newArchiveChannel(pool),
 		AutoClose:           newAutoCloseTable(pool),
 		Blacklist:           newBlacklist(pool),
@@ -78,6 +81,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		TicketLimit:         newTicketLimit(pool),
 		TicketMembers:       newTicketMembers(pool),
 		Tickets:             newTicketTable(pool),
+		Translations:        newTranslations(pool),
 		UsedKeys:            newUsedKeys(pool),
 		UsersCanClose:       newUsersCanClose(pool),
 		UserGuilds:          newUserGuildsTable(pool),
@@ -92,6 +96,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 }
 
 func (d *Database) CreateTables(pool *pgxpool.Pool) {
+	mustCreate(pool, d.ActiveLanguage)
 	mustCreate(pool, d.ArchiveChannel)
 	mustCreate(pool, d.AutoClose)
 	mustCreate(pool, d.Blacklist)
@@ -120,6 +125,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
 	mustCreate(pool, d.TicketClaims)
+	mustCreate(pool, d.Translations)
 	mustCreate(pool, d.UsedKeys)
 	mustCreate(pool, d.UsersCanClose)
 	mustCreate(pool, d.UserGuilds)
