@@ -167,6 +167,10 @@ const (
 	HelpTransfer          // Transfers a claimed ticket to another user
 	HelpUnclaim           // Removes the claim on the current ticket
 	HelpHelp              // Shows you a list of commands
+	HelpLanguage          // Changes the language the bot uses
+
+	// note: %s will be a list of languages. You do not need to worry about this.
+	MessageLanguageInvalidLanguage // You need to specify a language code or flag. Available languages:\n\n%s
 )
 
 var Messages = map[string]MessageId{
@@ -241,7 +245,7 @@ var Messages = map[string]MessageId{
 	"Help: t!admin updateschema":         HelpAdminUpdateSchema,
 	"Help: t!admin users":                HelpAdminUsers,
 	"Help: t!about":                      HelpAbout,
-	"Help: t!vote":                      HelpVote,
+	"Help: t!vote":                       HelpVote,
 	"Help: t!addadmin":                   HelpAddAdmin,
 	"Help: t!addsupport":                 HelpAddSupport,
 	"Help: t!blacklist":                  HelpBlacklist,
