@@ -167,6 +167,7 @@ const (
 	HelpTransfer          // Transfers a claimed ticket to another user
 	HelpUnclaim           // Removes the claim on the current ticket
 	HelpHelp              // Shows you a list of commands
+	HelpRemoveAdmin       // Revokes a user's or role's admin privileges
 	HelpLanguage          // Changes the language the bot uses
 
 	// note: %s will be a list of languages. You do not need to worry about this.
