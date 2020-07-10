@@ -171,7 +171,7 @@ const (
 	HelpLanguage          // Changes the language the bot uses
 
 	// note: %s will be a list of languages. You do not need to worry about this.
-	MessageLanguageInvalidLanguage // You need to specify a language code or flag. Available languages:\n\n%s
+	MessageLanguageInvalidLanguage // You need to specify a language code or flag. Available languages:\n%s
 )
 
 var Messages = map[string]MessageId{
@@ -273,4 +273,7 @@ var Messages = map[string]MessageId{
 	"Help: t!transfer":                   HelpTransfer,
 	"Help: t!unclaim":                    HelpUnclaim,
 	"Help: t!help":                       HelpHelp,
+	"Help: t!removeadmin":                HelpRemoveAdmin,
+	"Help: t!language":                   HelpLanguage,
+	"t!language invalid language":        MessageLanguageInvalidLanguage,
 }
