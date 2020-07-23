@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS multi_panels(
 	"colour" int4 NOT NULL,
 	PRIMARY KEY("id")
 );
-CREATE INDEX IF NOT EXISTS multi_panels_guild_id ON multi_panels("guild_id");`
+CREATE INDEX IF NOT EXISTS multi_panels_guild_id ON multi_panels("guild_id");
+CREATE INDEX IF NOT EXISTS multi_panels_message_id ON multi_panels("message_id");`
 }
 
 func (p *MultiPanelTable) Get(id int) (panel MultiPanel, found bool, e error) {
@@ -52,6 +53,25 @@ WHERE
 ;`
 
 	if err := p.QueryRow(context.Background(), query, id).Scan(&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour); err == nil {
+		found = true
+	} else if err != pgx.ErrNoRows {
+		e = err
+	}
+
+	return
+}
+
+func (p *MultiPanelTable) GetByMessageId(messageId uint64) (panel MultiPanel, found bool, e error) {
+	query := `
+SELECT
+	*
+FROM
+	multi_panels
+WHERE
+	"message_id" = $1
+;`
+
+	if err := p.QueryRow(context.Background(), query, messageId).Scan(&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour); err == nil {
 		found = true
 	} else if err != pgx.ErrNoRows {
 		e = err
