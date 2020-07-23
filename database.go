@@ -20,6 +20,8 @@ type Database struct {
 	ModmailForcedGuilds *ModmailForcedGuilds
 	ModmailSession      *ModmailSessionTable
 	ModmailWebhook      *ModmailWebhookTable
+	MultiPanels         *MultiPanelTable
+	MultiPanelTargets   *MultiPanelTargets
 	NamingScheme        *TicketNamingScheme
 	Panel               *PanelTable
 	PanelRoleMentions   *PanelRoleMentions
@@ -65,6 +67,8 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ModmailForcedGuilds: newModmailForcedGuilds(pool),
 		ModmailSession:      newModmailSessionTable(pool),
 		ModmailWebhook:      newModmailWebhookTable(pool),
+		MultiPanels:         newMultiMultiPanelTable(pool),
+		MultiPanelTargets:   newMultiPanelTargets(pool),
 		NamingScheme:        newTicketNamingScheme(pool),
 		Panel:               newPanelTable(pool),
 		PanelRoleMentions:   newPanelRoleMentions(pool),
@@ -108,8 +112,10 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.ModmailEnabled)
 	mustCreate(pool, d.ModmailSession)
 	mustCreate(pool, d.ModmailWebhook)
+	mustCreate(pool, d.MultiPanels)
 	mustCreate(pool, d.NamingScheme)
 	mustCreate(pool, d.Panel)
+	mustCreate(pool, d.MultiPanelTargets) // must be created after panels table
 	mustCreate(pool, d.PanelRoleMentions)
 	mustCreate(pool, d.PanelUserMention)
 	mustCreate(pool, d.Permissions)

@@ -7,15 +7,15 @@ import (
 )
 
 type Panel struct {
-	MessageId      uint64
-	ChannelId      uint64
-	GuildId        uint64
-	Title          string
-	Content        string
-	Colour         int32
-	TargetCategory uint64
-	ReactionEmote  string
-	WelcomeMessage *string
+	MessageId      uint64  `json:"message_id,string"`
+	ChannelId      uint64  `json:"channel_id,string"`
+	GuildId        uint64  `json:"guild_id,string"`
+	Title          string  `json:"title"`
+	Content        string  `json:"content"`
+	Colour         int32   `json:"colour"`
+	TargetCategory uint64  `json:"category,string"`
+	ReactionEmote  string  `json:"reaction_emote"`
+	WelcomeMessage *string `json:"welcome_message"`
 }
 
 type PanelTable struct {
