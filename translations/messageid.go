@@ -173,7 +173,8 @@ const (
 	// note: %s will be a list of languages. You do not need to worry about this.
 	MessageLanguageInvalidLanguage // You need to specify a language code or flag. Available languages:\n%s
 
-	HelpAdminSetMessage // Override a message
+	HelpAdminSetMessage   // Override a message
+	HelpAdminCheckPremium // Check the premium status of a server
 )
 
 var Messages = map[string]MessageId{
@@ -279,4 +280,5 @@ var Messages = map[string]MessageId{
 	"Help: t!language":                   HelpLanguage,
 	"t!language invalid language":        MessageLanguageInvalidLanguage,
 	"Help: t!admin setmessage":           HelpAdminSetMessage,
+	"Help: t!admin checkpremium":         HelpAdminCheckPremium,
 }
