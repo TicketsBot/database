@@ -28,7 +28,7 @@ func (d *DmOnOpen) Get(guildId uint64) (dmOnOpen bool, e error) {
 	return
 }
 
-func (d *DmOnOpen) Set(guildId, dmOnOpen bool) (err error) {
+func (d *DmOnOpen) Set(guildId uint64, dmOnOpen bool) (err error) {
 	_, err = d.Exec(context.Background(), `INSERT INTO dm_on_open("guild_id", "dm_on_open") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "dm_on_open" = $2;`, guildId, dmOnOpen)
 	return
 }

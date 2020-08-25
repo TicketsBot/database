@@ -32,6 +32,7 @@ type Database struct {
 	PremiumGuilds       *PremiumGuilds
 	PremiumKeys         *PremiumKeys
 	RolePermissions     *RolePermissions
+	ServerBlacklist     *ServerBlacklist
 	Tag                 *Tag
 	TicketClaims        *TicketClaims
 	TicketLastMessage   *TicketLastMessageTable
@@ -79,6 +80,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PremiumGuilds:       newPremiumGuilds(pool),
 		PremiumKeys:         newPremiumKeys(pool),
 		RolePermissions:     newRolePermissions(pool),
+		ServerBlacklist:     newServerBlacklist(pool),
 		Tag:                 newTag(pool),
 		TicketClaims:        newTicketClaims(pool),
 		TicketLastMessage:   newTicketLastMessageTable(pool),
@@ -124,6 +126,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.PremiumGuilds)
 	mustCreate(pool, d.PremiumKeys)
 	mustCreate(pool, d.RolePermissions)
+	mustCreate(pool, d.ServerBlacklist)
 	mustCreate(pool, d.Tag)
 	mustCreate(pool, d.TicketLimit)
 	mustCreate(pool, d.Tickets) // Must be created before members table
