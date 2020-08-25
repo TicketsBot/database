@@ -175,6 +175,8 @@ const (
 
 	HelpAdminSetMessage   // Override a message
 	HelpAdminCheckPremium // Check the premium status of a server
+	HelpAdminBlacklist // Blacklist a guild from using the bot
+	HelpAdminUnblacklist // Remove a guild from the guild blacklist
 )
 
 var Messages = map[string]MessageId{
