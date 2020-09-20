@@ -24,6 +24,7 @@ type Database struct {
 	MultiPanelTargets   *MultiPanelTargets
 	NamingScheme        *TicketNamingScheme
 	Panel               *PanelTable
+	Participants        *ParticipantTable
 	PanelRoleMentions   *PanelRoleMentions
 	PanelUserMention    *PanelUserMention
 	Permissions         *Permissions
@@ -72,6 +73,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		MultiPanelTargets:   newMultiPanelTargets(pool),
 		NamingScheme:        newTicketNamingScheme(pool),
 		Panel:               newPanelTable(pool),
+		Participants:        newParticipantTable(pool),
 		PanelRoleMentions:   newPanelRoleMentions(pool),
 		PanelUserMention:    newPanelUserMention(pool),
 		Permissions:         newPermissions(pool),
@@ -131,6 +133,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.TicketLimit)
 	mustCreate(pool, d.Tickets) // Must be created before members table
 	mustCreate(pool, d.TicketLastMessage)
+	mustCreate(pool, d.Participants) // Must be created after Tickets table
 	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
 	mustCreate(pool, d.TicketClaims)
