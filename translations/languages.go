@@ -13,6 +13,7 @@ const (
 	Turkish   Language = "tr"
 	Swedish   Language = "sv"
 	Arabic    Language = "ar"
+	Hungarian Language = "hu"
 )
 
 var Flags = map[Language]string{
@@ -26,6 +27,7 @@ var Flags = map[Language]string{
 	Turkish:   "🇹🇷",
 	Swedish:   "🇸🇪",
 	Arabic:    "🇸🇦",
+	Hungarian: "🇭🇺",
 }
 
 // https://discord.com/developers/docs/dispatch/field-values
@@ -39,7 +41,7 @@ var Locales = map[string]Language{
 	"nl":    Dutch,
 	"fr":    French,
 	"de":    German,
-	"hu":    English,   // Hungarian
+	"hu":    Hungarian,
 	"it":    English,   // Italian
 	"ja":    English,   // Japanese
 	"ko":    English,   // Korean
