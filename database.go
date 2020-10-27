@@ -9,6 +9,7 @@ type Database struct {
 	ActiveLanguage      *ActiveLanguage
 	ArchiveChannel      *ArchiveChannel
 	AutoClose           *AutoCloseTable
+	AutoCloseExclude    *AutoCloseExclude
 	Blacklist           *Blacklist
 	ChannelCategory     *ChannelCategory
 	ClaimSettings       *ClaimSettingsTable
@@ -58,6 +59,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ActiveLanguage:      newActiveLanguage(pool),
 		ArchiveChannel:      newArchiveChannel(pool),
 		AutoClose:           newAutoCloseTable(pool),
+		AutoCloseExclude:    newAutoCloseExclude(pool),
 		Blacklist:           newBlacklist(pool),
 		ChannelCategory:     newChannelCategory(pool),
 		ClaimSettings:       newClaimSettingsTable(pool),
@@ -134,6 +136,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Tickets) // Must be created before members table
 	mustCreate(pool, d.TicketLastMessage)
 	mustCreate(pool, d.Participants) // Must be created after Tickets table
+	mustCreate(pool, d.AutoCloseExclude) // Must be created after Tickets table
 	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
 	mustCreate(pool, d.TicketClaims)
