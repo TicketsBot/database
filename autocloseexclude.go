@@ -55,3 +55,18 @@ ON CONFLICT("guild_id", "ticket_id") DO NOTHING
 	_, err = a.Exec(context.Background(), query, guildId, ticketId)
 	return
 }
+
+func (a *AutoCloseExclude) ExcludeAll(guildId uint64) (err error) {
+	query := `
+INSERT INTO auto_close_exclude("guild_id", "ticket_id")
+	SELECT "guild_id", "id"
+	FROM tickets
+	WHERE "guild_id" = $1 AND "open" = 't'
+ON CONFLICT("guild_id", "ticket_id") DO NOTHING
+;
+`
+
+	_, err = a.Exec(context.Background(), query, guildId)
+	return
+}
+
