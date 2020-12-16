@@ -212,6 +212,8 @@ const (
 
 	SetupCategoryInvalid  // You must provide the name of a [**channel category**](https://support.discord.com/hc/en-us/articles/115001580171-Channel-Categories-101)\n**Example:** `t!setup category Tickets`
 	SetupCategoryComplete // The ticket channel category has been changed to `%s`
+
+	MessageOwnerIsAlreadyAdmin // The owner of the server already inherits administrator permissions
 )
 
 var Messages = map[string]MessageId{
@@ -348,6 +350,7 @@ var Messages = map[string]MessageId{
 	"t!setup transcripts: success":             SetupTranscriptsComplete,
 	"t!setup category: invalid":                SetupCategoryInvalid,
 	"t!setup category: success":                SetupCategoryComplete,
+	"t!addadmin: owner already admin":          MessageOwnerIsAlreadyAdmin,
 }
 
 func GetSimpleName(id MessageId) *string {
