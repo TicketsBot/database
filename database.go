@@ -51,6 +51,7 @@ type Database struct {
 	Whitelabel          *WhitelabelBotTable
 	WhitelabelErrors    *WhitelabelErrors
 	WhitelabelGuilds    *WhitelabelGuilds
+	WhitelabelKeys      *WhitelabelKeys
 	WhitelabelStatuses  *WhitelabelStatuses
 }
 
@@ -101,6 +102,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		Whitelabel:          newWhitelabelBotTable(pool),
 		WhitelabelErrors:    newWhitelabelErrors(pool),
 		WhitelabelGuilds:    newWhitelabelGuilds(pool),
+		WhitelabelKeys:      newWhitelabelKeys(pool),
 		WhitelabelStatuses:  newWhitelabelStatuses(pool),
 	}
 }
@@ -135,7 +137,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.TicketLimit)
 	mustCreate(pool, d.Tickets) // Must be created before members table
 	mustCreate(pool, d.TicketLastMessage)
-	mustCreate(pool, d.Participants) // Must be created after Tickets table
+	mustCreate(pool, d.Participants)     // Must be created after Tickets table
 	mustCreate(pool, d.AutoCloseExclude) // Must be created after Tickets table
 	mustCreate(pool, d.FirstResponseTime)
 	mustCreate(pool, d.TicketMembers)
@@ -150,6 +152,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool, d.Whitelabel)
 	mustCreate(pool, d.WhitelabelErrors)
 	mustCreate(pool, d.WhitelabelGuilds)
+	mustCreate(pool, d.WhitelabelKeys)
 	mustCreate(pool, d.WhitelabelStatuses)
 	mustCreate(pool, d.ModmailForcedGuilds)
 }
