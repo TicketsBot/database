@@ -31,6 +31,8 @@ type Database struct {
 	PremiumKeys        *PremiumKeys
 	RolePermissions    *RolePermissions
 	ServerBlacklist    *ServerBlacklist
+	SupportTeam        *SupportTeamTable
+	SupportTeamMembers *SupportTeamMembersTable
 	Tag                *Tag
 	TicketClaims       *TicketClaims
 	TicketLastMessage  *TicketLastMessageTable
@@ -61,7 +63,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ChannelCategory:    newChannelCategory(pool),
 		ClaimSettings:      newClaimSettingsTable(pool),
 		CloseConfirmation:  newCloseConfirmation(pool),
-		CloseReason:  newCloseReasonTable(pool),
+		CloseReason:        newCloseReasonTable(pool),
 		DmOnOpen:           newDmOnOpen(pool),
 		FirstResponseTime:  newFirstResponseTime(pool),
 		MultiPanels:        newMultiMultiPanelTable(pool),
@@ -78,6 +80,8 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PremiumKeys:        newPremiumKeys(pool),
 		RolePermissions:    newRolePermissions(pool),
 		ServerBlacklist:    newServerBlacklist(pool),
+		SupportTeam:        newSupportTeamTable(pool),
+		SupportTeamMembers: newSupportTeamMembersTable(pool),
 		Tag:                newTag(pool),
 		TicketClaims:       newTicketClaims(pool),
 		TicketLastMessage:  newTicketLastMessageTable(pool),
@@ -100,53 +104,58 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 }
 
 func (d *Database) CreateTables(pool *pgxpool.Pool) {
-	mustCreate(pool, d.ActiveLanguage)
-	mustCreate(pool, d.ArchiveChannel)
-	mustCreate(pool, d.AutoClose)
-	mustCreate(pool, d.Blacklist)
-	mustCreate(pool, d.ChannelCategory)
-	mustCreate(pool, d.ClaimSettings)
-	mustCreate(pool, d.CloseConfirmation)
-	mustCreate(pool, d.DmOnOpen)
-	mustCreate(pool, d.MultiPanels)
-	mustCreate(pool, d.NamingScheme)
-	mustCreate(pool, d.Panel)
-	mustCreate(pool, d.MultiPanelTargets) // must be created after panels table
-	mustCreate(pool, d.PanelRoleMentions)
-	mustCreate(pool, d.PanelUserMention)
-	mustCreate(pool, d.Permissions)
-	mustCreate(pool, d.PingEveryone)
-	mustCreate(pool, d.Prefix)
-	mustCreate(pool, d.PremiumGuilds)
-	mustCreate(pool, d.PremiumKeys)
-	mustCreate(pool, d.RolePermissions)
-	mustCreate(pool, d.ServerBlacklist)
-	mustCreate(pool, d.Tag)
-	mustCreate(pool, d.TicketLimit)
-	mustCreate(pool, d.Tickets) // Must be created before members table
-	mustCreate(pool, d.TicketLastMessage)
-	mustCreate(pool, d.Participants)     // Must be created after Tickets table
-	mustCreate(pool, d.AutoCloseExclude) // Must be created after Tickets table
-	mustCreate(pool, d.CloseReason) // Must be created after Tickets table
-	mustCreate(pool, d.FirstResponseTime)
-	mustCreate(pool, d.TicketMembers)
-	mustCreate(pool, d.TicketClaims)
-	mustCreate(pool, d.Translations)
-	mustCreate(pool, d.UsedKeys)
-	mustCreate(pool, d.UsersCanClose)
-	mustCreate(pool, d.UserGuilds)
-	mustCreate(pool, d.Votes)
-	mustCreate(pool, d.Webhooks)
-	mustCreate(pool, d.WelcomeMessages)
-	mustCreate(pool, d.Whitelabel)
-	mustCreate(pool, d.WhitelabelErrors)
-	mustCreate(pool, d.WhitelabelGuilds)
-	mustCreate(pool, d.WhitelabelKeys)
-	mustCreate(pool, d.WhitelabelStatuses)
+	mustCreate(pool,
+		d.ActiveLanguage,
+		d.AutoClose,
+		d.Blacklist,
+		d.ChannelCategory,
+		d.ClaimSettings,
+		d.CloseConfirmation,
+		d.DmOnOpen,
+		d.MultiPanels,
+		d.NamingScheme,
+		d.Panel,
+		d.MultiPanelTargets, // must be created after panels table
+		d.PanelRoleMentions,
+		d.PanelUserMention,
+		d.Permissions,
+		d.PingEveryone,
+		d.Prefix,
+		d.PremiumGuilds,
+		d.PremiumKeys,
+		d.RolePermissions,
+		d.ServerBlacklist,
+		d.SupportTeam,
+		d.SupportTeamMembers,
+		d.Tag,
+		d.TicketLimit,
+		d.Tickets, // Must be created before members table
+		d.TicketLastMessage,
+		d.Participants, // Must be created after Tickets table
+		d.AutoCloseExclude, // Must be created after Tickets table
+		d.CloseReason, // Must be created after Tickets table
+		d.FirstResponseTime,
+		d.TicketMembers,
+		d.TicketClaims,
+		d.Translations,
+		d.UsedKeys,
+		d.UsersCanClose,
+		d.UserGuilds,
+		d.Votes,
+		d.Webhooks,
+		d.WelcomeMessages,
+		d.Whitelabel,
+		d.WhitelabelErrors,
+		d.WhitelabelGuilds,
+		d.WhitelabelKeys,
+		d.WhitelabelStatuses,
+	)
 }
 
-func mustCreate(pool *pgxpool.Pool, table Table) {
-	if _, err := pool.Exec(context.Background(), table.Schema()); err != nil {
-		panic(err)
+func mustCreate(pool *pgxpool.Pool, tables ...Table) {
+	for _, table := range tables {
+		if _, err := pool.Exec(context.Background(), table.Schema()); err != nil {
+			panic(err)
+		}
 	}
 }
