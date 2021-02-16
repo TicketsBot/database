@@ -53,7 +53,7 @@ SELECT AVG(first_response_time.response_time)
 FROM first_response_time
 INNER JOIN tickets
 ON first_response_time.guild_id = tickets.guild_id AND first_response_time.ticket_id = tickets.id
-WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2;
+WHERE tickets.open_time > NOW() - $1::interval AND first_response_time.guild_id = $2;
 `
 
 	if err := f.QueryRow(context.Background(), query, parsedInterval, guildId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
@@ -84,7 +84,7 @@ SELECT AVG(first_response_time.response_time)
 FROM first_response_time
 INNER JOIN tickets
 ON first_response_time.guild_id = tickets.guild_id AND first_response_time.ticket_id = tickets.id
-WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2 AND first_response_time.user_id = $3;`
+WHERE tickets.open_time > NOW() - $1::interval AND first_response_time.guild_id = $2 AND first_response_time.user_id = $3;`
 
 	if err := f.QueryRow(context.Background(), query, parsedInterval, guildId, userId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
