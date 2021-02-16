@@ -41,7 +41,6 @@ func (f *FirstResponseTime) HasResponse(guildId uint64, ticketId int) (hasRespon
 	return
 }
 
-// giving the duration / interval straight to pgx doesn't work, even with creating the pgtype.Interval ourselves
 func (f *FirstResponseTime) GetAverage(guildId uint64, interval time.Duration) (responseTime *time.Duration, e error) {
 	parsedInterval := pgtype.Interval{}
 	if err := parsedInterval.Set(interval); err != nil {
@@ -72,7 +71,6 @@ func (f *FirstResponseTime) GetAverageAllTime(guildId uint64) (responseTime *tim
 	return
 }
 
-// giving the duration / interval straight to pgx doesn't work, even with creating the pgtype.Interval ourselves
 func (f *FirstResponseTime) GetAverageUser(guildId, userId uint64, interval time.Duration) (responseTime *time.Duration, e error) {
 	parsedInterval := pgtype.Interval{}
 	if err := parsedInterval.Set(interval); err != nil {
