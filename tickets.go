@@ -209,6 +209,18 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 	return
 }
 
+func (t *TicketTable) GetTotalTicketCountInterval(guildId uint64, interval time.Duration) (count int, e error) {
+	parsed, err := toInterval(interval); if err != nil {
+		return 0, err
+	}
+
+	query := `SELECT COUNT(*) FROM tickets WHERE "guild_id" = $1 AND tickets.open_time > NOW() - $2::interval;`
+	if err := t.QueryRow(context.Background(), query, guildId, parsed).Scan(&count); err != nil {
+		e = err
+	}
+	return
+}
+
 func (t *TicketTable) GetTotalTicketCount(guildId uint64) (count int, e error) {
 	query := `SELECT COUNT(*) FROM tickets WHERE "guild_id" = $1;`
 	if err := t.QueryRow(context.Background(), query, guildId).Scan(&count); err != nil {
