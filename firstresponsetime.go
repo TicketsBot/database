@@ -48,7 +48,14 @@ func (f *FirstResponseTime) GetAverage(guildId uint64, interval time.Duration) (
 		return nil, err
 	}
 
-	query := `SELECT AVG(response_time) FROM first_response_time WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2;`
+	query := `
+SELECT AVG(first_response_time.response_time)
+FROM first_response_time
+INNER JOIN tickets
+ON first_response_time.guild_id = tickets.guild_id AND first_response_time.ticket_id = tickets.id
+WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2;
+`
+
 	if err := f.QueryRow(context.Background(), query, parsedInterval, guildId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -72,7 +79,13 @@ func (f *FirstResponseTime) GetAverageUser(guildId, userId uint64, interval time
 		return nil, err
 	}
 
-	query := `SELECT AVG(response_time) FROM first_response_time WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2 AND first_response_time.user_id = $3;`
+	query := `
+SELECT AVG(first_response_time.response_time)
+FROM first_response_time
+INNER JOIN tickets
+ON first_response_time.guild_id = tickets.guild_id AND first_response_time.ticket_id = tickets.id
+WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2 AND first_response_time.user_id = $3;`
+
 	if err := f.QueryRow(context.Background(), query, parsedInterval, guildId, userId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
