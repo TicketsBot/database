@@ -128,7 +128,7 @@ SELECT COUNT(*)
 FROM participant
 INNER JOIN tickets
 ON tickets.guild_id = participant.ticket_id AND tickets.id = participant.ticket_id
-WHERE "participant.guild_id" = $1 AND "participant.user_id" = $2 AND "tickets.open_time" > NOW() - $3::interval;
+WHERE participant.guild_id = $1 AND participant.user_id = $2 AND tickets.open_time > NOW() - $3::interval;
 `
 
 	err = p.QueryRow(context.Background(), query, guildId, userId, parsed).Scan(&count)
