@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
@@ -42,8 +43,13 @@ func (f *FirstResponseTime) HasResponse(guildId uint64, ticketId int) (hasRespon
 
 // giving the duration / interval straight to pgx doesn't work, even with creating the pgtype.Interval ourselves
 func (f *FirstResponseTime) GetAverage(guildId uint64, interval time.Duration) (responseTime *time.Duration, e error) {
-	query := `SELECT AVG(response_time) FROM first_response_time, tickets WHERE tickets.open_time > $1 AND first_response_time.guild_id = $2;`
-	if err := f.QueryRow(context.Background(), query, time.Now().Add(-interval), guildId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
+	parsedInterval := pgtype.Interval{}
+	if err := parsedInterval.Set(interval); err != nil {
+		return nil, err
+	}
+
+	query := `SELECT AVG(response_time) FROM first_response_time WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2;`
+	if err := f.QueryRow(context.Background(), query, parsedInterval, guildId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
@@ -61,8 +67,13 @@ func (f *FirstResponseTime) GetAverageAllTime(guildId uint64) (responseTime *tim
 
 // giving the duration / interval straight to pgx doesn't work, even with creating the pgtype.Interval ourselves
 func (f *FirstResponseTime) GetAverageUser(guildId, userId uint64, interval time.Duration) (responseTime *time.Duration, e error) {
-	query := `SELECT AVG(response_time) FROM first_response_time WHERE tickets.open_time > $1 AND first_response_time.guild_id = $2 AND first_response_time.user_id = $3;`
-	if err := f.QueryRow(context.Background(), query, time.Now().Add(-interval), guildId, userId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
+	parsedInterval := pgtype.Interval{}
+	if err := parsedInterval.Set(interval); err != nil {
+		return nil, err
+	}
+
+	query := `SELECT AVG(response_time) FROM first_response_time WHERE tickets.open_time > NOW() - $1 AND first_response_time.guild_id = $2 AND first_response_time.user_id = $3;`
+	if err := f.QueryRow(context.Background(), query, parsedInterval, guildId, userId).Scan(&responseTime); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
