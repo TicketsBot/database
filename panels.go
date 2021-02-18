@@ -49,7 +49,11 @@ CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");`
 }
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
-	query := `SELECT * from panels WHERE "message_id" = $1;`
+	query := `
+SELECT message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+FROM panels
+WHERE "message_id" = $1;
+`
 
 	if err := p.QueryRow(context.Background(), query, messageId).Scan(
 		&panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
@@ -61,7 +65,10 @@ func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
 }
 
 func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
-	query := `SELECT * from panels WHERE "guild_id" = $1;`
+	query := `
+SELECT message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+FROM panels
+WHERE "guild_id" = $1;`
 
 	rows, err := p.Query(context.Background(), query, guildId)
 	defer rows.Close()

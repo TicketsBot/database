@@ -62,7 +62,11 @@ func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelI
 }
 
 func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "id" = $1 AND "guild_id" = $2;`
+	query := `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "id" = $1 AND "guild_id" = $2;`
+
 	if err := t.QueryRow(context.Background(), query, ticketId, guildId).Scan(
 		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
 	); err != nil && err != pgx.ErrNoRows {
@@ -86,7 +90,10 @@ WHERE "channel_id" = $1;`
 }
 
 func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "guild_id" = $1 AND "user_id" = $2;`
+	query := `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "guild_id" = $1 AND "user_id" = $2;`
 
 	rows, err := t.Query(context.Background(), query, guildId, userId)
 	defer rows.Close()
@@ -109,7 +116,10 @@ func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e 
 }
 
 func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
+	query := `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
 	rows, err := t.Query(context.Background(), query, userId, guildId)
 	defer rows.Close()
@@ -134,7 +144,10 @@ func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e
 }
 
 func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "guild_id" = $1 AND "open" = true;`
+	query := `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "guild_id" = $1 AND "open" = true;`
 
 	rows, err := t.Query(context.Background(), query, guildId)
 	defer rows.Close()
@@ -162,10 +175,20 @@ func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (
 	var query string
 	var args []interface{}
 	if before == 0 {
-		query = `SELECT * FROM tickets WHERE "guild_id" = $1 AND "open" = false ORDER BY "id" DESC LIMIT $2;`
+		query = `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "guild_id" = $1 AND "open" = false
+ORDER BY "id" DESC LIMIT $2;`
+
 		args = []interface{}{guildId, limit}
 	} else {
-		query = `SELECT * from tickets WHERE "guild_id" = $1 AND "open" = false AND "id" < $3 ORDER BY "id" DESC LIMIT $2;`
+		query = `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "guild_id" = $1 AND "open" = false AND "id" < $3
+ORDER BY "id" DESC LIMIT $2;`
+
 		args = []interface{}{guildId, limit, before}
 	}
 
@@ -201,10 +224,20 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 	var query string
 	var args []interface{}
 	if before == 0 {
-		query = `SELECT * FROM tickets WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false ORDER BY "id" DESC LIMIT $3;`
+		query = `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false
+ORDER BY "id" DESC LIMIT $3;`
+
 		args = []interface{}{guildId, array, limit}
 	} else {
-		query = `SELECT * from tickets WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false AND "id" < $4 ORDER BY "id" DESC LIMIT $3;`
+		query = `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false AND "id" < $4
+ORDER BY "id" DESC LIMIT $3;`
+
 		args = []interface{}{guildId, array, limit, before}
 	}
 
