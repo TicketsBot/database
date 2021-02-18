@@ -40,6 +40,12 @@ CREATE TABLE IF NOT EXISTS support_team(
 );`
 }
 
+func (s *SupportTeamTable) Exists(teamId int, guildId uint64) (exists bool, err error) {
+	query := `SELECT EXISTS(SELECT 1 FROM support_team WHERE "id" = $1 and "guild_id" = $2);`
+	err = s.QueryRow(context.Background(), query, teamId, guildId).Scan(&exists)
+	return
+}
+
 func (s *SupportTeamTable) Get(guildId uint64) (teams []SupportTeam, e error) {
 	rows, err := s.Query(context.Background(), `SELECT "id", "name" from support_team WHERE "guild_id" = $1;`, guildId)
 	if err != nil {
@@ -106,8 +112,8 @@ WHERE support_team.guild_id = $1;
 	return
 }
 
-func (s *SupportTeamTable) Create(guildId uint64, name string) (err error) {
-	_, err = s.Exec(context.Background(), `INSERT INTO support_team("guild_id", "name") VALUES($1, $2) RETURNING "id";`, guildId, name)
+func (s *SupportTeamTable) Create(guildId uint64, name string) (id int, err error) {
+	err = s.QueryRow(context.Background(), `INSERT INTO support_team("guild_id", "name") VALUES($1, $2) RETURNING "id";`, guildId, name).Scan(&id)
 	return
 }
 

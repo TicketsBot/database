@@ -49,6 +49,6 @@ func (s *SupportTeamMembersTable) Add(teamId int, userId uint64) (err error) {
 }
 
 func (s *SupportTeamMembersTable) Delete(teamId int, userId uint64) (err error) {
-	_, err = s.Exec(context.Background(), `DELETE FROM support_team_members WHERE "team_id"=$1 AND "user_id"=$1;`, teamId, userId)
+	_, err = s.Exec(context.Background(), `DELETE FROM support_team_members WHERE "team_id"=$1 AND "user_id"=$2;`, teamId, userId)
 	return
 }

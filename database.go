@@ -21,6 +21,7 @@ type Database struct {
 	MultiPanelTargets  *MultiPanelTargets
 	NamingScheme       *TicketNamingScheme
 	Panel              *PanelTable
+	PanelTeams         *PanelTeamsTable
 	Participants       *ParticipantTable
 	PanelRoleMentions  *PanelRoleMentions
 	PanelUserMention   *PanelUserMention
@@ -33,6 +34,7 @@ type Database struct {
 	ServerBlacklist    *ServerBlacklist
 	SupportTeam        *SupportTeamTable
 	SupportTeamMembers *SupportTeamMembersTable
+	SupportTeamRoles   *SupportTeamRolesTable
 	Tag                *Tag
 	TicketClaims       *TicketClaims
 	TicketLastMessage  *TicketLastMessageTable
@@ -70,6 +72,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		MultiPanelTargets:  newMultiPanelTargets(pool),
 		NamingScheme:       newTicketNamingScheme(pool),
 		Panel:              newPanelTable(pool),
+		PanelTeams:         newPanelTeamsTable(pool),
 		Participants:       newParticipantTable(pool),
 		PanelRoleMentions:  newPanelRoleMentions(pool),
 		PanelUserMention:   newPanelUserMention(pool),
@@ -82,6 +85,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ServerBlacklist:    newServerBlacklist(pool),
 		SupportTeam:        newSupportTeamTable(pool),
 		SupportTeamMembers: newSupportTeamMembersTable(pool),
+		SupportTeamRoles:   newSupportTeamRolesTable(pool),
 		Tag:                newTag(pool),
 		TicketClaims:       newTicketClaims(pool),
 		TicketLastMessage:  newTicketLastMessageTable(pool),
@@ -127,13 +131,15 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.ServerBlacklist,
 		d.SupportTeam,
 		d.SupportTeamMembers,
+		d.SupportTeamRoles,
+		d.PanelTeams, // Must be created after panels & support teams tables
 		d.Tag,
 		d.TicketLimit,
 		d.Tickets, // Must be created before members table
 		d.TicketLastMessage,
-		d.Participants, // Must be created after Tickets table
+		d.Participants,     // Must be created after Tickets table
 		d.AutoCloseExclude, // Must be created after Tickets table
-		d.CloseReason, // Must be created after Tickets table
+		d.CloseReason,      // Must be created after Tickets table
 		d.FirstResponseTime,
 		d.TicketMembers,
 		d.TicketClaims,
