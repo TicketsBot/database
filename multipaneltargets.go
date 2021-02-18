@@ -29,15 +29,11 @@ CREATE TABLE IF NOT EXISTS multi_panel_targets(
 
 func (p *MultiPanelTargets) GetPanels(multiPanelId int) (panels []Panel, e error) {
 	query := `
-SELECT
-	panels.message_id, panels.channel_id, panels.guild_id, panels.title, panels.content, panels.colour, panels.target_category, panels.reaction_emote, panels.welcome_message
-FROM
-	multi_panel_targets
-INNER JOIN
-	panels ON panels.message_id = multi_panel_targets.panel_id
-WHERE
-	"multi_panel_id" = $1
-;`
+SELECT panels.message_id, panels.channel_id, panels.guild_id, panels.title, panels.content, panels.colour, panels.target_category, panels.reaction_emote, panels.welcome_message, panels.default_team
+FROM multi_panel_targets
+INNER JOIN panels
+ON panels.message_id = multi_panel_targets.panel_id
+WHERE "multi_panel_id" = $1;`
 
 	rows, err := p.Query(context.Background(), query, multiPanelId)
 	defer rows.Close()
@@ -48,7 +44,9 @@ WHERE
 
 	for rows.Next() {
 		var panel Panel
-		if err := rows.Scan(&panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage); err != nil {
+		if err := rows.Scan(
+			&panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+		); err != nil {
 			e = err
 			continue
 		}
