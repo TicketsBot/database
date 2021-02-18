@@ -72,7 +72,11 @@ func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error)
 }
 
 func (t *TicketTable) GetByChannel(channelId uint64) (ticket Ticket, e error) {
-	query := `SELECT * FROM tickets WHERE "channel_id" = $1;`
+	query := `
+SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+FROM tickets
+WHERE "channel_id" = $1;`
+
 	if err := t.QueryRow(context.Background(), query, channelId).Scan(
 		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
 	); err != nil && err != pgx.ErrNoRows {
