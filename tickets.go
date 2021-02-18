@@ -63,7 +63,7 @@ func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelI
 
 func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error) {
 	query := `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "id" = $1 AND "guild_id" = $2;`
 
@@ -77,7 +77,7 @@ WHERE "id" = $1 AND "guild_id" = $2;`
 
 func (t *TicketTable) GetByChannel(channelId uint64) (ticket Ticket, e error) {
 	query := `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "channel_id" = $1;`
 
@@ -91,7 +91,7 @@ WHERE "channel_id" = $1;`
 
 func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = $2;`
 
@@ -117,7 +117,7 @@ WHERE "guild_id" = $1 AND "user_id" = $2;`
 
 func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
@@ -145,7 +145,7 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
 func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = true;`
 
@@ -176,7 +176,7 @@ func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (
 	var args []interface{}
 	if before == 0 {
 		query = `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = false
 ORDER BY "id" DESC LIMIT $2;`
@@ -184,7 +184,7 @@ ORDER BY "id" DESC LIMIT $2;`
 		args = []interface{}{guildId, limit}
 	} else {
 		query = `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = false AND "id" < $3
 ORDER BY "id" DESC LIMIT $2;`
@@ -225,7 +225,7 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 	var args []interface{}
 	if before == 0 {
 		query = `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false
 ORDER BY "id" DESC LIMIT $3;`
@@ -233,7 +233,7 @@ ORDER BY "id" DESC LIMIT $3;`
 		args = []interface{}{guildId, array, limit}
 	} else {
 		query = `
-SELECT ticket.id, ticket.guild_id, ticket.channel_id, ticket.user_id, ticket.open, ticket.open_time, ticket.welcome_message_id, ticket.panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false AND "id" < $4
 ORDER BY "id" DESC LIMIT $3;`
