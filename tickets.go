@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// ALTER TABLE tickets ADD COLUMN panel_id int8 DEFAULT NULL;
+// ALTER TABLE tickets ADD CONSTRAINT fk_panel_id FOREIGN KEY(panel_id) REFERENCES panels("message_id") ON DELETE SET NULL ON UPDATE CASCADE;
 type Ticket struct {
 	Id               int
 	GuildId          uint64
@@ -16,6 +18,7 @@ type Ticket struct {
 	Open             bool
 	OpenTime         time.Time
 	WelcomeMessageId *uint64
+	PanelId          *uint64
 }
 
 type TicketTable struct {
@@ -38,6 +41,8 @@ CREATE TABLE IF NOT EXISTS tickets(
 	"open" bool NOT NULL,
 	"open_time" timestamptz NOT NULL,
 	"welcome_message_id" int8,
+	"panel_id" int8,
+	FOREIGN KEY("panel_id") REFERENCES panels("message_id") ON DELETE SET NULL ON UPDATE CASCADE,
 	PRIMARY KEY("id", "guild_id")
 );
 CREATE INDEX IF NOT EXISTS tickets_channel_id ON tickets("channel_id");
@@ -50,15 +55,17 @@ func (t *TicketTable) Create(guildId, userId uint64) (id int, err error) {
 	return
 }
 
-func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelId, welcomeMessageId uint64) (err error) {
-	query := `UPDATE tickets SET "channel_id" = $1, "welcome_message_id" = $2 WHERE "guild_id" = $3 AND "id" = $4;`
-	_, err = t.Exec(context.Background(), query, channelId, welcomeMessageId, guildId, ticketId)
+func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelId, welcomeMessageId, panelId uint64) (err error) {
+	query := `UPDATE tickets SET "channel_id" = $1, "welcome_message_id" = $2, "panel_id" = $3 WHERE "guild_id" = $4 AND "id" = $5;`
+	_, err = t.Exec(context.Background(), query, channelId, welcomeMessageId, panelId, guildId, ticketId)
 	return
 }
 
 func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error) {
 	query := `SELECT * FROM tickets WHERE "id" = $1 AND "guild_id" = $2;`
-	if err := t.QueryRow(context.Background(), query, ticketId, guildId).Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
+	if err := t.QueryRow(context.Background(), query, ticketId, guildId).Scan(
+		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 	return
@@ -66,7 +73,9 @@ func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error)
 
 func (t *TicketTable) GetByChannel(channelId uint64) (ticket Ticket, e error) {
 	query := `SELECT * FROM tickets WHERE "channel_id" = $1;`
-	if err := t.QueryRow(context.Background(), query, channelId).Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil && err != pgx.ErrNoRows {
+	if err := t.QueryRow(context.Background(), query, channelId).Scan(
+		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 	return
@@ -84,7 +93,7 @@ func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e 
 
 	for rows.Next() {
 		var ticket Ticket
-		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId); err != nil {
 			e = err
 			continue
 		}
@@ -107,7 +116,9 @@ func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e
 
 	for rows.Next() {
 		var ticket Ticket
-		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		); err != nil {
 			e = err
 			continue
 		}
@@ -130,7 +141,9 @@ func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e e
 
 	for rows.Next() {
 		var ticket Ticket
-		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		); err != nil {
 			e = err
 			continue
 		}
@@ -161,7 +174,9 @@ func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (
 
 	for rows.Next() {
 		var ticket Ticket
-		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		); err != nil {
 			e = err
 			continue
 		}
@@ -198,7 +213,9 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 
 	for rows.Next() {
 		var ticket Ticket
-		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId); err != nil {
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		); err != nil {
 			e = err
 			continue
 		}
@@ -210,7 +227,8 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 }
 
 func (t *TicketTable) GetTotalTicketCountInterval(guildId uint64, interval time.Duration) (count int, e error) {
-	parsed, err := toInterval(interval); if err != nil {
+	parsed, err := toInterval(interval)
+	if err != nil {
 		return 0, err
 	}
 
