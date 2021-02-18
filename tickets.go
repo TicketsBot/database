@@ -55,7 +55,7 @@ func (t *TicketTable) Create(guildId, userId uint64) (id int, err error) {
 	return
 }
 
-func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelId, welcomeMessageId, panelId uint64) (err error) {
+func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelId, welcomeMessageId uint64, panelId *uint64) (err error) {
 	query := `UPDATE tickets SET "channel_id" = $1, "welcome_message_id" = $2, "panel_id" = $3 WHERE "guild_id" = $4 AND "id" = $5;`
 	_, err = t.Exec(context.Background(), query, channelId, welcomeMessageId, panelId, guildId, ticketId)
 	return
