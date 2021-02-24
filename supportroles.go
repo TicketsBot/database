@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -50,5 +51,40 @@ func (s *SupportTeamRolesTable) Add(teamId int, roleId uint64) (err error) {
 
 func (s *SupportTeamRolesTable) Delete(teamId int, roleId uint64) (err error) {
 	_, err = s.Exec(context.Background(), `DELETE FROM support_team_roles WHERE "team_id"=$1 AND "role_id"=$2;`, teamId, roleId)
+	return
+}
+
+func (s *SupportTeamRolesTable) IsSupport(guildId, roleId uint64) (isSupport bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM support_team_roles
+	INNER JOIN support_team
+	ON support_team_roles.team_id = support_team.id
+	WHERE support_team.guild_id = $1 AND support_team_roles.role_id = $2
+);
+`
+
+	err = s.QueryRow(context.Background(), query, guildId, roleId).Scan(&isSupport)
+	return
+}
+
+func (s *SupportTeamRolesTable) IsSupportAny(guildId uint64, roleIds []uint64) (isSupport bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM support_team_roles
+	INNER JOIN support_team
+	ON support_team_roles.team_id = support_team.id
+	WHERE support_team.guild_id = $1 AND support_team_roles.role_id = ANY($2)
+);
+`
+
+	roleIdArray := &pgtype.Int8Array{}
+	if err = roleIdArray.Set(roleIds); err != nil {
+		return
+	}
+
+	err = s.QueryRow(context.Background(), query, guildId, roleIdArray).Scan(&isSupport)
 	return
 }

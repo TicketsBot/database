@@ -52,3 +52,18 @@ func (s *SupportTeamMembersTable) Delete(teamId int, userId uint64) (err error) 
 	_, err = s.Exec(context.Background(), `DELETE FROM support_team_members WHERE "team_id"=$1 AND "user_id"=$2;`, teamId, userId)
 	return
 }
+
+func (s *SupportTeamMembersTable) IsSupport(guildId, userId uint64) (isSupport bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM support_team_members
+	INNER JOIN support_team
+	ON support_team_members.team_id = support_team.id
+	WHERE support_team.guild_id = $1 AND support_team_members.user_id = $2
+);
+`
+
+	err = s.QueryRow(context.Background(), query, guildId, userId).Scan(&isSupport)
+	return
+}
