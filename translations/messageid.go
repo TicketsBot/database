@@ -214,6 +214,8 @@ const (
 	SetupCategoryComplete // The ticket channel category has been changed to `%s`
 
 	MessageOwnerIsAlreadyAdmin // The owner of the server already inherits administrator permissions
+	MessageHelpInvite          // Provides an invite link for the bot
+	MessageInvite              // [Click here](<https://invite.ticketsbot.net>)
 )
 
 var Messages = map[string]MessageId{
@@ -351,6 +353,8 @@ var Messages = map[string]MessageId{
 	"t!setup category: invalid":                SetupCategoryInvalid,
 	"t!setup category: success":                SetupCategoryComplete,
 	"t!addadmin: owner already admin":          MessageOwnerIsAlreadyAdmin,
+	"t!help: t!invite":                         MessageHelpInvite,
+	"t!invite":                                 MessageInvite,
 }
 
 func GetSimpleName(id MessageId) *string {
