@@ -3,33 +3,35 @@ package database
 type Language string
 
 const (
-	English   Language = "en"
-	French    Language = "fr"
-	Spanish   Language = "es"
-	German    Language = "de"
-	Dutch     Language = "nl"
-	Polish    Language = "pl"
-	Norwegian Language = "no"
-	Turkish   Language = "tr"
-	Swedish   Language = "sv"
-	Arabic    Language = "ar"
-	Hungarian Language = "hu"
-	Russian   Language = "ru"
+	English      Language = "en"
+	French       Language = "fr"
+	Spanish      Language = "es"
+	German       Language = "de"
+	Dutch        Language = "nl"
+	Polish       Language = "pl"
+	Norwegian    Language = "no"
+	Turkish      Language = "tr"
+	Swedish      Language = "sv"
+	Arabic       Language = "ar"
+	Hungarian    Language = "hu"
+	Russian      Language = "ru"
+	PortugueseBR Language = "br"
 )
 
 var Flags = map[Language]string{
-	English:   "🇬🇧",
-	French:    "🇫🇷",
-	Spanish:   "🇪🇸",
-	German:    "🇩🇪",
-	Dutch:     "🇳🇱",
-	Polish:    "🇵🇱",
-	Norwegian: "🇳🇴",
-	Turkish:   "🇹🇷",
-	Swedish:   "🇸🇪",
-	Arabic:    "🇸🇦",
-	Hungarian: "🇭🇺",
-	Russian:   "🇷🇺",
+	English:      "🇬🇧",
+	French:       "🇫🇷",
+	Spanish:      "🇪🇸",
+	German:       "🇩🇪",
+	Dutch:        "🇳🇱",
+	Polish:       "🇵🇱",
+	Norwegian:    "🇳🇴",
+	Turkish:      "🇹🇷",
+	Swedish:      "🇸🇪",
+	Arabic:       "🇸🇦",
+	Hungarian:    "🇭🇺",
+	Russian:      "🇷🇺",
+	PortugueseBR: "🇧🇷",
 }
 
 // https://discord.com/developers/docs/dispatch/field-values
@@ -44,12 +46,12 @@ var Locales = map[string]Language{
 	"fr":    French,
 	"de":    German,
 	"hu":    Hungarian,
-	"it":    English,   // Italian
-	"ja":    English,   // Japanese
-	"ko":    English,   // Korean
+	"it":    English, // Italian
+	"ja":    English, // Japanese
+	"ko":    English, // Korean
 	"no":    Norwegian,
 	"pl":    Polish,
-	"pt-BR": English, // Portuguese (Brazil)
+	"pt-BR": PortugueseBR,
 	"ru":    Russian,
 	"es-ES": Spanish,
 	"sv-SE": Swedish,
