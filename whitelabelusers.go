@@ -22,7 +22,7 @@ func (p WhitelabelUsers) Schema() string {
 CREATE TABLE IF NOT EXISTS whitelabel_users(
 	"user_id" int8 NOT NULL UNIQUE,
 	"expiry" timestamp NOT NULL,
-	PRIMARY KEY("guild_id")
+	PRIMARY KEY("user_id")
 );`
 }
 
