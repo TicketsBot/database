@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS whitelabel_users(
 );`
 }
 
-func (p *WhitelabelUsers) IsPremium(guildId uint64) (bool, error) {
-	expiry, err := p.GetExpiry(guildId)
+func (p *WhitelabelUsers) IsPremium(userId uint64) (bool, error) {
+	expiry, err := p.GetExpiry(userId)
 	if err != nil {
 		return false, err
 	}
