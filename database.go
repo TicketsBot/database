@@ -53,6 +53,7 @@ type Database struct {
 	WhitelabelGuilds   *WhitelabelGuilds
 	WhitelabelKeys     *WhitelabelKeys
 	WhitelabelStatuses *WhitelabelStatuses
+	WhitelabelUsers    *WhitelabelUsers
 }
 
 func NewDatabase(pool *pgxpool.Pool) *Database {
@@ -104,6 +105,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		WhitelabelGuilds:   newWhitelabelGuilds(pool),
 		WhitelabelKeys:     newWhitelabelKeys(pool),
 		WhitelabelStatuses: newWhitelabelStatuses(pool),
+		WhitelabelUsers:    newWhitelabelUsers(pool),
 	}
 }
 
@@ -155,6 +157,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.WhitelabelGuilds,
 		d.WhitelabelKeys,
 		d.WhitelabelStatuses,
+		d.WhitelabelUsers,
 	)
 }
 
