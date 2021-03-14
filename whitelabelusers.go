@@ -35,15 +35,21 @@ func (p *WhitelabelUsers) IsPremium(guildId uint64) (bool, error) {
 	return expiry.After(time.Now()), nil
 }
 
-func (p *WhitelabelUsers) GetExpiry(guildId uint64) (expiry time.Time, e error) {
-	if err := p.QueryRow(context.Background(), `SELECT "expiry" from whitelabel_users WHERE "user_id" = $1;`, guildId).Scan(&expiry); err != nil && err != pgx.ErrNoRows {
+func (p *WhitelabelUsers) GetExpiry(userId uint64) (expiry time.Time, e error) {
+	if err := p.QueryRow(context.Background(), `SELECT "expiry" from whitelabel_users WHERE "user_id" = $1;`, userId).Scan(&expiry); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (p *WhitelabelUsers) Add(guildId uint64, interval time.Duration) (err error) {
-	_, err = p.Exec(context.Background(), `INSERT INTO whitelabel_users("user_id", "expiry") VALUES($1, NOW() + $2) ON CONFLICT("user_id") DO UPDATE SET "expiry" = whitelabel_users.expiry + $2;`, guildId, interval)
+func (p *WhitelabelUsers) Add(userId uint64, interval time.Duration) (err error) {
+	query := `
+INSERT INTO whitelabel_users("user_id", "expiry")
+VALUES($1, NOW() + $2)
+ON CONFLICT("user_id") DO
+UPDATE SET "expiry" = whitelabel_users.expiry + $2;`
+
+	_, err = p.Exec(context.Background(), query, userId, interval)
 	return
 }
