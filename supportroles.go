@@ -88,3 +88,30 @@ SELECT EXISTS(
 	err = s.QueryRow(context.Background(), query, guildId, roleIdArray).Scan(&isSupport)
 	return
 }
+
+
+func (s *SupportTeamMembersTable) GetAllSupportRoles(guildId uint64) (roles []uint64, err error) {
+	query := `
+SELECT support_team_roles.role_id
+FROM support_team_roles
+INNER JOIN support_team
+ON support_team_roles.team_id = support_team.id
+WHERE support_team.guild_id = $1;
+`
+
+	rows, err := s.Query(context.Background(), query, guildId)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var roleId uint64
+		if err := rows.Scan(&roleId); err != nil {
+			return nil, err
+		}
+
+		roles = append(roles, roleId)
+	}
+
+	return
+}
