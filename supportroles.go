@@ -90,7 +90,7 @@ SELECT EXISTS(
 }
 
 
-func (s *SupportTeamMembersTable) GetAllSupportRoles(guildId uint64) (roles []uint64, err error) {
+func (s *SupportTeamRolesTable) GetAllSupportRoles(guildId uint64) (roles []uint64, err error) {
 	query := `
 SELECT support_team_roles.role_id
 FROM support_team_roles
