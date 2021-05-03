@@ -51,7 +51,7 @@ WHERE "leave_time" < NOW() - $1::interval;
 }
 
 func (c *GuildLeaveTime) Set(guildId uint64) (err error) {
-	_, err = c.Exec(context.Background(), `INSERT INTO guild_leave_time("guild_id", "leave_time") VALUES($1, NOW()) ON CONFLICT("guild_id") DO UPDATE SET "leave_time" = NOW();`, guildId, confirm)
+	_, err = c.Exec(context.Background(), `INSERT INTO guild_leave_time("guild_id", "leave_time") VALUES($1, NOW()) ON CONFLICT("guild_id") DO UPDATE SET "leave_time" = NOW();`, guildId)
 	return
 }
 
