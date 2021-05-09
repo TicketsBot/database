@@ -8,6 +8,7 @@ import (
 
 // ALTER TABLE panels ADD COLUMN default_team bool NOT NULL DEFAULT 't';
 type Panel struct {
+	PanelId         int     `json:"panel_id"`
 	MessageId       uint64  `json:"message_id,string"`
 	ChannelId       uint64  `json:"channel_id,string"`
 	GuildId         uint64  `json:"guild_id,string"`
@@ -33,6 +34,7 @@ func newPanelTable(db *pgxpool.Pool) *PanelTable {
 func (p PanelTable) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS panels(
+	"panel_id" SERIAL NOT NULL UNIQUE,
 	"message_id" int8 NOT NULL UNIQUE,
 	"channel_id" int8 NOT NULL,
 	"guild_id" int8 NOT NULL,
@@ -43,20 +45,21 @@ CREATE TABLE IF NOT EXISTS panels(
 	"reaction_emote" varchar(32) NOT NULL,
 	"welcome_message" text,
 	"default_team" bool NOT NULL,
-	PRIMARY KEY("message_id")
+	PRIMARY KEY("panel_id")
 );
-CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");`
+CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");
+CREATE INDEX IF NOT EXISTS panels_message_id ON panels("message_id");`
 }
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
 	query := `
-SELECT message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
 FROM panels
 WHERE "message_id" = $1;
 `
 
 	if err := p.QueryRow(context.Background(), query, messageId).Scan(
-		&panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -66,7 +69,7 @@ WHERE "message_id" = $1;
 
 func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
 	query := `
-SELECT message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
 FROM panels
 WHERE "guild_id" = $1;`
 
@@ -80,7 +83,7 @@ WHERE "guild_id" = $1;`
 	for rows.Next() {
 		var panel Panel
 		if err := rows.Scan(
-			&panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+			&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
 		); err != nil {
 			e = err
 			continue
@@ -92,16 +95,18 @@ WHERE "guild_id" = $1;`
 	return
 }
 
-func (p *PanelTable) Create(panel Panel) (err error) {
+func (p *PanelTable) Create(panel Panel) (panelId int, err error) {
 	query := `
 INSERT INTO panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "target_category", "reaction_emote", "welcome_message", "default_team")
 VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-ON CONFLICT("message_id") DO NOTHING;`
-	_, err = p.Exec(context.Background(), query, panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam)
+ON CONFLICT("message_id") DO NOTHING
+RETURNING "panel_id";`
+
+	err = p.QueryRow(context.Background(), query, panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam).Scan(&panelId)
 	return
 }
 
-func (p *PanelTable) Update(oldMessageId uint64, panel Panel) (err error) {
+func (p *PanelTable) Update(panel Panel) (err error) {
 	query := `
 UPDATE panels
 	SET "message_id" = $2,
@@ -114,14 +119,14 @@ UPDATE panels
 		"welcome_message" = $9,
 		"default_team" = $10
 	WHERE
-		"message_id" = $1
+		"panel_id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query, oldMessageId, panel.MessageId, panel.ChannelId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam)
+	_, err = p.Exec(context.Background(), query, panel.PanelId, panel.MessageId, panel.ChannelId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam)
 	return
 }
 
-func (p *PanelTable) Delete(messageId uint64) (err error) {
-	query := `DELETE FROM panels WHERE "message_id"=$1;`
-	_, err = p.Exec(context.Background(), query, messageId)
+func (p *PanelTable) Delete(panelId uint64) (err error) {
+	query := `DELETE FROM panels WHERE "panel_id"=$1;`
+	_, err = p.Exec(context.Background(), query, panelId)
 	return
 }
