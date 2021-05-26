@@ -32,6 +32,7 @@ func newPanelTable(db *pgxpool.Pool) *PanelTable {
 	}
 }
 
+// TODO: Make custom_id unique
 func (p PanelTable) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS panels(
@@ -85,14 +86,14 @@ WHERE "panel_id" = $1;
 	return
 }
 
-func (p *PanelTable) GetByCustomId(customId string) (panel Panel, ok bool, e error) {
+func (p *PanelTable) GetByCustomId(guildId uint64, customId string) (panel Panel, ok bool, e error) {
 	query := `
 SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id
 FROM panels
-WHERE "custom_id" = $1;
+WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
 
-	err := p.QueryRow(context.Background(), query, customId).Scan(
+	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
 		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId,
 	)
 
