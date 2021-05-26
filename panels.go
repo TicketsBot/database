@@ -67,6 +67,22 @@ WHERE "message_id" = $1;
 	return
 }
 
+func (p *PanelTable) GetById(panelId uint64) (panel Panel, e error) {
+	query := `
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+FROM panels
+WHERE "panel_id" = $1;
+`
+
+	if err := p.QueryRow(context.Background(), query, panelId).Scan(
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+	); err != nil && err != pgx.ErrNoRows {
+		e = err
+	}
+
+	return
+}
+
 func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
 	query := `
 SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
