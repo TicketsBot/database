@@ -67,7 +67,7 @@ WHERE "message_id" = $1;
 	return
 }
 
-func (p *PanelTable) GetById(panelId uint64) (panel Panel, e error) {
+func (p *PanelTable) GetById(panelId int) (panel Panel, e error) {
 	query := `
 SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
 FROM panels
