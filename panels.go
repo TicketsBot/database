@@ -141,7 +141,7 @@ UPDATE panels
 	return
 }
 
-func (p *PanelTable) Delete(panelId uint64) (err error) {
+func (p *PanelTable) Delete(panelId int) (err error) {
 	query := `DELETE FROM panels WHERE "panel_id"=$1;`
 	_, err = p.Exec(context.Background(), query, panelId)
 	return
