@@ -19,6 +19,7 @@ type Panel struct {
 	ReactionEmote   string  `json:"reaction_emote"`
 	WelcomeMessage  *string `json:"welcome_message"`
 	WithDefaultTeam bool    `json:"default_team"`
+	CustomId        string  `json:"-"`
 }
 
 type PanelTable struct {
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"reaction_emote" varchar(32) NOT NULL,
 	"welcome_message" text,
 	"default_team" bool NOT NULL,
+	"custom_id" varchar(100) NOT NULL,
 	PRIMARY KEY("panel_id")
 );
 CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");
@@ -53,13 +55,13 @@ CREATE INDEX IF NOT EXISTS panels_message_id ON panels("message_id");`
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id
 FROM panels
 WHERE "message_id" = $1;
 `
 
 	if err := p.QueryRow(context.Background(), query, messageId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -69,14 +71,36 @@ WHERE "message_id" = $1;
 
 func (p *PanelTable) GetById(panelId int) (panel Panel, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id
 FROM panels
 WHERE "panel_id" = $1;
 `
 
 	if err := p.QueryRow(context.Background(), query, panelId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId,
 	); err != nil && err != pgx.ErrNoRows {
+		e = err
+	}
+
+	return
+}
+
+func (p *PanelTable) GetByCustomId(customId string) (panel Panel, ok bool, e error) {
+	query := `
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id
+FROM panels
+WHERE "custom_id" = $1;
+`
+
+	err := p.QueryRow(context.Background(), query, customId).Scan(
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId,
+	)
+
+	switch err {
+	case nil:
+		ok = true
+	case pgx.ErrNoRows:
+	default:
 		e = err
 	}
 
@@ -85,7 +109,7 @@ WHERE "panel_id" = $1;
 
 func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id
 FROM panels
 WHERE "guild_id" = $1;`
 
@@ -99,7 +123,7 @@ WHERE "guild_id" = $1;`
 	for rows.Next() {
 		var panel Panel
 		if err := rows.Scan(
-			&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam,
+			&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId,
 		); err != nil {
 			e = err
 			continue
@@ -113,12 +137,12 @@ WHERE "guild_id" = $1;`
 
 func (p *PanelTable) Create(panel Panel) (panelId int, err error) {
 	query := `
-INSERT INTO panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "target_category", "reaction_emote", "welcome_message", "default_team")
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "target_category", "reaction_emote", "welcome_message", "default_team", "custom_id")
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
-	err = p.QueryRow(context.Background(), query, panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam).Scan(&panelId)
+	err = p.QueryRow(context.Background(), query, panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam, panel.CustomId).Scan(&panelId)
 	return
 }
 
@@ -133,11 +157,12 @@ UPDATE panels
 		"target_category" = $7,
 		"reaction_emote" = $8,
 		"welcome_message" = $9,
-		"default_team" = $10
+		"default_team" = $10,
+		"custom_id" = $11
 	WHERE
 		"panel_id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query, panel.PanelId, panel.MessageId, panel.ChannelId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam)
+	_, err = p.Exec(context.Background(), query, panel.PanelId, panel.MessageId, panel.ChannelId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam, panel.CustomId)
 	return
 }
 
