@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// ALTER TABLE tickets ADD COLUMN panel_id int8 DEFAULT NULL;
-// ALTER TABLE tickets ADD CONSTRAINT fk_panel_id FOREIGN KEY(panel_id) REFERENCES panels("message_id") ON DELETE SET NULL ON UPDATE CASCADE;
 type Ticket struct {
 	Id               int
 	GuildId          uint64
