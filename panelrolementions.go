@@ -18,19 +18,19 @@ func newPanelRoleMentions(db *pgxpool.Pool) *PanelRoleMentions {
 func (p PanelRoleMentions) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS panel_role_mentions(
-	"panel_message_id" int8 NOT NULL,
+	"panel_id" int NOT NULL,
 	"role_id" int8 NOT NULL,
-	FOREIGN KEY("panel_message_id") REFERENCES panels("message_id") ON DELETE CASCADE ON UPDATE CASCADE,
-	PRIMARY KEY("panel_message_id", "role_id")
+	FOREIGN KEY("panel_id") REFERENCES panels("panel_id") ON DELETE CASCADE ON UPDATE CASCADE,
+	PRIMARY KEY("panel_id", "role_id")
 );
-CREATE INDEX IF NOT EXISTS panel_role_mentions_panel_message_id ON panel_role_mentions("panel_message_id");
+CREATE INDEX IF NOT EXISTS panel_role_mentions_panel_id ON panel_role_mentions("panel_id");
 `
 }
 
-func (p *PanelRoleMentions) GetRoles(panelMessageId uint64) (roles []uint64, e error) {
-	query := `SELECT "role_id" from panel_role_mentions WHERE "panel_message_id"=$1;`
+func (p *PanelRoleMentions) GetRoles(panelId int) (roles []uint64, e error) {
+	query := `SELECT "role_id" from panel_role_mentions WHERE "panel_id"=$1;`
 
-	rows, err := p.Query(context.Background(), query, panelMessageId)
+	rows, err := p.Query(context.Background(), query, panelId)
 	defer rows.Close()
 	if err != nil {
 		e = err
@@ -49,20 +49,20 @@ func (p *PanelRoleMentions) GetRoles(panelMessageId uint64) (roles []uint64, e e
 	return
 }
 
-func (p *PanelRoleMentions) Add(panelMessageId, roleId uint64) (err error) {
-	query := `INSERT INTO panel_role_mentions("panel_message_id", "role_id") VALUES($1, $2) ON CONFLICT("panel_message_id", "role_id") DO NOTHING;`
-	_, err = p.Exec(context.Background(), query, panelMessageId, roleId)
+func (p *PanelRoleMentions) Add(panelId int, roleId uint64) (err error) {
+	query := `INSERT INTO panel_role_mentions("panel_id", "role_id") VALUES($1, $2) ON CONFLICT("panel_id", "role_id") DO NOTHING;`
+	_, err = p.Exec(context.Background(), query, panelId, roleId)
 	return
 }
 
-func (p *PanelRoleMentions) DeleteAll(panelMessageId uint64) (err error) {
-	query := `DELETE FROM panel_role_mentions WHERE "panel_message_id"=$1;`
-	_, err = p.Exec(context.Background(), query, panelMessageId)
+func (p *PanelRoleMentions) DeleteAll(panelId int) (err error) {
+	query := `DELETE FROM panel_role_mentions WHERE "panel_id"=$1;`
+	_, err = p.Exec(context.Background(), query, panelId)
 	return
 }
 
-func (p *PanelRoleMentions) Delete(panelMessageId, roleId uint64) (err error) {
-	query := `DELETE FROM panel_role_mentions WHERE "panel_message_id"=$1 AND "role_id"=$2;`
-	_, err = p.Exec(context.Background(), query, panelMessageId, roleId)
+func (p *PanelRoleMentions) Delete(panelId int, roleId uint64) (err error) {
+	query := `DELETE FROM panel_role_mentions WHERE "panel_id"=$1 AND "role_id"=$2;`
+	_, err = p.Exec(context.Background(), query, panelId, roleId)
 	return
 }
