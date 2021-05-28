@@ -19,10 +19,10 @@ func (p MultiPanelTargets) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS multi_panel_targets(
 	"multi_panel_id" int4 NOT NULL,
-	"panel_message_id" int8 NOT NULL,
+	"panel_id" int NOT NULL,
 	FOREIGN KEY("multi_panel_id") REFERENCES multi_panels("id") ON DELETE CASCADE,
-	FOREIGN KEY ("panel_message_id") REFERENCES panels("message_id") ON DELETE CASCADE ON UPDATE CASCADE,
-	PRIMARY KEY("multi_panel_id", "panel_message_id")
+	FOREIGN KEY ("panel_id") REFERENCES panels("panel_id") ON DELETE CASCADE,
+	PRIMARY KEY("multi_panel_id", "panel_id")
 );
 `
 }
@@ -32,7 +32,7 @@ func (p *MultiPanelTargets) GetPanels(multiPanelId int) (panels []Panel, e error
 SELECT panels.message_id, panels.channel_id, panels.guild_id, panels.title, panels.content, panels.colour, panels.target_category, panels.reaction_emote, panels.welcome_message, panels.default_team
 FROM multi_panel_targets
 INNER JOIN panels
-ON panels.message_id = multi_panel_targets.panel_message_id
+ON panels.panel_id = multi_panel_targets.panel_id
 WHERE "multi_panel_id" = $1;`
 
 	rows, err := p.Query(context.Background(), query, multiPanelId)
@@ -57,17 +57,17 @@ WHERE "multi_panel_id" = $1;`
 	return
 }
 
-func (p *MultiPanelTargets) GetMultiPanels(panelMessageId uint64) (multiPanelIds []int, e error) {
+func (p *MultiPanelTargets) GetMultiPanels(panelId int) (multiPanelIds []int, e error) {
 	query := `
 SELECT
 	"multi_panel_id"
 FROM
 	multi_panel_targets
 WHERE
-	"panel_message_id" = $1
+	"panel_id" = $1
 ;`
 
-	rows, err := p.Query(context.Background(), query, panelMessageId)
+	rows, err := p.Query(context.Background(), query, panelId)
 	defer rows.Close()
 	if err != nil {
 		e = err
@@ -87,14 +87,14 @@ WHERE
 	return
 }
 
-func (p *MultiPanelTargets) Insert(multiPanelId int, panelMessageId uint64) (err error) {
+func (p *MultiPanelTargets) Insert(multiPanelId, panelId int) (err error) {
 	query := `
-INSERT INTO multi_panel_targets("multi_panel_id", "panel_message_id")
+INSERT INTO multi_panel_targets("multi_panel_id", "panel_id")
 VALUES ($1, $2) 
-ON CONFLICT("multi_panel_id", "panel_message_id") DO NOTHING;
+ON CONFLICT("multi_panel_id", "panel_id") DO NOTHING;
 `
 
-	_, err = p.Exec(context.Background(), query, multiPanelId, panelMessageId)
+	_, err = p.Exec(context.Background(), query, multiPanelId, panelId)
 	return
 }
 
@@ -110,16 +110,16 @@ WHERE
 	return
 }
 
-func (p *MultiPanelTargets) Delete(multiPanelId int, panelMessageId uint64) (err error) {
+func (p *MultiPanelTargets) Delete(multiPanelId, panelId int) (err error) {
 	query := `
 DELETE FROM
 	multi_panel_targets
 WHERE
 	"multi_panel_id"=$1
 	AND
-	"panel_message_id" = $2
+	"panel_id" = $2
 ;`
 
-	_, err = p.Exec(context.Background(), query, multiPanelId, panelMessageId)
+	_, err = p.Exec(context.Background(), query, multiPanelId, panelId)
 	return
 }
