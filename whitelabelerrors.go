@@ -17,8 +17,8 @@ func newWhitelabelErrors(db *pgxpool.Pool) *WhitelabelErrors {
 }
 
 type WhitelabelError struct {
-	Message string
-	Time    time.Time
+	Message string    `json:"message"`
+	Time    time.Time `json:"time"`
 }
 
 func (w WhitelabelErrors) Schema() string {
