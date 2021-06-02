@@ -3,43 +3,47 @@ package database
 type Language string
 
 const (
-	English      Language = "en"
-	French       Language = "fr"
-	Spanish      Language = "es"
-	German       Language = "de"
-	Dutch        Language = "nl"
-	Polish       Language = "pl"
-	Norwegian    Language = "no"
-	Turkish      Language = "tr"
-	Swedish      Language = "sv"
-	Arabic       Language = "ar"
-	Hungarian    Language = "hu"
-	Russian      Language = "ru"
-	PortugueseBR Language = "br"
+	English       Language = "en"
+	French        Language = "fr"
+	Spanish       Language = "es"
+	German        Language = "de"
+	Dutch         Language = "nl"
+	Polish        Language = "pl"
+	Norwegian     Language = "no"
+	Turkish       Language = "tr"
+	Swedish       Language = "sv"
+	Arabic        Language = "ar"
+	Hungarian     Language = "hu"
+	Russian       Language = "ru"
+	PortugueseBR  Language = "br"
+	Chinese       Language = "cn"
+	ChineseTaiwan Language = "tw"
 )
 
 var Flags = map[Language]string{
-	English:      "🇬🇧",
-	French:       "🇫🇷",
-	Spanish:      "🇪🇸",
-	German:       "🇩🇪",
-	Dutch:        "🇳🇱",
-	Polish:       "🇵🇱",
-	Norwegian:    "🇳🇴",
-	Turkish:      "🇹🇷",
-	Swedish:      "🇸🇪",
-	Arabic:       "🇸🇦",
-	Hungarian:    "🇭🇺",
-	Russian:      "🇷🇺",
-	PortugueseBR: "🇧🇷",
+	English:       "🇬🇧",
+	French:        "🇫🇷",
+	Spanish:       "🇪🇸",
+	German:        "🇩🇪",
+	Dutch:         "🇳🇱",
+	Polish:        "🇵🇱",
+	Norwegian:     "🇳🇴",
+	Turkish:       "🇹🇷",
+	Swedish:       "🇸🇪",
+	Arabic:        "🇸🇦",
+	Hungarian:     "🇭🇺",
+	Russian:       "🇷🇺",
+	PortugueseBR:  "🇧🇷",
+	Chinese:       "🇨🇳",
+	ChineseTaiwan: "🇹🇼",
 }
 
 // https://discord.com/developers/docs/dispatch/field-values
 var Locales = map[string]Language{
 	"en-US": English,
 	"en-GB": English,
-	"zh-CN": English, // Chinese (China)
-	"zh-TW": English, // Chinese (Taiwan)
+	"zh-CN": Chinese,
+	"zh-TW": ChineseTaiwan,
 	"cs":    English, // Czech
 	"da":    English, // Danish
 	"nl":    Dutch,
