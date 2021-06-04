@@ -118,7 +118,7 @@ RETURNING
 	return
 }
 
-func (p *MultiPanelTable) Update(panelId int, multiPanel MultiPanel) (err error) {
+func (p *MultiPanelTable) Update(multiPanelId int, multiPanel MultiPanel) (err error) {
 	query := `
 UPDATE multi_panels
 	SET "message_id" = $2,
@@ -129,7 +129,18 @@ UPDATE multi_panels
 	WHERE
 		"id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query, panelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour)
+	_, err = p.Exec(context.Background(), query, multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour)
+	return
+}
+
+func (p *MultiPanelTable) UpdateMessageId(multiPanelId int, messageId uint64) (err error) {
+	query := `
+UPDATE multi_panels
+SET "message_id" = $1
+WHERE "id" = $2;
+`
+
+	_, err = p.Exec(context.Background(), query, messageId, multiPanelId)
 	return
 }
 
