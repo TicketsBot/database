@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
@@ -33,6 +34,26 @@ func (p *WhitelabelUsers) IsPremium(userId uint64) (bool, error) {
 	}
 
 	return expiry.After(time.Now()), nil
+}
+
+func (p *WhitelabelUsers) AnyPremium(userIds []uint64) (bool, error) {
+	query := `
+SELECT 1
+FROM whitelabel_users
+WHERE "user_id" = ANY($1) AND "expiry" > NOW();
+`
+
+	userIdArray := &pgtype.Int8Array{}
+	if err := userIdArray.Set(userIds); err != nil {
+		return false, err
+	}
+
+	var res int
+	if err := p.QueryRow(context.Background(), query, userIdArray).Scan(&res); err != nil {
+		return false, err
+	}
+
+	return res == 1, nil
 }
 
 func (p *WhitelabelUsers) GetExpiry(userId uint64) (expiry time.Time, e error) {
