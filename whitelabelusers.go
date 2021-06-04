@@ -38,9 +38,11 @@ func (p *WhitelabelUsers) IsPremium(userId uint64) (bool, error) {
 
 func (p *WhitelabelUsers) AnyPremium(userIds []uint64) (bool, error) {
 	query := `
-SELECT 1
-FROM whitelabel_users
-WHERE "user_id" = ANY($1) AND "expiry" > NOW();
+SELECT EXISTS(
+	SELECT 1
+	FROM whitelabel_users
+	WHERE "user_id" = ANY($1) AND "expiry" > NOW()
+);
 `
 
 	userIdArray := &pgtype.Int8Array{}
@@ -48,12 +50,12 @@ WHERE "user_id" = ANY($1) AND "expiry" > NOW();
 		return false, err
 	}
 
-	var res int
+	var res bool
 	if err := p.QueryRow(context.Background(), query, userIdArray).Scan(&res); err != nil {
 		return false, err
 	}
 
-	return res == 1, nil
+	return res, nil
 }
 
 func (p *WhitelabelUsers) GetExpiry(userId uint64) (expiry time.Time, e error) {

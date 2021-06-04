@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
@@ -34,6 +35,28 @@ func (v *Votes) Get(userId uint64) (voteTime time.Time, e error) {
 	}
 
 	return
+}
+
+func (v *Votes) Any(userIds ...uint64) (bool, error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM votes
+	WHERE "user_id" = ANY($1) AND vote_time > NOW() - INTERVAL '24 hours'
+);
+`
+
+	userIdArray := &pgtype.Int8Array{}
+	if err := userIdArray.Set(userIds); err != nil {
+		return false, err
+	}
+
+	var res bool
+	if err := v.QueryRow(context.Background(), query, userIdArray).Scan(&res); err != nil {
+		return false, err
+	}
+
+	return res, nil
 }
 
 func (v *Votes) Set(userId uint64) (err error) {
