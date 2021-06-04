@@ -58,15 +58,14 @@ WHERE "multi_panel_id" = $1;`
 	return
 }
 
-func (p *MultiPanelTargets) GetMultiPanels(panelId int) (multiPanelIds []int, e error) {
+func (p *MultiPanelTargets) GetMultiPanels(panelId int) (multiPanels []MultiPanel, e error) {
 	query := `
-SELECT
-	"multi_panel_id"
-FROM
-	multi_panel_targets
-WHERE
-	"panel_id" = $1
-;`
+SELECT multi_panels.id, multi_panels.message_id, multi_panels.channel_id, multi_panels.guild_id, multi_panels.title, multi_panels.content, multi_panels.colour
+FROM multi_panel_targets
+INNER JOIN multi_panels
+ON multi_panels.id = multi_panel_targets.multi_panel_id
+WHERE multi_panel_targets.panel_id = $1;
+`
 
 	rows, err := p.Query(context.Background(), query, panelId)
 	defer rows.Close()
@@ -76,13 +75,13 @@ WHERE
 	}
 
 	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
+		var multiPanel MultiPanel
+		if err := rows.Scan(&multiPanel.Id, &multiPanel.MessageId, &multiPanel.ChannelId, &multiPanel.GuildId, &multiPanel.Title, &multiPanel.Content, &multiPanel.Colour); err != nil {
 			e = err
-			continue
+			return nil, err
 		}
 
-		multiPanelIds = append(multiPanelIds, id)
+		multiPanels = append(multiPanels, multiPanel)
 	}
 
 	return
