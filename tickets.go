@@ -141,6 +141,41 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 	return
 }
 
+func (t *TicketTable) GetClosedByAnyBefore(guildId uint64, userIds []uint64, before, limit int) (tickets []Ticket, e error) {
+	query := `
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+FROM tickets
+WHERE "guild_id" = $1 "user_id" = ANY($2) AND "open" = false AND "id" < $3
+ORDER BY "id" DESC
+LIMIT $4;`
+
+	userIdArray := &pgtype.Int8Array{}
+	if err := userIdArray.Set(userIds); err != nil {
+		return nil, err
+	}
+
+	rows, err := t.Query(context.Background(), query, guildId, userIdArray, before, limit)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket Ticket
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
 func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
