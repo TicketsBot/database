@@ -5,18 +5,19 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"math"
 	"time"
 )
 
 type Ticket struct {
-	Id               int
-	GuildId          uint64
-	ChannelId        *uint64
-	UserId           uint64
-	Open             bool
-	OpenTime         time.Time
-	WelcomeMessageId *uint64
-	PanelId          *int
+	Id               int       `json:"id"`
+	GuildId          uint64    `json:"guild_id"`
+	ChannelId        *uint64   `json:"channel_id"`
+	UserId           uint64    `json:"user_id"`
+	Open             bool      `json:"open"`
+	OpenTime         time.Time `json:"open_time"`
+	WelcomeMessageId *uint64   `json:"welcome_message_id"`
+	PanelId          *int      `json:"panel_id"`
 }
 
 type TicketTable struct {
@@ -176,11 +177,95 @@ LIMIT $4;`
 	return
 }
 
+type TicketWithCloseReason struct {
+	Ticket
+	CloseReason *string `json:"close_reason"`
+}
+
+func (t *TicketTable) GetClosedByAnyBeforeWithCloseReason(guildId uint64, userIds []uint64, before, limit int) (tickets []TicketWithCloseReason, e error) {
+	query := `
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+FROM tickets
+LEFT JOIN close_reason
+ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
+WHERE tickets.guild_id = $1 AND tickets.user_id = ANY($2) AND tickets.open = false AND tickets.id < $3
+ORDER BY tickets.id DESC
+LIMIT $4;`
+
+	userIdArray := &pgtype.Int8Array{}
+	if err := userIdArray.Set(userIds); err != nil {
+		return nil, err
+	}
+
+	if before <= 0 {
+		before = math.MaxInt32
+	}
+
+	rows, err := t.Query(context.Background(), query, guildId, userIdArray, before, limit)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket TicketWithCloseReason
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+		); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
+func (t *TicketTable) GetClosedByAnyAfterWithCloseReason(guildId uint64, userIds []uint64, after, limit int) (tickets []TicketWithCloseReason, e error) {
+	query := `
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+FROM tickets
+LEFT JOIN close_reason
+ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
+WHERE tickets.guild_id = $1 AND tickets.user_id = ANY($2) AND tickets.open = false AND tickets.id > $3
+ORDER BY tickets.id ASC
+LIMIT $4;`
+
+	userIdArray := &pgtype.Int8Array{}
+	if err := userIdArray.Set(userIds); err != nil {
+		return nil, err
+	}
+
+	rows, err := t.Query(context.Background(), query, guildId, userIdArray, after, limit)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket TicketWithCloseReason
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+		); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
 func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
-WHERE "guild_id" = $1 AND "open" = true;`
+WHERE "guild_id" = $1 AND "open" = true
+ORDER BY id DESC;`
 
 	rows, err := t.Query(context.Background(), query, guildId)
 	defer rows.Close()
@@ -205,27 +290,17 @@ WHERE "guild_id" = $1 AND "open" = true;`
 }
 
 func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (tickets []Ticket, e error) {
-	var query string
-	var args []interface{}
-	if before == 0 {
-		query = `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
-FROM tickets
-WHERE "guild_id" = $1 AND "open" = false
-ORDER BY "id" DESC LIMIT $2;`
-
-		args = []interface{}{guildId, limit}
-	} else {
-		query = `
+	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = false AND "id" < $3
 ORDER BY "id" DESC LIMIT $2;`
 
-		args = []interface{}{guildId, limit, before}
+	if before <= 0 {
+		before = math.MaxInt32
 	}
 
-	rows, err := t.Query(context.Background(), query, args...)
+	rows, err := t.Query(context.Background(), query, guildId, limit, before)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -247,6 +322,72 @@ ORDER BY "id" DESC LIMIT $2;`
 	return
 }
 
+func (t *TicketTable) GetGuildClosedTicketsBeforeWithCloseReason(guildId uint64, limit, before int) (tickets []TicketWithCloseReason, e error) {
+	query := `
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+FROM tickets
+LEFT JOIN close_reason
+ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
+WHERE tickets.guild_id = $1 AND tickets.open = false AND tickets.id < $3
+ORDER BY tickets.id DESC LIMIT $2;`
+
+	if before <= 0 {
+		before = math.MaxInt32
+	}
+
+	rows, err := t.Query(context.Background(), query, guildId, limit, before)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket TicketWithCloseReason
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+		); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
+func (t *TicketTable) GetGuildClosedTicketsAfterWithCloseReason(guildId uint64, limit, after int) (tickets []TicketWithCloseReason, e error) {
+	query := `
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+FROM tickets
+LEFT JOIN close_reason
+ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
+WHERE tickets.guild_id = $1 AND tickets.open = false AND tickets.id > $3
+ORDER BY tickets.id ASC LIMIT $2;`
+
+	rows, err := t.Query(context.Background(), query, guildId, limit, after)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket TicketWithCloseReason
+		if err := rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+		); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
 func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, limit, before int) (tickets []Ticket, e error) {
 	// create array of user IDs
 	array := &pgtype.Int8Array{}
@@ -254,27 +395,18 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 		return
 	}
 
-	var query string
-	var args []interface{}
-	if before == 0 {
-		query = `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
-FROM tickets
-WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false
-ORDER BY "id" DESC LIMIT $3;`
-
-		args = []interface{}{guildId, array, limit}
-	} else {
-		query = `
+	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false AND "id" < $4
-ORDER BY "id" DESC LIMIT $3;`
+ORDER BY "id" DESC LIMIT $3;
+`
 
-		args = []interface{}{guildId, array, limit, before}
+	if before <= 0 {
+		before = math.MaxInt32
 	}
 
-	rows, err := t.Query(context.Background(), query, args...)
+	rows, err := t.Query(context.Background(), query, guildId, userIds, limit, before)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
