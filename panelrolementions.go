@@ -61,6 +61,12 @@ func (p *PanelRoleMentions) DeleteAll(panelId int) (err error) {
 	return
 }
 
+func (p *PanelRoleMentions) DeleteAllRole(roleId uint64) (err error) {
+	query := `DELETE FROM panel_role_mentions WHERE "role_id"=$1;`
+	_, err = p.Exec(context.Background(), query, roleId)
+	return
+}
+
 func (p *PanelRoleMentions) Delete(panelId int, roleId uint64) (err error) {
 	query := `DELETE FROM panel_role_mentions WHERE "panel_id"=$1 AND "role_id"=$2;`
 	_, err = p.Exec(context.Background(), query, panelId, roleId)

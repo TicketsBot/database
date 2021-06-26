@@ -54,6 +54,11 @@ func (s *SupportTeamRolesTable) Delete(teamId int, roleId uint64) (err error) {
 	return
 }
 
+func (s *SupportTeamRolesTable) DeleteAllRole(roleId uint64) (err error) {
+	_, err = s.Exec(context.Background(), `DELETE FROM support_team_roles WHERE "role_id"=$1;`, roleId)
+	return
+}
+
 func (s *SupportTeamRolesTable) IsSupport(guildId, roleId uint64) (isSupport bool, err error) {
 	query := `
 SELECT EXISTS(
