@@ -15,7 +15,7 @@ type Panel struct {
 	Title           string  `json:"title"`
 	Content         string  `json:"content"`
 	Colour          int32   `json:"colour"`
-	TargetCategory  uint64  `json:"category,string"`
+	TargetCategory  uint64  `json:"category_id,string"`
 	ReactionEmote   string  `json:"reaction_emote"`
 	WelcomeMessage  *string `json:"welcome_message"`
 	WithDefaultTeam bool    `json:"default_team"`
