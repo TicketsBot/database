@@ -146,7 +146,7 @@ WHERE "guild_id" = $1;`
 func (p *PanelTable) Create(panel Panel) (panelId int, err error) {
 	query := `
 INSERT INTO panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "target_category", "reaction_emote", "welcome_message", "default_team", "custom_id", "image_url", "thumbnail_url", "button_style")
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
