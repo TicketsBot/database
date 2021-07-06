@@ -63,3 +63,13 @@ ON CONFLICT("guild_id") DO
 	_, err = a.Exec(context.Background(), query, guildId, settings.Enabled, settings.SinceOpenWithNoResponse, settings.SinceLastMessage, settings.OnUserLeave)
 	return
 }
+
+func (a *AutoCloseTable) Delete(guildId uint64) (err error) {
+	query := `
+DELETE FROM auto_close
+WHERE "guild_id" = $1;
+`
+
+	_, err = a.Exec(context.Background(), query, guildId)
+	return
+}
