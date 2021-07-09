@@ -65,3 +65,12 @@ WHERE ticket_claims.guild_id = $1 AND ticket_claims.user_id = $2 AND tickets.ope
 
 	return
 }
+
+func (c *TicketClaims) GetClaimedCount(guildId, userId uint64) (count int, e error) {
+	query := `SELECT COUNT(*) FROM ticket_claims WHERE "guild_id" = $1 AND "user_id" = $2;`
+	if err := c.QueryRow(context.Background(), query, guildId, userId).Scan(&count); err != nil && err != pgx.ErrNoRows {
+		e = err
+	}
+
+	return
+}
