@@ -11,7 +11,7 @@ type UserGuild struct {
 	GuildId         uint64
 	Name            string
 	Owner           bool
-	UserPermissions int32
+	UserPermissions uint64
 	Icon            string
 }
 
