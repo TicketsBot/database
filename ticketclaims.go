@@ -57,7 +57,7 @@ SELECT COUNT(*)
 FROM ticket_claims
 INNER JOIN tickets
 ON ticket_claims.guild_id = tickets.guild_id AND ticket_claims.ticket_id = tickets.id
-WHERE ticket_claims.guild_id = $1 AND ticket_claims.user_id = $2 AND tickets.open_time > NOW() - $3;`
+WHERE ticket_claims.guild_id = $1 AND ticket_claims.user_id = $2 AND tickets.open_time > NOW() - $3::interval;`
 
 	if err := c.QueryRow(context.Background(), query, guildId, userId, interval).Scan(&count); err != nil && err != pgx.ErrNoRows {
 		e = err
