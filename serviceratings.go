@@ -48,7 +48,7 @@ func (r *ServiceRatings) GetCount(guildId uint64) (count int, err error) {
 }
 
 // TODO: Materialized view?
-func (r *ServiceRatings) GetAverage(guildId uint64) (average uint8, err error) {
+func (r *ServiceRatings) GetAverage(guildId uint64) (average float32, err error) {
 	query := `SELECT AVG(rating) from service_ratings WHERE "guild_id" = $1;`
 	err = r.QueryRow(context.Background(), query, guildId).Scan(&average)
 	return
