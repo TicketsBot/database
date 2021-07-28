@@ -89,7 +89,7 @@ WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 	return
 }
 
-func (r *ServiceRatings) GetMulti(guildId uint64, ticketIds []uint) (map[int]uint8, error) {
+func (r *ServiceRatings) GetMulti(guildId uint64, ticketIds []int) (map[int]uint8, error) {
 	query := `SELECT "ticket_id", "rating" from service_ratings WHERE "guild_id" = $1 AND "ticket_id" = ANY($2);`
 
 	idArray := &pgtype.Int4Array{}
