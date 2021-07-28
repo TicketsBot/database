@@ -47,6 +47,19 @@ func (r *ServiceRatings) GetCount(guildId uint64) (count int, err error) {
 	return
 }
 
+func (r *ServiceRatings) GetCountClaimedBy(guildId uint64) (count int, err error) {
+	query := `
+SELECT COUNT(service_ratings.rating)
+FROM service_ratings
+INNER JOIN ticket_claims
+ON service_ratings.guild_id = ticket_claims.guild_id AND service_ratings.ticket_id = ticket_claims.ticket_id
+WHERE service_ratings.guild_id = $1;
+`
+
+	err = r.QueryRow(context.Background(), query, guildId).Scan(&count)
+	return
+}
+
 // TODO: Materialized view?
 func (r *ServiceRatings) GetAverage(guildId uint64) (average float32, err error) {
 	query := `SELECT AVG(rating) from service_ratings WHERE "guild_id" = $1;`
