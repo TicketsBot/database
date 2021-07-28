@@ -56,7 +56,7 @@ ON service_ratings.guild_id = ticket_claims.guild_id AND service_ratings.ticket_
 WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 `
 
-	err = r.QueryRow(context.Background(), query, guildId).Scan(&count)
+	err = r.QueryRow(context.Background(), query, guildId, userId).Scan(&count)
 	return
 }
 
