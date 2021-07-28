@@ -16,6 +16,7 @@ type Database struct {
 	CloseConfirmation  *CloseConfirmation
 	CloseReason        *CloseReasonTable
 	DmOnOpen           *DmOnOpen
+	FeedbackEnabled    *FeedbackEnabled
 	FirstResponseTime  *FirstResponseTime
 	GuildLeaveTime     *GuildLeaveTime
 	MultiPanels        *MultiPanelTable
@@ -69,6 +70,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		CloseConfirmation:  newCloseConfirmation(pool),
 		CloseReason:        newCloseReasonTable(pool),
 		DmOnOpen:           newDmOnOpen(pool),
+		FeedbackEnabled:    newFeedbackEnabled(pool),
 		FirstResponseTime:  newFirstResponseTime(pool),
 		GuildLeaveTime:     newGuildLeaveTime(pool),
 		MultiPanels:        newMultiMultiPanelTable(pool),
@@ -120,6 +122,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.ClaimSettings,
 		d.CloseConfirmation,
 		d.DmOnOpen,
+		d.FeedbackEnabled,
 		d.GuildLeaveTime,
 		d.MultiPanels,
 		d.NamingScheme,

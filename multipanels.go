@@ -26,7 +26,7 @@ func newMultiMultiPanelTable(db *pgxpool.Pool) *MultiPanelTable {
 	}
 }
 
-func (p MultiPanelTable) Schema() string {
+func (MultiPanelTable) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS multi_panels(
 	"id" SERIAL NOT NULL,

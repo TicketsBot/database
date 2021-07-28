@@ -17,7 +17,7 @@ func newGuildLeaveTime(db *pgxpool.Pool) *GuildLeaveTime {
 	}
 }
 
-func (c GuildLeaveTime) Schema() string {
+func (GuildLeaveTime) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS guild_leave_time(
 	"guild_id" int8 NOT NULL UNIQUE,

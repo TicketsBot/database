@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS user_guilds(
 	"guild_id" int8 NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"owner" bool NOT NULL,
-	"permissions" int4 NOT NULL,
+	"permissions" int8 NOT NULL,
 	"icon" varchar(34),
 	PRIMARY KEY("user_id", "guild_id")
 );`
