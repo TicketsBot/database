@@ -70,6 +70,9 @@ func (r *ServiceRatings) GetAverage(guildId uint64) (average float32, err error)
 
 // TODO: Materialized view?
 func (r *ServiceRatings) GetAverageClaimedBy(guildId, userId uint64) (average float32, err error) {
+	// Returns NULL if no tickets claimed
+	var f *float32
+
 	query := `
 SELECT AVG(service_ratings.rating)
 FROM service_ratings
@@ -78,7 +81,11 @@ ON service_ratings.guild_id = ticket_claims.guild_id AND service_ratings.ticket_
 WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 `
 
-	err = r.QueryRow(context.Background(), query, guildId, userId).Scan(&average)
+	err = r.QueryRow(context.Background(), query, guildId, userId).Scan(&f)
+	if f != nil {
+		average = *f
+	}
+
 	return
 }
 
