@@ -34,6 +34,7 @@ type Database struct {
 	PremiumKeys        *PremiumKeys
 	RolePermissions    *RolePermissions
 	ServerBlacklist    *ServerBlacklist
+	ServiceRatings     *ServiceRatings
 	SupportTeam        *SupportTeamTable
 	SupportTeamMembers *SupportTeamMembersTable
 	SupportTeamRoles   *SupportTeamRolesTable
@@ -88,6 +89,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PremiumKeys:        newPremiumKeys(pool),
 		RolePermissions:    newRolePermissions(pool),
 		ServerBlacklist:    newServerBlacklist(pool),
+		ServiceRatings:     newServiceRatings(pool),
 		SupportTeam:        newSupportTeamTable(pool),
 		SupportTeamMembers: newSupportTeamMembersTable(pool),
 		SupportTeamRoles:   newSupportTeamRolesTable(pool),
@@ -137,6 +139,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.PremiumKeys,
 		d.RolePermissions,
 		d.ServerBlacklist,
+		d.ServiceRatings,
 		d.SupportTeam,
 		d.SupportTeamMembers,
 		d.SupportTeamRoles,
