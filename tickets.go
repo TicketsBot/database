@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS tickets(
 	PRIMARY KEY("id", "guild_id")
 );
 CREATE INDEX IF NOT EXISTS tickets_channel_id ON tickets("channel_id");
+CREATE INDEX IF NOT EXISTS tickets_panel_id ON tickets("panel_id");
 `
 }
 
