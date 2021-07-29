@@ -147,7 +147,7 @@ func (r *ServiceRatings) Set(guildId uint64, ticketId int, rating uint8) (err er
 	query := `
 INSERT INTO service_ratings("guild_id", "ticket_id", "rating")
 VALUES($1, $2, $3)
-ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "rating" = 3;`
+ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "rating" = $3;`
 
 	_, err = r.Exec(context.Background(), query, guildId, ticketId, rating)
 	return
