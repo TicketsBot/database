@@ -62,8 +62,15 @@ WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 
 // TODO: Materialized view?
 func (r *ServiceRatings) GetAverage(guildId uint64) (average float32, err error) {
+	// Returns NULL if no ratings
+	var f *float32
+
 	query := `SELECT AVG(rating) from service_ratings WHERE "guild_id" = $1;`
-	err = r.QueryRow(context.Background(), query, guildId).Scan(&average)
+	err = r.QueryRow(context.Background(), query, guildId).Scan(&f)
+	if f != nil {
+		average = *f
+	}
+
 	return
 }
 
