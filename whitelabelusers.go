@@ -70,8 +70,11 @@ func (p *WhitelabelUsers) Add(userId uint64, interval time.Duration) (err error)
 	query := `
 INSERT INTO whitelabel_users("user_id", "expiry")
 VALUES($1, NOW() + $2)
-ON CONFLICT("user_id") DO
-UPDATE SET "expiry" = whitelabel_users.expiry + $2;`
+ON CONFLICT("user_id")
+DO UPDATE SET "expiry" = CASE WHEN whitelabel_users.expiry < NOW()
+	THEN NOW() + $2
+	ELSE whitelabel_users.expiry + $2
+END;`
 
 	_, err = p.Exec(context.Background(), query, userId, interval)
 	return
