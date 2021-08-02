@@ -86,6 +86,19 @@ WHERE "user_id" = $1;
 	return
 }
 
+func (p *ParticipantTable) HasParticipated(guildId uint64, ticketId int, userId uint64) (hasParticipated bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM participant
+	WHERE "guild_id" = $1 AND "ticket_id" = $2 AND "user_id" = $3
+);
+`
+
+	err = p.QueryRow(context.Background(), query, guildId, ticketId, userId).Scan(&hasParticipated)
+	return
+}
+
 func (p *ParticipantTable) Set(guildId uint64, ticketId int, userId uint64) (err error) {
 	query := `
 INSERT INTO participant("guild_id", "ticket_id", "user_id")
