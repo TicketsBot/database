@@ -8,12 +8,14 @@ import (
 
 // TODO: Migrate all settings to this table
 type Settings struct {
-	HideClaimButton bool `json:"hide_claim_button"`
+	HideClaimButton    bool `json:"hide_claim_button"`
+	DisableOpenCommand bool `json:"disable_open_command"`
 }
 
 func defaultSettings() Settings {
 	return Settings{
-		HideClaimButton: false,
+		HideClaimButton:    false,
+		DisableOpenCommand: false,
 	}
 }
 
@@ -32,6 +34,7 @@ func (s SettingsTable) Schema() string {
 CREATE TABLE IF NOT EXISTS settings(
 	"guild_id" int8 NOT NULL,
 	"hide_claim_button" bool DEFAULT 'f',
+	"disable_open_command" bool DEFAULT 'f',
 	PRIMARY KEY("guild_id")
 );
 `
@@ -39,7 +42,7 @@ CREATE TABLE IF NOT EXISTS settings(
 
 func (s *SettingsTable) Get(guildId uint64) (Settings, error) {
 	query := `
-SELECT "hide_claim_button"
+SELECT "hide_claim_button", "disable_open_command"
 FROM settings
 WHERE "guild_id" = $1;
 `
@@ -47,6 +50,7 @@ WHERE "guild_id" = $1;
 	var settings Settings
 	err := s.QueryRow(context.Background(), query, guildId).Scan(
 		&settings.HideClaimButton,
+		&settings.DisableOpenCommand,
 	)
 
 	if err == nil {
@@ -60,13 +64,15 @@ WHERE "guild_id" = $1;
 
 func (s *SettingsTable) Set(guildId uint64, settings Settings) (err error) {
 	query := `
-INSERT INTO settings("guild_id", "hide_claim_button")
-VALUES($1, $2)
+INSERT INTO settings("guild_id", "hide_claim_button", "disable_open_command")
+VALUES($1, $2, $3)
 ON CONFLICT("guild_id")
-DO UPDATE SET "hide_claim_button" = $2;
+DO UPDATE SET
+	"hide_claim_button" = $2,
+	"disable_open_command" = $3;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, settings.HideClaimButton)
+	_, err = s.Exec(context.Background(), query, guildId, settings.HideClaimButton, settings.DisableOpenCommand)
 	return
 }
 
@@ -79,5 +85,17 @@ DO UPDATE SET "hide_claim_button" = $2;
 `
 
 	_, err = s.Exec(context.Background(), query, guildId, hideClaimButton)
+	return
+}
+
+func (s *SettingsTable) SetDisableOpenCommand(guildId uint64, disableOpenCommand bool) (err error) {
+	query := `
+INSERT INTO settings("guild_id", "disable_open_command")
+VALUES($1, $2)
+ON CONFLICT("guild_id")
+DO UPDATE SET "disable_open_command" = $2;
+`
+
+	_, err = s.Exec(context.Background(), query, guildId, disableOpenCommand)
 	return
 }
