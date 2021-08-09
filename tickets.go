@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -18,6 +19,25 @@ type Ticket struct {
 	OpenTime         time.Time `json:"open_time"`
 	WelcomeMessageId *uint64   `json:"welcome_message_id"`
 	PanelId          *int      `json:"panel_id"`
+}
+
+type TicketQueryOptions struct {
+	Id      int      `json:"id"`
+	GuildId uint64   `json:"guild_id"`
+	UserIds []uint64 `json:"user_ids"`
+	Open    *bool    `json:"open"`
+	Before  int      `json:"before"`
+	After   int      `json:"after"`
+	Limit   int      `json:"limit"`
+}
+
+func (o TicketQueryOptions) HasWhereClause() bool {
+	return o.Id == 0 &&
+		o.GuildId == 0 &&
+		len(o.UserIds) == 0 &&
+		o.Open == nil &&
+		o.Before == 0 &&
+		o.After == 0
 }
 
 type TicketTable struct {
@@ -72,6 +92,112 @@ WHERE "id" = $1 AND "guild_id" = $2;`
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
+	return
+}
+
+func (t *TicketTable) GetByOptions(options TicketQueryOptions) (tickets []Ticket, e error) {
+	query, args, err := options.BuildQuery()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := t.Query(context.Background(), query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var ticket Ticket
+		err = rows.Scan(
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
+func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err error) {
+	query = `SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id FROM tickets`
+
+	if !o.HasWhereClause() {
+		query += " WHERE "
+	}
+
+	var needsAnd bool
+
+	if o.Id != 0 {
+		args = append(args, o.Id)
+		query += fmt.Sprintf(`"id" = $%d`, len(args))
+		needsAnd = true
+	}
+
+	if o.GuildId != 0 {
+		if needsAnd {
+			query += " AND "
+		}
+
+		args = append(args, o.GuildId)
+		query += fmt.Sprintf(`"guild_id" = $%d`, len(args))
+		needsAnd = true
+	}
+
+	if len(o.UserIds) > 0 {
+		if needsAnd {
+			query += " AND "
+		}
+
+		userIdArray := &pgtype.Int8Array{}
+		if err := userIdArray.Set(o.UserIds); err != nil {
+			return "", nil, err
+		}
+
+		args = append(args, userIdArray)
+		query += fmt.Sprintf(`"user_id" = ANY($%d)`, len(args))
+		needsAnd = true
+	}
+
+	if o.Open != nil {
+		if needsAnd {
+			query += " AND "
+		}
+
+		args = append(args, *o.Open)
+		query += fmt.Sprintf(`"open" = $%d`, len(args))
+		needsAnd = true
+	}
+
+	if o.Before != 0 {
+		if needsAnd {
+			query += " AND "
+		}
+
+		args = append(args, o.Before)
+		query += fmt.Sprintf(`"id" < $%d`, len(args))
+		needsAnd = true
+	}
+
+	if o.After != 0 {
+		if needsAnd {
+			query += " AND "
+		}
+
+		args = append(args, o.After)
+		query += fmt.Sprintf(`"id" > $%d`, len(args))
+		needsAnd = true
+	}
+
+	if o.Limit != 0 {
+		args = append(args, o.Limit)
+		query += fmt.Sprintf(` LIMIT $%d`, len(args))
+	}
+
+	query += ";"
 	return
 }
 
