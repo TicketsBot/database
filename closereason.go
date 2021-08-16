@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -43,6 +44,37 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 	}
 
 	return
+}
+
+func (c *CloseReasonTable) GetMulti(guildId uint64, ticketIds []int) (map[int]string, error) {
+	query := `
+SELECT "ticket_id", "close_reason"
+FROM close_reason
+WHERE "guild_id" = $1 AND "ticket_id" = ANY($2);
+`
+
+	array := &pgtype.Int4Array{}
+	if err := array.Set(ticketIds); err != nil {
+		return nil, err
+	}
+
+	rows, err := c.Query(context.Background(), query, guildId, ticketIds)
+	if err != nil {
+		return nil, err
+	}
+
+	reasons := make(map[int]string)
+	for rows.Next() {
+		var ticketId int
+		var reason string
+		if err := rows.Scan(&ticketId, &reason); err != nil {
+			return nil, err
+		}
+
+		reasons[ticketId] = reason
+	}
+
+	return reasons, nil
 }
 
 func (c *CloseReasonTable) Set(guildId uint64, ticketId int, reason string) (err error) {
