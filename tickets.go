@@ -192,6 +192,8 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 		needsAnd = true
 	}
 
+	query += ` ORDER BY "id" DESC `
+
 	if o.Limit != 0 {
 		args = append(args, o.Limit)
 		query += fmt.Sprintf(` LIMIT $%d`, len(args))
