@@ -22,22 +22,28 @@ type Ticket struct {
 }
 
 type TicketQueryOptions struct {
-	Id      int      `json:"id"`
-	GuildId uint64   `json:"guild_id"`
-	UserIds []uint64 `json:"user_ids"`
-	Open    *bool    `json:"open"`
-	Before  int      `json:"before"`
-	After   int      `json:"after"`
-	Limit   int      `json:"limit"`
+	Id      int       `json:"id"`
+	GuildId uint64    `json:"guild_id"`
+	UserIds []uint64  `json:"user_ids"`
+	Open    *bool     `json:"open"`
+	Order   OrderType `json:"order_type"`
+	Limit   int       `json:"limit"`
+	Offset  int       `json:"offset"`
 }
+
+type OrderType string
+
+const (
+	OrderTypeNone       OrderType = ""
+	OrderTypeAscending  OrderType = "ASC"
+	OrderTypeDescending OrderType = "DESC"
+)
 
 func (o TicketQueryOptions) HasWhereClause() bool {
 	return o.Id == 0 &&
 		o.GuildId == 0 &&
 		len(o.UserIds) == 0 &&
-		o.Open == nil &&
-		o.Before == 0 &&
-		o.After == 0
+		o.Open == nil
 }
 
 type TicketTable struct {
@@ -172,31 +178,19 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 		needsAnd = true
 	}
 
-	if o.Before != 0 {
-		if needsAnd {
-			query += " AND "
-		}
-
-		args = append(args, o.Before)
-		query += fmt.Sprintf(`"id" < $%d`, len(args))
-		needsAnd = true
+	// Cannot use prepared statement for this value
+	if o.Order == OrderTypeAscending || o.Order == OrderTypeDescending {
+		query += fmt.Sprintf(` ORDER BY "id" %s `, o.Order)
 	}
-
-	if o.After != 0 {
-		if needsAnd {
-			query += " AND "
-		}
-
-		args = append(args, o.After)
-		query += fmt.Sprintf(`"id" > $%d`, len(args))
-		needsAnd = true
-	}
-
-	query += ` ORDER BY "id" ASC `
 
 	if o.Limit != 0 {
 		args = append(args, o.Limit)
-		query += fmt.Sprintf(` LIMIT $%d`, len(args))
+		query += fmt.Sprintf(` LIMIT $%d `, len(args))
+	}
+
+	if o.Offset != 0 {
+		args = append(args, o.Offset)
+		query += fmt.Sprintf(` OFFSET $%d `, len(args))
 	}
 
 	query += ";"
