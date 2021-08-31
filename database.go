@@ -45,7 +45,6 @@ type Database struct {
 	TicketLimit        *TicketLimit
 	TicketMembers      *TicketMembers
 	Tickets            *TicketTable
-	Translations       *Translations
 	UsedKeys           *UsedKeys
 	UsersCanClose      *UsersCanClose
 	UserGuilds         *UserGuildsTable
@@ -101,7 +100,6 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		TicketLimit:        newTicketLimit(pool),
 		TicketMembers:      newTicketMembers(pool),
 		Tickets:            newTicketTable(pool),
-		Translations:       newTranslations(pool),
 		UsedKeys:           newUsedKeys(pool),
 		UsersCanClose:      newUsersCanClose(pool),
 		UserGuilds:         newUserGuildsTable(pool),
@@ -157,7 +155,6 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.FirstResponseTime,
 		d.TicketMembers,
 		d.TicketClaims,
-		d.Translations,
 		d.UsedKeys,
 		d.UsersCanClose,
 		d.UserGuilds,
