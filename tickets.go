@@ -26,6 +26,7 @@ type TicketQueryOptions struct {
 	GuildId uint64    `json:"guild_id"`
 	UserIds []uint64  `json:"user_ids"`
 	Open    *bool     `json:"open"`
+	PanelId int       `json:"panel_id"`
 	Order   OrderType `json:"order_type"`
 	Limit   int       `json:"limit"`
 	Offset  int       `json:"offset"`
@@ -175,6 +176,16 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 
 		args = append(args, *o.Open)
 		query += fmt.Sprintf(`"open" = $%d`, len(args))
+		needsAnd = true
+	}
+
+	if o.PanelId > 0 {
+		if needsAnd {
+			query += " AND "
+		}
+
+		args = append(args, o.PanelId)
+		query += fmt.Sprintf(`"panel_id" = $%d`, len(args))
 		needsAnd = true
 	}
 
