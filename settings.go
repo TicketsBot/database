@@ -10,7 +10,7 @@ import (
 type Settings struct {
 	HideClaimButton            bool `json:"hide_claim_button"`
 	DisableOpenCommand         bool `json:"disable_open_command"`
-	ContextMenuPermissionLevel int  `json:"context_menu_permission_level"`
+	ContextMenuPermissionLevel int  `json:"context_menu_permission_level,string"`
 }
 
 func defaultSettings() Settings {
