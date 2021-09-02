@@ -101,7 +101,7 @@ func (c *CloseRequestTable) Cleanup() (err error) {
 DELETE
 FROM close_request 
 USING tickets
-WHERE NOT tickets.open;
+WHERE close_request.guild_id = tickets.guild_id AND close_request.ticket_id = tickets.id AND NOT tickets.open;
 `
 	_, err = c.Exec(context.Background(), query)
 	return
