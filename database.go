@@ -15,6 +15,7 @@ type Database struct {
 	ClaimSettings      *ClaimSettingsTable
 	CloseConfirmation  *CloseConfirmation
 	CloseReason        *CloseReasonTable
+	CloseRequest       *CloseRequestTable
 	DmOnOpen           *DmOnOpen
 	FeedbackEnabled    *FeedbackEnabled
 	FirstResponseTime  *FirstResponseTime
@@ -70,6 +71,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ClaimSettings:      newClaimSettingsTable(pool),
 		CloseConfirmation:  newCloseConfirmation(pool),
 		CloseReason:        newCloseReasonTable(pool),
+		CloseRequest:       newCloseRequestTable(pool),
 		DmOnOpen:           newDmOnOpen(pool),
 		FeedbackEnabled:    newFeedbackEnabled(pool),
 		FirstResponseTime:  newFirstResponseTime(pool),
@@ -152,6 +154,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.Participants,     // Must be created after Tickets table
 		d.AutoCloseExclude, // Must be created after Tickets table
 		d.CloseReason,      // Must be created after Tickets table
+		d.CloseRequest,     // Must be created after Tickets table
 		d.FirstResponseTime,
 		d.TicketMembers,
 		d.TicketClaims,
