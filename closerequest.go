@@ -135,12 +135,16 @@ func (c *CloseRequestTable) Delete(guildId uint64, ticketId int) (uint64, error)
 DELETE
 FROM close_request
 WHERE "guild_id" = $1 AND "ticket_id" = $2
-RETURNING message_id
-;`
+RETURNING message_id;
+`
 
 	var temp *uint64
 	if err := c.QueryRow(context.Background(), query, guildId, ticketId).Scan(&temp); err != nil {
-		return 0, err
+		if err == pgx.ErrNoRows {
+			return 0, nil
+		} else {
+			return 0, err
+		}
 	}
 
 	if temp == nil {
