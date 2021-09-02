@@ -61,7 +61,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 	}
 }
 
-func (c *CloseReasonTable) GetCloseable() ([]CloseRequest, error) {
+func (c *CloseRequestTable) GetCloseable() ([]CloseRequest, error) {
 	query := `
 SELECT close_request.guild_id, close_request.ticket_id, close_request.user_id, close_request.close_at, close_request.close_reason
 FROM close_request
