@@ -63,7 +63,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 
 func (c *CloseRequestTable) GetCloseable() ([]CloseRequest, error) {
 	query := `
-SELECT close_request.guild_id, close_request.ticket_id, close_request.user_id, close_request.close_at, close_request.close_reason
+SELECT close_request.guild_id, close_request.ticket_id, close_request.user_id, close_request.message_id, close_request.close_at, close_request.close_reason
 FROM close_request
 INNER JOIN tickets
 	ON tickets.guild_id = close_request.guild_id AND tickets.id = close_request.ticket_id
