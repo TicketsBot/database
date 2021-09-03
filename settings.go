@@ -11,6 +11,8 @@ type Settings struct {
 	HideClaimButton            bool `json:"hide_claim_button"`
 	DisableOpenCommand         bool `json:"disable_open_command"`
 	ContextMenuPermissionLevel int  `json:"context_menu_permission_level,string"`
+	ContextMenuAddSender       bool `json:"context_menu_add_sender"`
+	ContextMenuPanel           *int `json:"context_menu_panel"`
 }
 
 func defaultSettings() Settings {
@@ -18,6 +20,8 @@ func defaultSettings() Settings {
 		HideClaimButton:            false,
 		DisableOpenCommand:         false,
 		ContextMenuPermissionLevel: 0,
+		ContextMenuAddSender:       true,
+		ContextMenuPanel:           nil,
 	}
 }
 
@@ -38,6 +42,9 @@ CREATE TABLE IF NOT EXISTS settings(
 	"hide_claim_button" bool DEFAULT 'f',
 	"disable_open_command" bool DEFAULT 'f',
 	"context_menu_permission_level" int DEFAULT '0',
+	"context_menu_add_sender" bool DEFAULT 't',
+	"context_menu_panel" int DEFAULT NULL,
+	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
 	PRIMARY KEY("guild_id")
 );
 `
@@ -46,7 +53,12 @@ CREATE TABLE IF NOT EXISTS settings(
 // TODO: GetSome func
 func (s *SettingsTable) Get(guildId uint64) (Settings, error) {
 	query := `
-SELECT "hide_claim_button", "disable_open_command", "context_menu_permission_level"
+SELECT
+	"hide_claim_button",
+	"disable_open_command",
+	"context_menu_permission_level",
+	"context_menu_add_sender",
+	"context_menu_panel"
 FROM settings
 WHERE "guild_id" = $1;
 `
@@ -56,6 +68,8 @@ WHERE "guild_id" = $1;
 		&settings.HideClaimButton,
 		&settings.DisableOpenCommand,
 		&settings.ContextMenuPermissionLevel,
+		&settings.ContextMenuAddSender,
+		&settings.ContextMenuPanel,
 	)
 
 	if err == nil {
@@ -69,20 +83,32 @@ WHERE "guild_id" = $1;
 
 func (s *SettingsTable) Set(guildId uint64, settings Settings) (err error) {
 	query := `
-INSERT INTO settings("guild_id", "hide_claim_button", "disable_open_command", "context_menu_permission_level")
-VALUES($1, $2, $3, $4)
+INSERT INTO settings(
+	"guild_id",
+	"hide_claim_button",
+	"disable_open_command",
+	"context_menu_permission_level",
+	"context_menu_add_sender",
+	"context_menu_panel"
+)
+VALUES($1, $2, $3, $4, $5, $6)
 ON CONFLICT("guild_id")
 DO UPDATE SET
 	"hide_claim_button" = $2,
 	"disable_open_command" = $3,
-	"context_menu_permission_level" = $4;
+	"context_menu_permission_level" = $4,
+	"context_menu_add_sender" = $5,
+	"context_menu_panel" = $6
+;
 `
 
-	_, err = s.Exec(
-		context.Background(), query, guildId,
+	_, err = s.Exec(context.Background(), query,
+		guildId,
 		settings.HideClaimButton,
 		settings.DisableOpenCommand,
 		settings.ContextMenuPermissionLevel,
+		settings.ContextMenuAddSender,
+		settings.ContextMenuPanel,
 	)
 
 	return
