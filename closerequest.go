@@ -8,12 +8,11 @@ import (
 )
 
 type CloseRequest struct {
-	GuildId   uint64
-	TicketId  int
-	UserId    uint64
-	MessageId uint64
-	CloseAt   *time.Time
-	Reason    *string
+	GuildId  uint64
+	TicketId int
+	UserId   uint64
+	CloseAt  *time.Time
+	Reason   *string
 }
 
 type CloseRequestTable struct {
@@ -32,7 +31,6 @@ CREATE TABLE IF NOT EXISTS close_request(
 	"guild_id" int8 NOT NULL,
 	"ticket_id" int4 NOT NULL,
 	"user_id" int8 NOT NULL,
-	"message_id" int8 DEFAULT NULL,
 	"close_at" timestamptz,
 	"close_reason" VARCHAR(255),
 	FOREIGN KEY("guild_id", "ticket_id") REFERENCES tickets("guild_id", "id"),
@@ -43,14 +41,14 @@ CREATE TABLE IF NOT EXISTS close_request(
 
 func (c *CloseRequestTable) Get(guildId uint64, ticketId int) (CloseRequest, bool, error) {
 	query := `
-SELECT "guild_id", "ticket_id", "user_id", "message_id", "close_at", "close_reason"
+SELECT "guild_id", "ticket_id", "user_id", "close_at", "close_reason"
 FROM close_request
 WHERE "guild_id" = $1 AND "ticket_id" = $2;
 `
 
 	var request CloseRequest
 	err := c.QueryRow(context.Background(), query, guildId, ticketId).
-		Scan(&request.GuildId, &request.TicketId, &request.UserId, &request.MessageId, &request.CloseAt, &request.Reason)
+		Scan(&request.GuildId, &request.TicketId, &request.UserId, &request.CloseAt, &request.Reason)
 
 	if err == nil {
 		return request, true, nil
@@ -63,7 +61,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 
 func (c *CloseRequestTable) GetCloseable() ([]CloseRequest, error) {
 	query := `
-SELECT close_request.guild_id, close_request.ticket_id, close_request.user_id, close_request.message_id, close_request.close_at, close_request.close_reason
+SELECT close_request.guild_id, close_request.ticket_id, close_request.user_id, close_request.close_at, close_request.close_reason
 FROM close_request
 INNER JOIN tickets
 	ON tickets.guild_id = close_request.guild_id AND tickets.id = close_request.ticket_id
@@ -86,7 +84,7 @@ WHERE
 	var requests []CloseRequest
 	for rows.Next() {
 		var request CloseRequest
-		if err := rows.Scan(&request.GuildId, &request.TicketId, &request.UserId, &request.MessageId, &request.CloseAt, &request.Reason); err != nil {
+		if err := rows.Scan(&request.GuildId, &request.TicketId, &request.UserId, &request.CloseAt, &request.Reason); err != nil {
 			return nil, err
 		}
 
@@ -119,23 +117,11 @@ SET "user_id" = $3, "close_at" = $4, "close_reason" = $5;
 	return
 }
 
-func (c *CloseRequestTable) SetMessageId(guildId uint64, ticketId int, messageId uint64) (err error) {
-	query := `
-UPDATE close_request
-SET "message_id" = $1
-WHERE "guild_id" = $2 AND "ticket_id" = $3;
-`
-
-	_, err = c.Exec(context.Background(), query, messageId, guildId, ticketId)
-	return
-}
-
 func (c *CloseRequestTable) Delete(guildId uint64, ticketId int) (uint64, error) {
 	query := `
 DELETE
 FROM close_request
-WHERE "guild_id" = $1 AND "ticket_id" = $2
-RETURNING message_id;
+WHERE "guild_id" = $1 AND "ticket_id" = $2;
 `
 
 	var temp *uint64
