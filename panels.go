@@ -177,6 +177,17 @@ UPDATE panels
 	return
 }
 
+func (p *PanelTable) UpdateMessageId(panelId int, messageId uint64) (err error) {
+	query := `
+UPDATE panels
+SET "message_id" = $1
+WHERE "panel_id" = $2;
+`
+
+	_, err = p.Exec(context.Background(), query, messageId, panelId)
+	return
+}
+
 func (p *PanelTable) Delete(panelId int) (err error) {
 	query := `DELETE FROM panels WHERE "panel_id"=$1;`
 	_, err = p.Exec(context.Background(), query, panelId)
