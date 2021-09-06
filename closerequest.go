@@ -117,25 +117,13 @@ SET "user_id" = $3, "close_at" = $4, "close_reason" = $5;
 	return
 }
 
-func (c *CloseRequestTable) Delete(guildId uint64, ticketId int) (uint64, error) {
+func (c *CloseRequestTable) Delete(guildId uint64, ticketId int) (err error) {
 	query := `
 DELETE
 FROM close_request
 WHERE "guild_id" = $1 AND "ticket_id" = $2;
 `
 
-	var temp *uint64
-	if err := c.QueryRow(context.Background(), query, guildId, ticketId).Scan(&temp); err != nil {
-		if err == pgx.ErrNoRows {
-			return 0, nil
-		} else {
-			return 0, err
-		}
-	}
-
-	if temp == nil {
-		return 0, nil
-	} else {
-		return *temp, nil
-	}
+	_, err = c.Exec(context.Background(), query, guildId, ticketId)
+	return
 }
