@@ -7,13 +7,14 @@ import (
 )
 
 type MultiPanel struct {
-	Id        int    `json:"id"`
-	MessageId uint64 `json:"message_id,string"`
-	ChannelId uint64 `json:"channel_id,string"`
-	GuildId   uint64 `json:"guild_id,string"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	Colour    int    `json:"colour"`
+	Id         int    `json:"id"`
+	MessageId  uint64 `json:"message_id,string"`
+	ChannelId  uint64 `json:"channel_id,string"`
+	GuildId    uint64 `json:"guild_id,string"`
+	Title      string `json:"title"`
+	Content    string `json:"content"`
+	Colour     int    `json:"colour"`
+	SelectMenu bool   `json:"select_menu"`
 }
 
 type MultiPanelTable struct {
@@ -36,85 +37,106 @@ CREATE TABLE IF NOT EXISTS multi_panels(
 	"title" varchar(255) NOT NULL,
 	"content" text NOT NULL,
 	"colour" int4 NOT NULL,
+	"select_menu" bool DEFAULT 'f',
 	PRIMARY KEY("id")
 );
 CREATE INDEX IF NOT EXISTS multi_panels_guild_id ON multi_panels("guild_id");
 CREATE INDEX IF NOT EXISTS multi_panels_message_id ON multi_panels("message_id");`
 }
 
-func (p *MultiPanelTable) Get(id int) (panel MultiPanel, found bool, e error) {
+func (p *MultiPanelTable) Get(id int) (MultiPanel, bool, error) {
 	query := `
 SELECT
-	*
+	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu"
 FROM
 	multi_panels
 WHERE
 	"id" = $1
 ;`
 
-	if err := p.QueryRow(context.Background(), query, id).Scan(&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour); err == nil {
-		found = true
-	} else if err != pgx.ErrNoRows {
-		e = err
+	var panel MultiPanel
+	err := p.QueryRow(context.Background(), query, id).Scan(
+		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return MultiPanel{}, false, nil
+		} else {
+			return MultiPanel{}, false, err
+		}
 	}
 
-	return
+	return panel, true, nil
 }
 
-func (p *MultiPanelTable) GetByMessageId(messageId uint64) (panel MultiPanel, found bool, e error) {
+func (p *MultiPanelTable) GetByMessageId(messageId uint64) (MultiPanel, bool, error) {
 	query := `
 SELECT
-	*
+	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu"
 FROM
 	multi_panels
 WHERE
 	"message_id" = $1
 ;`
 
-	if err := p.QueryRow(context.Background(), query, messageId).Scan(&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour); err == nil {
-		found = true
-	} else if err != pgx.ErrNoRows {
-		e = err
+	var panel MultiPanel
+	err := p.QueryRow(context.Background(), query, messageId).Scan(
+		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return MultiPanel{}, false, nil
+		} else {
+			return MultiPanel{}, false, err
+		}
 	}
 
-	return
+	return panel, true, nil
 }
 
-func (p *MultiPanelTable) GetByGuild(guildId uint64) (panels []MultiPanel, e error) {
+func (p *MultiPanelTable) GetByGuild(guildId uint64) ([]MultiPanel, error) {
 	query := `SELECT * from multi_panels WHERE "guild_id" = $1;`
 
 	rows, err := p.Query(context.Background(), query, guildId)
 	defer rows.Close()
-	if err != nil && err != pgx.ErrNoRows {
-		e = err
-		return
+	if err != nil {
+		return nil, err
 	}
 
+	var panels []MultiPanel
 	for rows.Next() {
 		var panel MultiPanel
-		if err := rows.Scan(&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour); err != nil {
-			e = err
-			continue
+		err := rows.Scan(
+			&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu,
+		)
+
+		if err != nil {
+			return nil, err
 		}
 
 		panels = append(panels, panel)
 	}
 
-	return
+	return panels, nil
 }
 
 func (p *MultiPanelTable) Create(panel MultiPanel) (multiPanelId int, err error) {
 	query := `
 INSERT INTO
-	multi_panels("message_id", "channel_id", "guild_id", "title", "content", "colour")
+	multi_panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu")
 VALUES
-	($1, $2, $3, $4, $5, $6)
+	($1, $2, $3, $4, $5, $6, $7)
 RETURNING
 	"id"
 ;
 `
 
-	err = p.QueryRow(context.Background(), query, panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour).Scan(&multiPanelId)
+	err = p.QueryRow(context.Background(), query,
+		panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.SelectMenu,
+	).Scan(&multiPanelId)
+
 	return
 }
 
@@ -125,11 +147,15 @@ UPDATE multi_panels
 		"channel_id" = $3,
 		"title" = $4,
 		"content" = $5,
-		"colour" = $6
+		"colour" = $6,
+		"select_menu" = $7
 	WHERE
 		"id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query, multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour)
+	_, err = p.Exec(context.Background(), query,
+		multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour, multiPanel.SelectMenu,
+	)
+
 	return
 }
 

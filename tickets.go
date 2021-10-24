@@ -27,6 +27,7 @@ type TicketQueryOptions struct {
 	UserIds []uint64  `json:"user_ids"`
 	Open    *bool     `json:"open"`
 	PanelId int       `json:"panel_id"`
+	Rating  int       `json:"rating"`
 	Order   OrderType `json:"order_type"`
 	Limit   int       `json:"limit"`
 	Offset  int       `json:"offset"`
@@ -44,7 +45,8 @@ func (o TicketQueryOptions) HasWhereClause() bool {
 	return o.Id == 0 &&
 		o.GuildId == 0 &&
 		len(o.UserIds) == 0 &&
-		o.Open == nil
+		o.Open == nil &&
+		o.Rating != 0
 }
 
 type TicketTable struct {
@@ -130,7 +132,20 @@ func (t *TicketTable) GetByOptions(options TicketQueryOptions) (tickets []Ticket
 }
 
 func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err error) {
-	query = `SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id FROM tickets`
+	query = `
+SELECT tickets.id,
+	tickets.guild_id,
+	tickets.channel_id,
+	tickets.user_id,
+	tickets.open,
+	tickets.open_time,
+	tickets.welcome_message_id,
+	tickets.panel_id
+FROM tickets`
+
+	if o.Rating != 0 {
+		query += " INNER JOIN service_ratings ON tickets.guild_id = service_ratings.guild_id AND tickets.id = service_ratings.ticket_id "
+	}
 
 	if !o.HasWhereClause() {
 		query += " WHERE "
@@ -140,7 +155,7 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 
 	if o.Id != 0 {
 		args = append(args, o.Id)
-		query += fmt.Sprintf(`"id" = $%d`, len(args))
+		query += fmt.Sprintf(`tickets.id = $%d`, len(args))
 		needsAnd = true
 	}
 
@@ -150,7 +165,7 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 		}
 
 		args = append(args, o.GuildId)
-		query += fmt.Sprintf(`"guild_id" = $%d`, len(args))
+		query += fmt.Sprintf(`tickets.guild_id = $%d`, len(args))
 		needsAnd = true
 	}
 
@@ -165,7 +180,7 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 		}
 
 		args = append(args, userIdArray)
-		query += fmt.Sprintf(`"user_id" = ANY($%d)`, len(args))
+		query += fmt.Sprintf(`tickets.user_id = ANY($%d)`, len(args))
 		needsAnd = true
 	}
 
@@ -175,7 +190,7 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 		}
 
 		args = append(args, *o.Open)
-		query += fmt.Sprintf(`"open" = $%d`, len(args))
+		query += fmt.Sprintf(`tickets.open = $%d`, len(args))
 		needsAnd = true
 	}
 
@@ -185,7 +200,17 @@ func (o TicketQueryOptions) BuildQuery() (query string, args []interface{}, _err
 		}
 
 		args = append(args, o.PanelId)
-		query += fmt.Sprintf(`"panel_id" = $%d`, len(args))
+		query += fmt.Sprintf(`tickets.panel_id = $%d`, len(args))
+		needsAnd = true
+	}
+
+	if o.Rating > 0 {
+		if needsAnd {
+			query += " AND "
+		}
+
+		args = append(args, o.Rating)
+		query += fmt.Sprintf(`service_ratings.rating = $%d`, len(args))
 		needsAnd = true
 	}
 

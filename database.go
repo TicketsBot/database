@@ -120,6 +120,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 func (d *Database) CreateTables(pool *pgxpool.Pool) {
 	mustCreate(pool,
 		d.ActiveLanguage,
+		d.ArchiveChannel,
 		d.AutoClose,
 		d.Blacklist,
 		d.ChannelCategory,
@@ -141,7 +142,6 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.PremiumKeys,
 		d.RolePermissions,
 		d.ServerBlacklist,
-		d.ServiceRatings,
 		d.Settings,
 		d.SupportTeam,
 		d.SupportTeamMembers,
@@ -155,6 +155,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.AutoCloseExclude, // Must be created after Tickets table
 		d.CloseReason,      // Must be created after Tickets table
 		d.CloseRequest,     // Must be created after Tickets table
+		d.ServiceRatings,   // Must be created after Tickets table
 		d.FirstResponseTime,
 		d.TicketMembers,
 		d.TicketClaims,
