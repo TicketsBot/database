@@ -13,6 +13,7 @@ type Settings struct {
 	ContextMenuPermissionLevel int  `json:"context_menu_permission_level,string"`
 	ContextMenuAddSender       bool `json:"context_menu_add_sender"`
 	ContextMenuPanel           *int `json:"context_menu_panel"`
+	StoreTranscripts           bool `json:"store_transcripts"`
 }
 
 func defaultSettings() Settings {
@@ -22,6 +23,7 @@ func defaultSettings() Settings {
 		ContextMenuPermissionLevel: 0,
 		ContextMenuAddSender:       true,
 		ContextMenuPanel:           nil,
+		StoreTranscripts:           true,
 	}
 }
 
@@ -44,6 +46,7 @@ CREATE TABLE IF NOT EXISTS settings(
 	"context_menu_permission_level" int DEFAULT '0',
 	"context_menu_add_sender" bool DEFAULT 't',
 	"context_menu_panel" int DEFAULT NULL,
+	"store_transcripts" bool DEFAULT 't',
 	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
 	PRIMARY KEY("guild_id")
 );
@@ -58,7 +61,8 @@ SELECT
 	"disable_open_command",
 	"context_menu_permission_level",
 	"context_menu_add_sender",
-	"context_menu_panel"
+	"context_menu_panel",
+	"store_transcripts"
 FROM settings
 WHERE "guild_id" = $1;
 `
@@ -70,6 +74,7 @@ WHERE "guild_id" = $1;
 		&settings.ContextMenuPermissionLevel,
 		&settings.ContextMenuAddSender,
 		&settings.ContextMenuPanel,
+		&settings.StoreTranscripts,
 	)
 
 	if err == nil {
@@ -89,16 +94,18 @@ INSERT INTO settings(
 	"disable_open_command",
 	"context_menu_permission_level",
 	"context_menu_add_sender",
-	"context_menu_panel"
+	"context_menu_panel",
+	"store_transcripts"
 )
-VALUES($1, $2, $3, $4, $5, $6)
+VALUES($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT("guild_id")
 DO UPDATE SET
 	"hide_claim_button" = $2,
 	"disable_open_command" = $3,
 	"context_menu_permission_level" = $4,
 	"context_menu_add_sender" = $5,
-	"context_menu_panel" = $6
+	"context_menu_panel" = $6,
+	"store_transcripts" = $7
 ;
 `
 
@@ -109,6 +116,7 @@ DO UPDATE SET
 		settings.ContextMenuPermissionLevel,
 		settings.ContextMenuAddSender,
 		settings.ContextMenuPanel,
+		settings.StoreTranscripts,
 	)
 
 	return
