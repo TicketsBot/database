@@ -19,6 +19,7 @@ type Ticket struct {
 	OpenTime         time.Time `json:"open_time"`
 	WelcomeMessageId *uint64   `json:"welcome_message_id"`
 	PanelId          *int      `json:"panel_id"`
+	HasTranscript    bool      `json:"has_transcript"`
 }
 
 type TicketQueryOptions struct {
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS tickets(
 	"open_time" timestamptz NOT NULL,
 	"welcome_message_id" int8,
 	"panel_id" int,
+	"has_transcript" bool NOT NULL DEFAULT 'f',
 	FOREIGN KEY("panel_id") REFERENCES panels("panel_id") ON DELETE SET NULL ON UPDATE CASCADE,
 	PRIMARY KEY("id", "guild_id")
 );
@@ -92,12 +94,12 @@ func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelI
 
 func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "id" = $1 AND "guild_id" = $2;`
 
 	if err := t.QueryRow(context.Background(), query, ticketId, guildId).Scan(
-		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -118,7 +120,7 @@ func (t *TicketTable) GetByOptions(options TicketQueryOptions) (tickets []Ticket
 	for rows.Next() {
 		var ticket Ticket
 		err = rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 		)
 
 		if err != nil {
@@ -140,7 +142,8 @@ SELECT tickets.id,
 	tickets.open,
 	tickets.open_time,
 	tickets.welcome_message_id,
-	tickets.panel_id
+	tickets.panel_id,
+	tickets.has_transcript
 FROM tickets`
 
 	if o.Rating != 0 {
@@ -235,12 +238,12 @@ FROM tickets`
 
 func (t *TicketTable) GetByChannel(channelId uint64) (ticket Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "channel_id" = $1;`
 
 	if err := t.QueryRow(context.Background(), query, channelId).Scan(
-		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+		&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -249,7 +252,7 @@ WHERE "channel_id" = $1;`
 
 func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = $2;`
 
@@ -262,7 +265,7 @@ WHERE "guild_id" = $1 AND "user_id" = $2;`
 
 	for rows.Next() {
 		var ticket Ticket
-		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId); err != nil {
+		if err := rows.Scan(&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript); err != nil {
 			e = err
 			continue
 		}
@@ -275,7 +278,7 @@ WHERE "guild_id" = $1 AND "user_id" = $2;`
 
 func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
@@ -289,7 +292,7 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 	for rows.Next() {
 		var ticket Ticket
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 		); err != nil {
 			e = err
 			continue
@@ -303,7 +306,7 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
 func (t *TicketTable) GetClosedByAnyBefore(guildId uint64, userIds []uint64, before, limit int) (tickets []Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "guild_id" = $1 "user_id" = ANY($2) AND "open" = false AND "id" < $3
 ORDER BY "id" DESC
@@ -324,7 +327,7 @@ LIMIT $4;`
 	for rows.Next() {
 		var ticket Ticket
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 		); err != nil {
 			e = err
 			continue
@@ -343,7 +346,7 @@ type TicketWithCloseReason struct {
 
 func (t *TicketTable) GetClosedByAnyBeforeWithCloseReason(guildId uint64, userIds []uint64, before, limit int) (tickets []TicketWithCloseReason, e error) {
 	query := `
-SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, close_reason.close_reason
 FROM tickets
 LEFT JOIN close_reason
 ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
@@ -370,7 +373,7 @@ LIMIT $4;`
 	for rows.Next() {
 		var ticket TicketWithCloseReason
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript, &ticket.CloseReason,
 		); err != nil {
 			e = err
 			continue
@@ -384,7 +387,7 @@ LIMIT $4;`
 
 func (t *TicketTable) GetClosedByAnyAfterWithCloseReason(guildId uint64, userIds []uint64, after, limit int) (tickets []TicketWithCloseReason, e error) {
 	query := `
-SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, close_reason.close_reason
 FROM tickets
 LEFT JOIN close_reason
 ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
@@ -407,7 +410,7 @@ LIMIT $4;`
 	for rows.Next() {
 		var ticket TicketWithCloseReason
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript, &ticket.CloseReason,
 		); err != nil {
 			e = err
 			continue
@@ -421,7 +424,7 @@ LIMIT $4;`
 
 func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = true
 ORDER BY id DESC;`
@@ -436,7 +439,7 @@ ORDER BY id DESC;`
 	for rows.Next() {
 		var ticket Ticket
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 		); err != nil {
 			e = err
 			continue
@@ -450,7 +453,7 @@ ORDER BY id DESC;`
 
 func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (tickets []Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = false AND "id" < $3
 ORDER BY "id" DESC LIMIT $2;`
@@ -469,7 +472,7 @@ ORDER BY "id" DESC LIMIT $2;`
 	for rows.Next() {
 		var ticket Ticket
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 		); err != nil {
 			e = err
 			continue
@@ -483,7 +486,7 @@ ORDER BY "id" DESC LIMIT $2;`
 
 func (t *TicketTable) GetGuildClosedTicketsBeforeWithCloseReason(guildId uint64, limit, before int) (tickets []TicketWithCloseReason, e error) {
 	query := `
-SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript close_reason.close_reason
 FROM tickets
 LEFT JOIN close_reason
 ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
@@ -504,7 +507,7 @@ ORDER BY tickets.id DESC LIMIT $2;`
 	for rows.Next() {
 		var ticket TicketWithCloseReason
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript, &ticket.CloseReason,
 		); err != nil {
 			e = err
 			continue
@@ -518,7 +521,7 @@ ORDER BY tickets.id DESC LIMIT $2;`
 
 func (t *TicketTable) GetGuildClosedTicketsAfterWithCloseReason(guildId uint64, limit, after int) (tickets []TicketWithCloseReason, e error) {
 	query := `
-SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, close_reason.close_reason
+SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript close_reason.close_reason
 FROM tickets
 LEFT JOIN close_reason
 ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild_id
@@ -535,7 +538,7 @@ ORDER BY tickets.id ASC LIMIT $2;`
 	for rows.Next() {
 		var ticket TicketWithCloseReason
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.CloseReason,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript, &ticket.CloseReason,
 		); err != nil {
 			e = err
 			continue
@@ -555,7 +558,7 @@ func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, l
 	}
 
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = ANY($2) AND "open" = false AND "id" < $4
 ORDER BY "id" DESC LIMIT $3;
@@ -575,7 +578,7 @@ ORDER BY "id" DESC LIMIT $3;
 	for rows.Next() {
 		var ticket Ticket
 		if err := rows.Scan(
-			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId,
+			&ticket.Id, &ticket.GuildId, &ticket.ChannelId, &ticket.UserId, &ticket.Open, &ticket.OpenTime, &ticket.WelcomeMessageId, &ticket.PanelId, &ticket.HasTranscript,
 		); err != nil {
 			e = err
 			continue
@@ -617,5 +620,11 @@ func (t *TicketTable) Close(ticketId int, guildId uint64) (err error) {
 func (t *TicketTable) CloseByChannel(channelId uint64) (err error) {
 	query := `UPDATE tickets SET "open" = false WHERE "channel_id" = $1;`
 	_, err = t.Exec(context.Background(), query, channelId)
+	return
+}
+
+func (t *TicketTable) SetHasTranscript(guildId uint64, ticketId int, hasTranscript bool) (err error) {
+	query := `UPDATE tickets SET "has_transcript" = $3 WHERE "guild_id" = $1 AND "id" = $2;`
+	_, err = t.Exec(context.Background(), query, guildId, ticketId, hasTranscript)
 	return
 }
