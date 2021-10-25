@@ -81,6 +81,28 @@ func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
 	return
 }
 
+func (t *Tag) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds []string, e error) {
+	query := `SELECT LOWER("tag_id"), "content" from tags WHERE "guild_id"=$1 AND "tag_id" LIKE '%$2' LIMIT $3;`
+	rows, err := t.Query(context.Background(), query, guildId, prefix, limit)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			e = err
+			continue
+		}
+
+		tagIds = append(tagIds, id)
+	}
+
+	return
+}
+
 func (t *Tag) Set(guildId uint64, tagId, content string) (err error) {
 	query := `INSERT INTO tags("guild_id", "tag_id", "content") VALUES($1, LOWER($2), $3) ON CONFLICT("guild_id", "tag_id") DO UPDATE SET "content"=$3;`
 	_, err = t.Exec(context.Background(), query, guildId, tagId, content)
