@@ -46,6 +46,34 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 	return
 }
 
+func (c *CloseReasonTable) GetCommon(guildId uint64, prefix string, limit int) ([]string, error) {
+	query := `
+SELECT "close_reason"
+FROM close_reason
+WHERE "guild_id" = $1 AND "close_reason" like '$2' || '%'
+GROUP BY "close_reason"
+ORDER BY COUNT(*) DESC
+LIMIT $3;
+`
+
+	rows, err := c.Query(context.Background(), query, guildId, prefix, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var reasons []string
+	for rows.Next() {
+		var reason string
+		if err := rows.Scan(&reason); err != nil {
+			return nil, err
+		}
+
+		reasons = append(reasons, reason)
+	}
+
+	return reasons, nil
+}
+
 func (c *CloseReasonTable) GetMulti(guildId uint64, ticketIds []int) (map[int]string, error) {
 	query := `
 SELECT "ticket_id", "close_reason"
