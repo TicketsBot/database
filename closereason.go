@@ -50,7 +50,7 @@ func (c *CloseReasonTable) GetCommon(guildId uint64, prefix string, limit int) (
 	query := `
 SELECT "close_reason"
 FROM close_reason
-WHERE "guild_id" = $1 AND "close_reason" != 'Automatically closed due to inactivity' AND "close_reason" LIKE $2 || '%'
+WHERE "guild_id" = $1 AND "close_reason" LIKE $2 || '%' AND "close_reason" != 'Automatically closed due to inactivity'
 GROUP BY "close_reason"
 ORDER BY COUNT(*) DESC
 LIMIT $3;
