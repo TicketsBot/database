@@ -82,7 +82,7 @@ func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
 }
 
 func (t *Tag) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds []string, e error) {
-	query := `SELECT LOWER("tag_id"), "content" from tags WHERE "guild_id"=$1 AND "tag_id" LIKE '$2%' LIMIT $3;`
+	query := `SELECT LOWER("tag_id") FROM tags WHERE "guild_id"=$1 AND "tag_id" LIKE $2 || '%' LIMIT $3;`
 	rows, err := t.Query(context.Background(), query, guildId, prefix, limit)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
