@@ -7,14 +7,16 @@ import (
 )
 
 type MultiPanel struct {
-	Id         int    `json:"id"`
-	MessageId  uint64 `json:"message_id,string"`
-	ChannelId  uint64 `json:"channel_id,string"`
-	GuildId    uint64 `json:"guild_id,string"`
-	Title      string `json:"title"`
-	Content    string `json:"content"`
-	Colour     int    `json:"colour"`
-	SelectMenu bool   `json:"select_menu"`
+	Id           int     `json:"id"`
+	MessageId    uint64  `json:"message_id,string"`
+	ChannelId    uint64  `json:"channel_id,string"`
+	GuildId      uint64  `json:"guild_id,string"`
+	Title        string  `json:"title"`
+	Content      string  `json:"content"`
+	Colour       int     `json:"colour"`
+	SelectMenu   bool    `json:"select_menu"`
+	ImageUrl     *string `json:"image_url,omitempty"`
+	ThumbnailUrl *string `json:"thumbnail_url,omitempty"`
 }
 
 type MultiPanelTable struct {
@@ -38,6 +40,8 @@ CREATE TABLE IF NOT EXISTS multi_panels(
 	"content" text NOT NULL,
 	"colour" int4 NOT NULL,
 	"select_menu" bool DEFAULT 'f',
+	"image_url" varchar(255) DEFAULT NULL,
+	"thumbnail_url" varchar(255) DEFAULT NULL,
 	PRIMARY KEY("id")
 );
 CREATE INDEX IF NOT EXISTS multi_panels_guild_id ON multi_panels("guild_id");
@@ -47,7 +51,7 @@ CREATE INDEX IF NOT EXISTS multi_panels_message_id ON multi_panels("message_id")
 func (p *MultiPanelTable) Get(id int) (MultiPanel, bool, error) {
 	query := `
 SELECT
-	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu"
+	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
 FROM
 	multi_panels
 WHERE
@@ -56,7 +60,7 @@ WHERE
 
 	var panel MultiPanel
 	err := p.QueryRow(context.Background(), query, id).Scan(
-		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu,
+		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
 	)
 
 	if err != nil {
@@ -73,7 +77,7 @@ WHERE
 func (p *MultiPanelTable) GetByMessageId(messageId uint64) (MultiPanel, bool, error) {
 	query := `
 SELECT
-	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu"
+	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
 FROM
 	multi_panels
 WHERE
@@ -82,7 +86,7 @@ WHERE
 
 	var panel MultiPanel
 	err := p.QueryRow(context.Background(), query, messageId).Scan(
-		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu,
+		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
 	)
 
 	if err != nil {
@@ -97,7 +101,11 @@ WHERE
 }
 
 func (p *MultiPanelTable) GetByGuild(guildId uint64) ([]MultiPanel, error) {
-	query := `SELECT * from multi_panels WHERE "guild_id" = $1;`
+	query := `
+SELECT "id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
+FROM multi_panels
+WHERE "guild_id" = $1;
+`
 
 	rows, err := p.Query(context.Background(), query, guildId)
 	defer rows.Close()
@@ -109,7 +117,7 @@ func (p *MultiPanelTable) GetByGuild(guildId uint64) ([]MultiPanel, error) {
 	for rows.Next() {
 		var panel MultiPanel
 		err := rows.Scan(
-			&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu,
+			&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
 		)
 
 		if err != nil {
@@ -125,16 +133,16 @@ func (p *MultiPanelTable) GetByGuild(guildId uint64) ([]MultiPanel, error) {
 func (p *MultiPanelTable) Create(panel MultiPanel) (multiPanelId int, err error) {
 	query := `
 INSERT INTO
-	multi_panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu")
+	multi_panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url")
 VALUES
-	($1, $2, $3, $4, $5, $6, $7)
+	($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING
 	"id"
 ;
 `
 
 	err = p.QueryRow(context.Background(), query,
-		panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.SelectMenu,
+		panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.SelectMenu, panel.ImageUrl, panel.ThumbnailUrl,
 	).Scan(&multiPanelId)
 
 	return
@@ -148,12 +156,14 @@ UPDATE multi_panels
 		"title" = $4,
 		"content" = $5,
 		"colour" = $6,
-		"select_menu" = $7
+		"select_menu" = $7,
+        "image_url" = $8,
+        "thumbnail_url" = $9
 	WHERE
 		"id" = $1
 ;`
 	_, err = p.Exec(context.Background(), query,
-		multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour, multiPanel.SelectMenu,
+		multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour, multiPanel.SelectMenu, multiPanel.ImageUrl, multiPanel.ThumbnailUrl,
 	)
 
 	return
