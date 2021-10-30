@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -65,6 +66,26 @@ SELECT EXISTS(
 `
 
 	err = s.QueryRow(context.Background(), query, guildId, userId).Scan(&isSupport)
+	return
+}
+
+func (s *SupportTeamMembersTable) IsSupportSubset(guildId, userId uint64, teams []int) (isSupport bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM support_team_members
+	INNER JOIN support_team
+	ON support_team_members.team_id = support_team.id
+	WHERE support_team.guild_id = $1 AND support_team_members.user_id = $2 AND support_team.id = ANY($3)
+);
+`
+
+	teamIdArray := &pgtype.Int4Array{}
+	if err := teamIdArray.Set(teams); err != nil {
+		return false, err
+	}
+
+	err = s.QueryRow(context.Background(), query, guildId, userId, teamIdArray).Scan(&isSupport)
 	return
 }
 
