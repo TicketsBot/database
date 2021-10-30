@@ -94,6 +94,30 @@ SELECT EXISTS(
 	return
 }
 
+func (s *SupportTeamRolesTable) IsSupportAnySubset(guildId uint64, roleIds []uint64, teamIds []int) (isSupport bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM support_team_roles
+	INNER JOIN support_team
+	ON support_team_roles.team_id = support_team.id
+	WHERE support_team.guild_id = $1 AND support_team_roles.role_id = ANY($2) AND support_team.id = ANY($3)
+);
+`
+
+	roleIdArray := &pgtype.Int8Array{}
+	if err := roleIdArray.Set(roleIds); err != nil {
+		return false, err
+	}
+
+	teamIdArray := &pgtype.Int4Array{}
+	if err := teamIdArray.Set(teamIds); err != nil {
+        return false, err
+    }
+
+	err = s.QueryRow(context.Background(), query, guildId, roleIdArray, teamIdArray).Scan(&isSupport)
+	return
+}
 
 func (s *SupportTeamRolesTable) GetAllSupportRoles(guildId uint64) (roles []uint64, err error) {
 	query := `
