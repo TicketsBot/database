@@ -14,6 +14,8 @@ type Settings struct {
 	ContextMenuAddSender       bool `json:"context_menu_add_sender"`
 	ContextMenuPanel           *int `json:"context_menu_panel"`
 	StoreTranscripts           bool `json:"store_transcripts"`
+	UseThreads                 bool `json:"use_threads"`
+	ThreadArchiveDuration      int  `json:"thread_archive_duration"`
 }
 
 func defaultSettings() Settings {
@@ -24,6 +26,8 @@ func defaultSettings() Settings {
 		ContextMenuAddSender:       true,
 		ContextMenuPanel:           nil,
 		StoreTranscripts:           true,
+		UseThreads:                 false,
+		ThreadArchiveDuration:      10080,
 	}
 }
 
@@ -47,6 +51,8 @@ CREATE TABLE IF NOT EXISTS settings(
 	"context_menu_add_sender" bool DEFAULT 't',
 	"context_menu_panel" int DEFAULT NULL,
 	"store_transcripts" bool DEFAULT 't',
+    "use_threads" bool DEFAULT 'f',
+    "thread_archive_duration" int DEFAULT '10080',
 	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
 	PRIMARY KEY("guild_id")
 );
@@ -62,7 +68,9 @@ SELECT
 	"context_menu_permission_level",
 	"context_menu_add_sender",
 	"context_menu_panel",
-	"store_transcripts"
+	"store_transcripts",
+    "use_threads",
+    "thread_archive_duration"
 FROM settings
 WHERE "guild_id" = $1;
 `
@@ -75,6 +83,8 @@ WHERE "guild_id" = $1;
 		&settings.ContextMenuAddSender,
 		&settings.ContextMenuPanel,
 		&settings.StoreTranscripts,
+		&settings.UseThreads,
+        &settings.ThreadArchiveDuration,
 	)
 
 	if err == nil {
@@ -95,9 +105,11 @@ INSERT INTO settings(
 	"context_menu_permission_level",
 	"context_menu_add_sender",
 	"context_menu_panel",
-	"store_transcripts"
+	"store_transcripts",
+    "use_threads",
+    "thread_archive_duration"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT("guild_id")
 DO UPDATE SET
 	"hide_claim_button" = $2,
@@ -105,7 +117,9 @@ DO UPDATE SET
 	"context_menu_permission_level" = $4,
 	"context_menu_add_sender" = $5,
 	"context_menu_panel" = $6,
-	"store_transcripts" = $7
+	"store_transcripts" = $7,
+    "use_threads" = $8,
+    "thread_archive_duration" = $9;
 ;
 `
 
@@ -117,6 +131,8 @@ DO UPDATE SET
 		settings.ContextMenuAddSender,
 		settings.ContextMenuPanel,
 		settings.StoreTranscripts,
+		settings.UseThreads,
+        settings.ThreadArchiveDuration,
 	)
 
 	return
