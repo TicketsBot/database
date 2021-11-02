@@ -17,19 +17,32 @@ func newArchiveChannel(db *pgxpool.Pool) *ArchiveChannel {
 }
 
 func (c ArchiveChannel) Schema() string {
-	return `CREATE TABLE IF NOT EXISTS archive_channel("guild_id" int8 NOT NULL UNIQUE, "channel_id" int8 NOT NULL UNIQUE, PRIMARY KEY("guild_id"));`
+	return `
+CREATE TABLE IF NOT EXISTS archive_channel(
+	"guild_id" int8 NOT NULL UNIQUE,
+	"channel_id" int8,
+	PRIMARY KEY("guild_id")
+);`
 }
 
-func (c *ArchiveChannel) Get(guildId uint64) (archiveChannel uint64, e error) {
-	if err := c.QueryRow(context.Background(), `SELECT "channel_id" from archive_channel WHERE "guild_id" = $1`, guildId).Scan(&archiveChannel); err != nil && err != pgx.ErrNoRows {
+func (c *ArchiveChannel) Get(guildId uint64) (archiveChannel *uint64, e error) {
+	query := `SELECT "channel_id" from archive_channel WHERE "guild_id" = $1;`
+
+	if err := c.QueryRow(context.Background(), query, guildId).Scan(&archiveChannel); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (c *ArchiveChannel) Set(guildId, archiveChannel uint64) (err error) {
-	_, err = c.Exec(context.Background(), `INSERT INTO archive_channel("guild_id", "channel_id") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "channel_id" = $2;`, guildId, archiveChannel)
+func (c *ArchiveChannel) Set(guildId uint64, archiveChannel *uint64) (err error) {
+	query :=  `
+INSERT INTO archive_channel("guild_id", "channel_id")
+VALUES($1, $2)
+ON CONFLICT("guild_id") DO UPDATE SET "channel_id" = $2;
+`
+
+	_, err = c.Exec(context.Background(), query, guildId, archiveChannel)
 	return
 }
 
