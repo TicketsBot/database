@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS custom_colours(
 );`
 }
 
-func (c *CustomColours) Get(guildId uint64) (colourCode int, ok bool, e error) {
-	query := `SELECT "colour_code" FROM custom_colours WHERE "guild_id" = $1 AND "colour_id" = $2;	`
+func (c *CustomColours) Get(guildId uint64, colourId int16) (colourCode int, ok bool, e error) {
+	query := `SELECT "colour_code" FROM custom_colours WHERE "guild_id" = $1 AND "colour_id" = $2;`
 
-	if err := c.QueryRow(context.Background(), query, guildId, colourCode).Scan(&colourCode); err == nil {
+	if err := c.QueryRow(context.Background(), query, guildId, colourId).Scan(&colourCode); err == nil {
 		ok = true
 	} else {
 		if err != pgx.ErrNoRows {
