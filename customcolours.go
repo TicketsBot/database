@@ -67,7 +67,7 @@ func (c *CustomColours) Set(guildId uint64, colourId int16, colourCode int) (err
 	query := `
 INSERT INTO custom_colours("guild_id", "colour_id", "colour_code")
 VALUES($1, $2, $3) ON CONFLICT("guild_id", "colour_id")
-DO UPDATE SET "colour_code" = 3;`
+DO UPDATE SET "colour_code" = $3;`
 
 	_, err = c.Exec(context.Background(), query, guildId, colourId, colourCode)
 	return
