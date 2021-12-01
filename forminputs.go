@@ -30,7 +30,7 @@ func (f FormInputTable) Schema() string {
 CREATE TABLE IF NOT EXISTS form_input(
 	"id" SERIAL NOT NULL UNIQUE,
 	"form_id" int NOT NULL,
-    "custom_id" VARCHAR(100) NOT NULL,
+    "custom_id" VARCHAR(100) UNIQUE NOT NULL,
     "style" int2 NOT NULL,
     "label" VARCHAR(255) NOT NULL,
     "placeholder" VARCHAR(100) NULL,
@@ -101,6 +101,21 @@ WHERE forms.guild_id = $1;
 	}
 
 	return
+}
+
+func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string) (int, error) {
+	query := `
+INSERT INTO form_input("form_id", "custom_id" "style", "label", "placeholder")
+VALUES($1, $2, $3, $4, $5)
+RETURNING "id";
+`
+
+	var id int
+	if err := f.QueryRow(context.Background(), query, formId, customId, style, label, placeholder).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (f *FormInputTable) Update(input FormInput) (err error) {

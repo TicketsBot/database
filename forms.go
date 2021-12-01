@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS forms(
 	"form_id" SERIAL NOT NULL UNIQUE,
 	"guild_id" int8 NOT NULL,
 	"title" VARCHAR(255) NOT NULL,
-    "custom_id" VARCHAR(100) NOT NULL,
+    "custom_id" VARCHAR(100) UNIQUE NOT NULL,
 	PRIMARY KEY("form_id")
 );
 CREATE INDEX IF NOT EXISTS forms_guild_id ON forms("guild_id");
@@ -69,6 +69,21 @@ func (f *FormsTable) GetForms(guildId uint64) (forms []Form, e error) {
 	}
 
 	return
+}
+
+func (f *FormsTable) Create(guildId uint64, title, customId string) (int, error) {
+	query := `
+INSERT INTO forms("guild_id", "title", "custom_id")
+VALUES($1, $2, $3)
+RETURNING "form_id";
+`
+
+	var id int
+	if err := f.QueryRow(context.Background(), query, guildId, title, customId).Scan(&id); err != nil {
+        return 0, err
+    }
+
+	return id, nil
 }
 
 func (f *FormsTable) UpdateTitle(formId int, title string) (err error) {
