@@ -9,7 +9,7 @@ import (
 type FormInput struct {
 	Id          int     `json:"id"`
 	FormId      int     `json:"form_id"`
-	CustomId    string  `json:"custom_id"`
+	CustomId    string  `json:"-"`
 	Style       uint8   `json:"style"`
 	Label       string  `json:"label"`
 	Placeholder *string `json:"placeholder,omitempty"`
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS form_input(
     "style" int2 NOT NULL,
     "label" VARCHAR(255) NOT NULL,
     "placeholder" VARCHAR(100) NULL,
-	FOREIGN KEY("form_id") REFERENCES forms("form_id"),
+	FOREIGN KEY("form_id") REFERENCES forms("form_id") ON DELETE CASCADE,
 	PRIMARY KEY("id")
 );
 CREATE INDEX IF NOT EXISTS form_input_form_id ON form_input("form_id");

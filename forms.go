@@ -10,7 +10,7 @@ type Form struct {
 	Id       int    `json:"form_id"`
 	GuildId  uint64 `json:"guild_id,string"`
 	Title    string `json:"title"`
-	CustomId string `json:"custom_id"`
+	CustomId string `json:"-"`
 }
 
 type FormsTable struct {
