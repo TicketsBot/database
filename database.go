@@ -20,6 +20,8 @@ type Database struct {
 	DmOnOpen           *DmOnOpen
 	FeedbackEnabled    *FeedbackEnabled
 	FirstResponseTime  *FirstResponseTime
+	FormInput          *FormInputTable
+	Forms              *FormsTable
 	GuildLeaveTime     *GuildLeaveTime
 	MultiPanels        *MultiPanelTable
 	MultiPanelTargets  *MultiPanelTargets
@@ -77,6 +79,8 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		DmOnOpen:           newDmOnOpen(pool),
 		FeedbackEnabled:    newFeedbackEnabled(pool),
 		FirstResponseTime:  newFirstResponseTime(pool),
+		FormInput:          newFormInputTable(pool),
+		Forms:              newFormsTable(pool),
 		GuildLeaveTime:     newGuildLeaveTime(pool),
 		MultiPanels:        newMultiMultiPanelTable(pool),
 		MultiPanelTargets:  newMultiPanelTargets(pool),
@@ -131,6 +135,8 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.CustomColours,
 		d.DmOnOpen,
 		d.FeedbackEnabled,
+		d.Forms,
+		d.FormInput,
 		d.GuildLeaveTime,
 		d.MultiPanels,
 		d.NamingScheme,
