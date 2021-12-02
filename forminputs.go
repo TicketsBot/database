@@ -77,7 +77,7 @@ func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {
 }
 
 // Form ID -> Form Input
-func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int]FormInput, e error) {
+func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int][]FormInput, e error) {
 	query := `
 SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder
 FROM form_input 
@@ -90,14 +90,18 @@ WHERE forms.guild_id = $1;
 		return nil, err
 	}
 
-	inputs = make(map[int]FormInput)
+	inputs = make(map[int][]FormInput)
 	for rows.Next() {
 		var input FormInput
 		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder); err != nil {
 			return nil, err
 		}
 
-		inputs[input.FormId] = input
+		if _, ok := inputs[input.FormId]; !ok {
+            inputs[input.FormId] = make([]FormInput, 0)
+        }
+
+		inputs[input.FormId] = append(inputs[input.FormId], input)
 	}
 
 	return
