@@ -105,7 +105,7 @@ WHERE forms.guild_id = $1;
 
 func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string) (int, error) {
 	query := `
-INSERT INTO form_input("form_id", "custom_id" "style", "label", "placeholder")
+INSERT INTO form_input("form_id", "custom_id", "style", "label", "placeholder")
 VALUES($1, $2, $3, $4, $5)
 RETURNING "id";
 `
