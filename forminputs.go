@@ -57,7 +57,11 @@ func (f *FormInputTable) Get(id int) (input FormInput, ok bool, e error) {
 }
 
 func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {
-	query := `SELECT "id", "form_id", "custom_id", "style", "label", "placeholder" FROM form_input WHERE "form_id" = $1;`
+	query := `
+SELECT "id", "form_id", "custom_id", "style", "label", "placeholder"
+FROM form_input
+WHERE "form_id" = $1
+ORDER BY "id" ASC;`
 
 	rows, err := f.Query(context.Background(), query, formId)
 	if err != nil {
@@ -82,7 +86,8 @@ func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int][]For
 SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder
 FROM form_input 
 INNER JOIN forms ON form_input.form_id = forms.form_id
-WHERE forms.guild_id = $1;
+WHERE forms.guild_id = $1
+ORDER BY form_input.id ASC;
 `
 
 	rows, err := f.Query(context.Background(), query, guildId)
