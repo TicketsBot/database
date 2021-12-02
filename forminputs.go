@@ -53,7 +53,7 @@ func (f *FormInputTable) Get(id int) (input FormInput, ok bool, e error) {
 		}
 	}
 
-	return
+	return input, ok, nil
 }
 
 func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {

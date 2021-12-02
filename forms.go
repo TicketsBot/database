@@ -48,7 +48,7 @@ func (f *FormsTable) Get(formId int) (form Form, ok bool, e error) {
 		}
 	}
 
-	return
+	return form, true, nil
 }
 
 func (f *FormsTable) GetForms(guildId uint64) (forms []Form, e error) {
