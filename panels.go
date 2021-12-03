@@ -61,7 +61,9 @@ CREATE TABLE IF NOT EXISTS panels(
 );
 CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");
 CREATE INDEX IF NOT EXISTS panels_message_id ON panels("message_id");
-CREATE INDEX IF NOT EXISTS panels_custom_id ON panels("custom_id");`
+CREATE INDEX IF NOT EXISTS panels_form_id ON panels("form_id");
+CREATE INDEX IF NOT EXISTS panels_guild_id_form_id ON panels("guild_id", "form_id");
+sCREATE INDEX IF NOT EXISTS panels_custom_id ON panels("custom_id");`
 }
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
@@ -104,6 +106,28 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
 
 	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+	)
+
+	switch err {
+	case nil:
+		ok = true
+	case pgx.ErrNoRows:
+	default:
+		e = err
+	}
+
+	return
+}
+
+func (p *PanelTable) GetByFormId(guildId uint64, formId int) (panel Panel, ok bool, e error) {
+	query := `
+SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
+FROM panels
+WHERE "guild_id" = $1 AND "form_id" = $2;
+`
+
+	err := p.QueryRow(context.Background(), query, guildId, formId).Scan(
 		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
 	)
 
