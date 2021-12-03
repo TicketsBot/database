@@ -142,6 +142,30 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 	return
 }
 
+func (p *PanelTable) GetByFormCustomId(guildId uint64, customId string) (panel Panel, ok bool, e error) {
+	query := `
+SELECT panels.panel_id, panels.message_id, panels.channel_id, panels.guild_id, panels.title, panels.content, panels.colour, panels.target_category, panels.reaction_emote, panels.welcome_message, panels.default_team, panels.custom_id, panels.image_url, panels.thumbnail_url, panels.button_style, panels.form_id
+FROM panels
+INNER JOIN forms
+ON forms.form_id = panels.form_id
+WHERE forms.guild_id = $1 AND forms.form_id = $2;
+`
+
+	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
+		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+	)
+
+	switch err {
+	case nil:
+		ok = true
+	case pgx.ErrNoRows:
+	default:
+		e = err
+	}
+
+	return
+}
+
 func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
 	query := `
 SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
