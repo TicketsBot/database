@@ -112,6 +112,33 @@ ORDER BY form_input.id ASC;
 	return
 }
 
+func (f *FormInputTable) GetAllInputsUnordered(guildId uint64) ([]FormInput, error) {
+	query := `
+SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder
+FROM form_input 
+INNER JOIN forms ON form_input.form_id = forms.form_id
+WHERE forms.guild_id = $1
+ORDER BY form_input.id ASC;
+`
+
+	rows, err := f.Query(context.Background(), query, guildId)
+	if err != nil {
+		return nil, err
+	}
+
+	var inputs []FormInput
+	for rows.Next() {
+		var input FormInput
+		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder); err != nil {
+			return nil, err
+		}
+
+		inputs = append(inputs, input)
+	}
+
+	return inputs, nil
+}
+
 func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string) (int, error) {
 	query := `
 INSERT INTO form_input("form_id", "custom_id", "style", "label", "placeholder")
