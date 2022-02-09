@@ -112,7 +112,8 @@ ORDER BY form_input.id ASC;
 	return
 }
 
-func (f *FormInputTable) GetAllInputsUnordered(guildId uint64) ([]FormInput, error) {
+// custom_id -> FormInput
+func (f *FormInputTable) GetAllInputsByCustomId(guildId uint64) (map[string]FormInput, error) {
 	query := `
 SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder
 FROM form_input 
@@ -126,14 +127,14 @@ ORDER BY form_input.id ASC;
 		return nil, err
 	}
 
-	var inputs []FormInput
+	inputs := make(map[string]FormInput)
 	for rows.Next() {
 		var input FormInput
 		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder); err != nil {
 			return nil, err
 		}
 
-		inputs = append(inputs, input)
+		inputs[input.CustomId] = input
 	}
 
 	return inputs, nil
