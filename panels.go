@@ -63,7 +63,7 @@ CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");
 CREATE INDEX IF NOT EXISTS panels_message_id ON panels("message_id");
 CREATE INDEX IF NOT EXISTS panels_form_id ON panels("form_id");
 CREATE INDEX IF NOT EXISTS panels_guild_id_form_id ON panels("guild_id", "form_id");
-sCREATE INDEX IF NOT EXISTS panels_custom_id ON panels("custom_id");`
+CREATE INDEX IF NOT EXISTS panels_custom_id ON panels("custom_id");`
 }
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
