@@ -220,7 +220,7 @@ UPDATE panels
 		"custom_id" = $11,
 		"image_url" = $12,
 		"thumbnail_url" = $13,
-		"button_style" = $14
+		"button_style" = $14,
 		"form_id" = $15
 	WHERE
 		"panel_id" = $1
