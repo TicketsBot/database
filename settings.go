@@ -17,7 +17,7 @@ type Settings struct {
 	UseThreads                 bool    `json:"use_threads"`
 	ThreadArchiveDuration      int     `json:"thread_archive_duration"`
 	OverflowEnabled            bool    `json:"overflow_enabled"`
-	OverflowCategoryId         *uint64 `json:"overflow_category_id"` // If overflow_enabled and nil, use root
+	OverflowCategoryId         *uint64 `json:"overflow_category_id,string"` // If overflow_enabled and nil, use root
 }
 
 func defaultSettings() Settings {
