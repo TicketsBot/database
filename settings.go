@@ -8,14 +8,16 @@ import (
 
 // TODO: Migrate all settings to this table
 type Settings struct {
-	HideClaimButton            bool `json:"hide_claim_button"`
-	DisableOpenCommand         bool `json:"disable_open_command"`
-	ContextMenuPermissionLevel int  `json:"context_menu_permission_level,string"`
-	ContextMenuAddSender       bool `json:"context_menu_add_sender"`
-	ContextMenuPanel           *int `json:"context_menu_panel"`
-	StoreTranscripts           bool `json:"store_transcripts"`
-	UseThreads                 bool `json:"use_threads"`
-	ThreadArchiveDuration      int  `json:"thread_archive_duration"`
+	HideClaimButton            bool    `json:"hide_claim_button"`
+	DisableOpenCommand         bool    `json:"disable_open_command"`
+	ContextMenuPermissionLevel int     `json:"context_menu_permission_level,string"`
+	ContextMenuAddSender       bool    `json:"context_menu_add_sender"`
+	ContextMenuPanel           *int    `json:"context_menu_panel"`
+	StoreTranscripts           bool    `json:"store_transcripts"`
+	UseThreads                 bool    `json:"use_threads"`
+	ThreadArchiveDuration      int     `json:"thread_archive_duration"`
+	OverflowEnabled            bool    `json:"overflow_enabled"`
+	OverflowCategoryId         *uint64 `json:"overflow_category_id"` // If overflow_enabled and nil, use root
 }
 
 func defaultSettings() Settings {
@@ -28,6 +30,8 @@ func defaultSettings() Settings {
 		StoreTranscripts:           true,
 		UseThreads:                 false,
 		ThreadArchiveDuration:      10080,
+		OverflowEnabled:            false,
+		OverflowCategoryId:         nil,
 	}
 }
 
@@ -53,6 +57,8 @@ CREATE TABLE IF NOT EXISTS settings(
 	"store_transcripts" bool DEFAULT 't',
     "use_threads" bool DEFAULT 'f',
     "thread_archive_duration" int DEFAULT '10080',
+	"overflow_enabled" bool DEFAULT 'f',
+	"overflow_category_id" int8 DEFAULT NULL,
 	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
 	PRIMARY KEY("guild_id")
 );
@@ -70,7 +76,9 @@ SELECT
 	"context_menu_panel",
 	"store_transcripts",
     "use_threads",
-    "thread_archive_duration"
+    "thread_archive_duration",
+	"overflow_enabled",
+	"overflow_category_id"
 FROM settings
 WHERE "guild_id" = $1;
 `
@@ -84,7 +92,9 @@ WHERE "guild_id" = $1;
 		&settings.ContextMenuPanel,
 		&settings.StoreTranscripts,
 		&settings.UseThreads,
-        &settings.ThreadArchiveDuration,
+		&settings.ThreadArchiveDuration,
+		&settings.OverflowEnabled,
+		&settings.OverflowCategoryId,
 	)
 
 	if err == nil {
@@ -107,7 +117,9 @@ INSERT INTO settings(
 	"context_menu_panel",
 	"store_transcripts",
     "use_threads",
-    "thread_archive_duration"
+    "thread_archive_duration",
+	"overflow_enabled",
+	"overflow_category_id"
 )
 VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT("guild_id")
@@ -119,8 +131,9 @@ DO UPDATE SET
 	"context_menu_panel" = $6,
 	"store_transcripts" = $7,
     "use_threads" = $8,
-    "thread_archive_duration" = $9;
-;
+    "thread_archive_duration" = $9,
+	"overflow_enabled" = $10,
+	"overflow_category_id" = $11;
 `
 
 	_, err = s.Exec(context.Background(), query,
@@ -132,7 +145,7 @@ DO UPDATE SET
 		settings.ContextMenuPanel,
 		settings.StoreTranscripts,
 		settings.UseThreads,
-        settings.ThreadArchiveDuration,
+		settings.ThreadArchiveDuration,
 	)
 
 	return
