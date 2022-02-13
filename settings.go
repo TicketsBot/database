@@ -146,6 +146,8 @@ DO UPDATE SET
 		settings.StoreTranscripts,
 		settings.UseThreads,
 		settings.ThreadArchiveDuration,
+		settings.OverflowEnabled,
+		settings.OverflowCategoryId,
 	)
 
 	return
