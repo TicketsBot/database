@@ -22,6 +22,7 @@ type Database struct {
 	FirstResponseTime  *FirstResponseTime
 	FormInput          *FormInputTable
 	Forms              *FormsTable
+	GlobalBlacklist    *GlobalBlacklist
 	GuildLeaveTime     *GuildLeaveTime
 	MultiPanels        *MultiPanelTable
 	MultiPanelTargets  *MultiPanelTargets
@@ -81,6 +82,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		FirstResponseTime:  newFirstResponseTime(pool),
 		FormInput:          newFormInputTable(pool),
 		Forms:              newFormsTable(pool),
+		GlobalBlacklist:    newGlobalBlacklist(pool),
 		GuildLeaveTime:     newGuildLeaveTime(pool),
 		MultiPanels:        newMultiMultiPanelTable(pool),
 		MultiPanelTargets:  newMultiPanelTargets(pool),
@@ -137,6 +139,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.FeedbackEnabled,
 		d.Forms,
 		d.FormInput,
+		d.GlobalBlacklist,
 		d.GuildLeaveTime,
 		d.MultiPanels,
 		d.NamingScheme,
