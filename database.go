@@ -46,6 +46,7 @@ type Database struct {
 	SupportTeamRoles   *SupportTeamRolesTable
 	Tag                *Tag
 	TicketClaims       *TicketClaims
+	TicketDurationView *TicketDurationView
 	TicketLastMessage  *TicketLastMessageTable
 	TicketLimit        *TicketLimit
 	TicketMembers      *TicketMembers
@@ -106,6 +107,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		SupportTeamRoles:   newSupportTeamRolesTable(pool),
 		Tag:                newTag(pool),
 		TicketClaims:       newTicketClaims(pool),
+		TicketDurationView: newTicketDurationView(pool),
 		TicketLastMessage:  newTicketLastMessageTable(pool),
 		TicketLimit:        newTicketLimit(pool),
 		TicketMembers:      newTicketMembers(pool),
@@ -161,13 +163,14 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.PanelTeams, // Must be created after panels & support teams tables
 		d.Tag,
 		d.TicketLimit,
-		d.Tickets, // Must be created before members table
-		d.TicketLastMessage,
-		d.Participants,     // Must be created after Tickets table
-		d.AutoCloseExclude, // Must be created after Tickets table
-		d.CloseReason,      // Must be created after Tickets table
-		d.CloseRequest,     // Must be created after Tickets table
-		d.ServiceRatings,   // Must be created after Tickets table
+		d.Tickets,            // Must be created before members table
+		d.TicketLastMessage,  // Must be created after Tickets table
+		d.TicketDurationView, // Must be created after Tickets table
+		d.Participants,       // Must be created after Tickets table
+		d.AutoCloseExclude,   // Must be created after Tickets table
+		d.CloseReason,        // Must be created after Tickets table
+		d.CloseRequest,       // Must be created after Tickets table
+		d.ServiceRatings,     // Must be created after Tickets table
 		d.FirstResponseTime,
 		d.TicketMembers,
 		d.TicketClaims,
@@ -184,6 +187,12 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.WhitelabelStatuses,
 		d.WhitelabelUsers,
 	)
+}
+
+func (d *Database) Views() []View {
+	return []View{
+		d.TicketDurationView,
+	}
 }
 
 func mustCreate(pool *pgxpool.Pool, tables ...Table) {
