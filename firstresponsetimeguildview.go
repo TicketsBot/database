@@ -83,7 +83,7 @@ WHERE "guild_id" = $1;
 `
 
 	var data FirstResponseTimeData
-	if err := d.QueryRow(context.Background(), query, guildId).Scan(&data); err != nil {
+	if err := d.QueryRow(context.Background(), query, guildId).Scan(&data.GuildId, &data.AllTime, &data.Monthly, &data.Weekly); err != nil {
 		if err != pgx.ErrNoRows {
 			return FirstResponseTimeData{GuildId: guildId}, nil // Return durations of zero
 		} else {
