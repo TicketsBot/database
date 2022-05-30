@@ -9,10 +9,10 @@ import (
 )
 
 type FirstResponseTimeData struct {
-	GuildId uint64        `json:"guild_id"`
-	AllTime time.Duration `json:"all_time"`
-	Monthly time.Duration `json:"monthly"`
-	Weekly  time.Duration `json:"weekly"`
+	GuildId uint64         `json:"guild_id"`
+	AllTime *time.Duration `json:"all_time"`
+	Monthly *time.Duration `json:"monthly"`
+	Weekly  *time.Duration `json:"weekly"`
 }
 
 type FirstResponseTimeGuildView struct {
