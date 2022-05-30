@@ -27,3 +27,7 @@ func transact(pool *pgxpool.Pool, statements ...string) (pgx.Tx, error) {
 
 	return tx, nil
 }
+
+func slice[T any](v ...T) []T {
+	return v
+}

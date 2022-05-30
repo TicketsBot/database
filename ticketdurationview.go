@@ -26,7 +26,13 @@ func newTicketDurationView(db *pgxpool.Pool) *TicketDurationView {
 }
 
 func (d TicketDurationView) Schema() string {
-	return d.schema("ticket_duration")
+	s := d.schema("ticket_duration")
+	for _, indexSchema := range d.indexes("ticket_duration") {
+		s += "\n"
+		s += indexSchema
+	}
+
+	return s
 }
 
 func (d TicketDurationView) schema(tableName string) string {
@@ -42,18 +48,25 @@ AS
 	WHERE close_time IS NOT NULL
 	GROUP BY guild_id
 WITH DATA;
-CREATE UNIQUE INDEX IF NOT EXISTS %[1]s_guild_id_key ON ticket_duration(guild_id);
 `, tableName)
 }
 
+func (d TicketDurationView) indexes(tableName string) []string {
+	return []string{
+		fmt.Sprintf("CREATE UNIQUE INDEX IF NOT EXISTS %[1]s_guild_id_key ON %[1]s(guild_id);", tableName),
+	}
+}
+
 func (d *TicketDurationView) Refresh() error {
-	tx, err := transact(d.Pool,
-		d.schema("ticket_duration_new"),
-		"DROP MATERIALIZED VIEW ticket_duration;",
+	statements := slice(d.schema("ticket_duration_new"))
+	statements = append(statements, d.indexes("ticket_duration_new")...)
+	statements = append(statements,
+		"DROP MATERIALIZED VIEW IF EXISTS ticket_duration;",
 		"ALTER MATERIALIZED VIEW ticket_duration_new RENAME TO ticket_duration;",
 		"ALTER INDEX ticket_duration_new_guild_id_key RENAME TO ticket_duration_guild_id_key;",
 	)
 
+	tx, err := transact(d.Pool, statements...)
 	if err != nil {
 		return err
 	}
@@ -62,7 +75,11 @@ func (d *TicketDurationView) Refresh() error {
 }
 
 func (d *TicketDurationView) Get(guildId uint64) (TicketDurationData, error) {
-	query := `SELECT "guild_id", "all_time", "monthly", "weekly" FROM ticket_duration;`
+	query := `
+SELECT "guild_id", "all_time", "monthly", "weekly"
+FROM ticket_duration
+WHERE "guild_id" = $1;
+`
 
 	var data TicketDurationData
 	if err := d.QueryRow(context.Background(), query, guildId).Scan(&data); err != nil {
