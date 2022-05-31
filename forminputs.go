@@ -13,6 +13,7 @@ type FormInput struct {
 	Style       uint8   `json:"style"`
 	Label       string  `json:"label"`
 	Placeholder *string `json:"placeholder,omitempty"`
+	Required    bool    `json:"required"`
 }
 
 type FormInputTable struct {
@@ -34,6 +35,7 @@ CREATE TABLE IF NOT EXISTS form_input(
     "style" int2 NOT NULL,
     "label" VARCHAR(255) NOT NULL,
     "placeholder" VARCHAR(100) NULL,
+	"required" BOOL NOT NULL DEFAULT 't',
 	FOREIGN KEY("form_id") REFERENCES forms("form_id") ON DELETE CASCADE,
 	PRIMARY KEY("id")
 );
@@ -42,9 +44,9 @@ CREATE INDEX IF NOT EXISTS form_input_form_id ON form_input("form_id");
 }
 
 func (f *FormInputTable) Get(id int) (input FormInput, ok bool, e error) {
-	query := `SELECT "id", "form_id", "custom_id", "style", "label", "placeholder" FROM form_input WHERE "id" = $1;`
+	query := `SELECT "id", "form_id", "custom_id", "style", "label", "placeholder", "required" FROM form_input WHERE "id" = $1;`
 
-	err := f.QueryRow(context.Background(), query, id).Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder)
+	err := f.QueryRow(context.Background(), query, id).Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder, &input.Required)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return FormInput{}, false, nil
@@ -58,7 +60,7 @@ func (f *FormInputTable) Get(id int) (input FormInput, ok bool, e error) {
 
 func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {
 	query := `
-SELECT "id", "form_id", "custom_id", "style", "label", "placeholder"
+SELECT "id", "form_id", "custom_id", "style", "label", "placeholder", "required"
 FROM form_input
 WHERE "form_id" = $1
 ORDER BY "id" ASC;`
@@ -70,7 +72,7 @@ ORDER BY "id" ASC;`
 
 	for rows.Next() {
 		var input FormInput
-		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder); err != nil {
+		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder, &input.Required); err != nil {
 			return nil, err
 		}
 
@@ -83,7 +85,7 @@ ORDER BY "id" ASC;`
 // Form ID -> Form Input
 func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int][]FormInput, e error) {
 	query := `
-SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder
+SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder, form_input.required
 FROM form_input 
 INNER JOIN forms ON form_input.form_id = forms.form_id
 WHERE forms.guild_id = $1
@@ -98,13 +100,13 @@ ORDER BY form_input.id ASC;
 	inputs = make(map[int][]FormInput)
 	for rows.Next() {
 		var input FormInput
-		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder); err != nil {
+		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder, &input.Required); err != nil {
 			return nil, err
 		}
 
 		if _, ok := inputs[input.FormId]; !ok {
-            inputs[input.FormId] = make([]FormInput, 0)
-        }
+			inputs[input.FormId] = make([]FormInput, 0)
+		}
 
 		inputs[input.FormId] = append(inputs[input.FormId], input)
 	}
@@ -115,7 +117,7 @@ ORDER BY form_input.id ASC;
 // custom_id -> FormInput
 func (f *FormInputTable) GetAllInputsByCustomId(guildId uint64) (map[string]FormInput, error) {
 	query := `
-SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder
+SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder, form_input.required
 FROM form_input 
 INNER JOIN forms ON form_input.form_id = forms.form_id
 WHERE forms.guild_id = $1
@@ -130,7 +132,7 @@ ORDER BY form_input.id ASC;
 	inputs := make(map[string]FormInput)
 	for rows.Next() {
 		var input FormInput
-		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder); err != nil {
+		if err := rows.Scan(&input.Id, &input.FormId, &input.CustomId, &input.Style, &input.Label, &input.Placeholder, &input.Required); err != nil {
 			return nil, err
 		}
 
@@ -140,15 +142,15 @@ ORDER BY form_input.id ASC;
 	return inputs, nil
 }
 
-func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string) (int, error) {
+func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string, required bool) (int, error) {
 	query := `
-INSERT INTO form_input("form_id", "custom_id", "style", "label", "placeholder")
-VALUES($1, $2, $3, $4, $5)
+INSERT INTO form_input("form_id", "custom_id", "style", "label", "placeholder", "required")
+VALUES($1, $2, $3, $4, $5, $6)
 RETURNING "id";
 `
 
 	var id int
-	if err := f.QueryRow(context.Background(), query, formId, customId, style, label, placeholder).Scan(&id); err != nil {
+	if err := f.QueryRow(context.Background(), query, formId, customId, style, label, placeholder, required).Scan(&id); err != nil {
 		return 0, err
 	}
 
@@ -160,11 +162,12 @@ func (f *FormInputTable) Update(input FormInput) (err error) {
 UPDATE form_input
 SET "style" = $2,
 	"label"= $3,
-    "placeholder" = $4
+    "placeholder" = $4,
+	"required" = $5
 WHERE "id" = $1;
 `
 
-	_, err = f.Exec(context.Background(), query, input.Id, input.Style, input.Label, input.Placeholder)
+	_, err = f.Exec(context.Background(), query, input.Id, input.Style, input.Label, input.Placeholder, input.Required)
 	return
 }
 
