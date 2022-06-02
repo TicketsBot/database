@@ -78,7 +78,7 @@ WHERE "guild_id" = $1 AND "panel_id" = $2
 ORDER BY "ranking" ASC;
 `
 
-	rows, err := v.Query(context.Background(), query, guildId)
+	rows, err := v.Query(context.Background(), query, guildId, panelId)
 	if err != nil {
 		return nil, err
 	}
