@@ -59,7 +59,7 @@ func (v *TopCloseReasonsView) Refresh() error {
 	statements = append(statements,
 		"DROP MATERIALIZED VIEW IF EXISTS top_close_reasons;",
 		"ALTER MATERIALIZED VIEW top_close_reasons_new RENAME TO top_close_reasons;",
-		"ALTER INDEX top_close_reasons_new_guild_id_key RENAME TO top_close_reasons_guild_id_key;",
+		"ALTER INDEX top_close_reasons_new_guild_id_panel_id_key RENAME TO top_close_reasons_guild_id_panel_id_key;",
 	)
 
 	tx, err := transact(v.Pool, statements...)
