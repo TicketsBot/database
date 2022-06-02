@@ -54,11 +54,11 @@ func (v TopCloseReasonsView) indexes(tableName string) []string {
 }
 
 func (v *TopCloseReasonsView) Refresh() error {
-	statements := slice(v.schema("top_close_reasons"))
-	statements = append(statements, v.indexes("top_close_reasons")...)
+	statements := slice(v.schema("top_close_reasons_new"))
+	statements = append(statements, v.indexes("top_close_reasons_new")...)
 	statements = append(statements,
 		"DROP MATERIALIZED VIEW IF EXISTS top_close_reasons;",
-		"ALTER MATERIALIZED VIEW top_close_reasons RENAME TO top_close_reasons;",
+		"ALTER MATERIALIZED VIEW top_close_reasons_new RENAME TO top_close_reasons;",
 		"ALTER INDEX top_close_reasons_new_guild_id_key RENAME TO top_close_reasons_guild_id_key;",
 	)
 
