@@ -52,6 +52,7 @@ type Database struct {
 	TicketLimit                *TicketLimit
 	TicketMembers              *TicketMembers
 	Tickets                    *TicketTable
+	TopCloseReasonsView        *TopCloseReasonsView
 	UsedKeys                   *UsedKeys
 	UsersCanClose              *UsersCanClose
 	UserGuilds                 *UserGuildsTable
@@ -114,6 +115,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		TicketLimit:                newTicketLimit(pool),
 		TicketMembers:              newTicketMembers(pool),
 		Tickets:                    newTicketTable(pool),
+		TopCloseReasonsView:        newTopCloseReasonsView(pool),
 		UsedKeys:                   newUsedKeys(pool),
 		UsersCanClose:              newUsersCanClose(pool),
 		UserGuilds:                 newUserGuildsTable(pool),
@@ -177,6 +179,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.FirstResponseTimeGuildView,
 		d.TicketMembers,
 		d.TicketClaims,
+		d.TopCloseReasonsView,
 		d.UsedKeys,
 		d.UsersCanClose,
 		d.UserGuilds,
@@ -196,6 +199,7 @@ func (d *Database) Views() []View {
 	return []View{
 		d.TicketDurationView,
 		d.FirstResponseTimeGuildView,
+		d.TopCloseReasonsView,
 	}
 }
 
