@@ -31,11 +31,16 @@ func (v TopCloseReasonsView) schema(tableName string) string {
 CREATE MATERIALIZED VIEW IF NOT EXISTS %[1]s
 AS
 	SELECT * FROM (
-		SELECT "guild_id", "close_reason", RANK() OVER (PARTITION BY guild_id ORDER BY COUNT(*) DESC) AS ranking
+		SELECT
+			tickets.guild_id,
+			tickets.panel_id,
+			close_reason.close_reason,
+			ROW_NUMBER() OVER (PARTITION BY tickets.guild_id, tickets.panel_id ORDER BY COUNT(*) DESC) AS ranking
 		FROM close_reason
+		INNER JOIN tickets
+		ON close_reason.guild_id = tickets.guild_id AND close_reason.ticket_id = tickets.id
 		WHERE "close_reason" != 'Automatically closed due to inactivity'
-		GROUP BY "guild_id", "close_reason"
-		ORDER BY COUNT(*) DESC
+		GROUP BY tickets.guild_id, tickets.panel_id, close_reason
 	) AS top_reasons_inner
 	WHERE ranking <= 10
 WITH DATA;
@@ -44,7 +49,7 @@ WITH DATA;
 
 func (v TopCloseReasonsView) indexes(tableName string) []string {
 	return []string{
-		fmt.Sprintf("CREATE UNIQUE INDEX IF NOT EXISTS %[1]s_guild_id_key ON %[1]s(guild_id);", tableName),
+		fmt.Sprintf("CREATE UNIQUE INDEX IF NOT EXISTS %[1]s_guild_id_panel_id_key ON %[1]s(guild_id, panel_id);", tableName),
 	}
 }
 
@@ -65,11 +70,11 @@ func (v *TopCloseReasonsView) Refresh() error {
 	return tx.Commit(context.Background())
 }
 
-func (v *TopCloseReasonsView) Get(guildId uint64) ([]string, error) {
+func (v *TopCloseReasonsView) Get(guildId uint64, panelId *int) ([]string, error) {
 	query := `
 SELECT "close_reason"
 FROM top_close_reasons
-WHERE "guild_id" = $1
+WHERE "guild_id" = $1 AND "panel_id" = $2
 ORDER BY "ranking" ASC;
 `
 
