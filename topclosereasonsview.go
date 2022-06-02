@@ -49,7 +49,7 @@ WITH DATA;
 
 func (v TopCloseReasonsView) indexes(tableName string) []string {
 	return []string{
-		fmt.Sprintf("CREATE UNIQUE INDEX IF NOT EXISTS %[1]s_guild_id_panel_id_key ON %[1]s(guild_id, panel_id);", tableName),
+		fmt.Sprintf("CREATE INDEX IF NOT EXISTS %[1]s_guild_id_panel_id_key ON %[1]s(guild_id, panel_id);", tableName),
 	}
 }
 
