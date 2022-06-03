@@ -236,7 +236,7 @@ WITH deleted_position AS (
 )
 UPDATE form_input
 SET position=position-1
-WHERE position>(SELECT position FROM deleted_position);
+WHERE form_id=$2 AND position>(SELECT position FROM deleted_position);
 `
 
 	_, err = f.Exec(context.Background(), query, formInputId, formId)
