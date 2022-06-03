@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -31,12 +32,14 @@ func (f FormInputTable) Schema() string {
 CREATE TABLE IF NOT EXISTS form_input(
 	"id" SERIAL NOT NULL UNIQUE,
 	"form_id" int NOT NULL,
+	"position" int NOT NULL,
     "custom_id" VARCHAR(100) UNIQUE NOT NULL,
     "style" int2 NOT NULL,
     "label" VARCHAR(255) NOT NULL,
     "placeholder" VARCHAR(100) NULL,
 	"required" BOOL NOT NULL DEFAULT 't',
 	FOREIGN KEY("form_id") REFERENCES forms("form_id") ON DELETE CASCADE,
+	UNIQUE("form_id", "position") DEFERRABLE INITIALLY DEFERRED,
 	PRIMARY KEY("id")
 );
 CREATE INDEX IF NOT EXISTS form_input_form_id ON form_input("form_id");
@@ -63,7 +66,7 @@ func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {
 SELECT "id", "form_id", "custom_id", "style", "label", "placeholder", "required"
 FROM form_input
 WHERE "form_id" = $1
-ORDER BY "id" ASC;`
+ORDER BY "position" ASC;`
 
 	rows, err := f.Query(context.Background(), query, formId)
 	if err != nil {
@@ -89,7 +92,7 @@ SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style
 FROM form_input 
 INNER JOIN forms ON form_input.form_id = forms.form_id
 WHERE forms.guild_id = $1
-ORDER BY form_input.id ASC;
+ORDER BY form_input.form_id, form_input.position ASC;
 `
 
 	rows, err := f.Query(context.Background(), query, guildId)
@@ -121,7 +124,7 @@ SELECT form_input.id, form_input.form_id, form_input.custom_id, form_input.style
 FROM form_input 
 INNER JOIN forms ON form_input.form_id = forms.form_id
 WHERE forms.guild_id = $1
-ORDER BY form_input.id ASC;
+ORDER BY form_input.position ASC;
 `
 
 	rows, err := f.Query(context.Background(), query, guildId)
@@ -144,8 +147,8 @@ ORDER BY form_input.id ASC;
 
 func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string, required bool) (int, error) {
 	query := `
-INSERT INTO form_input("form_id", "custom_id", "style", "label", "placeholder", "required")
-VALUES($1, $2, $3, $4, $5, $6)
+INSERT INTO form_input("form_id", "position", "custom_id", "style", "label", "placeholder", "required")
+VALUES($1, (SELECT COALESCE(MAX("id"), 0) + 1 FROM form_input WHERE "form_id" = $1), $2, $3, $4, $5, $6)
 RETURNING "id";
 `
 
@@ -171,8 +174,71 @@ WHERE "id" = $1;
 	return
 }
 
+func (f *FormInputTable) Swap(inputId, otherId int) error {
+	query := `
+UPDATE form_input
+SET position = CASE
+	WHEN id = $1 THEN (SELECT position FROM form_input WHERE id=$2)
+	ELSE (SELECT position FROM form_input WHERE id=$1)
+	END
+WHERE id in ($1,$2);
+`
+
+	_, err := f.Exec(context.Background(), query, inputId, otherId)
+	return err
+}
+
+type InputSwapDirection int
+
+const (
+	SwapDirectionDown InputSwapDirection = iota
+	SwapDirectionUp
+)
+
+func (d InputSwapDirection) operator() string {
+	switch d {
+	case SwapDirectionUp:
+		return "<"
+	case SwapDirectionDown:
+		return ">"
+	}
+
+	return ""
+}
+
+func (f *FormInputTable) SwapDirection(inputId, formId int, direction InputSwapDirection) error {
+	query := fmt.Sprintf(`
+WITH next AS (
+	SELECT id, position
+	FROM form_input
+	WHERE form_id = $2 AND position %s (SELECT position FROM form_input WHERE id=$1)
+	LIMIT 1
+)
+UPDATE form_input
+SET position = CASE
+	WHEN form_input.id = $1 THEN next.position
+	ELSE (SELECT position FROM form_input WHERE form_input.id=$1)
+	END
+FROM next
+WHERE form_input.id in ($1,next.id);
+`, direction.operator())
+
+	_, err := f.Exec(context.Background(), query, inputId, formId)
+	return err
+}
+
 func (f *FormInputTable) Delete(formInputId, formId int) (err error) {
-	query := `DELETE FROM form_input WHERE "id" = $1 AND "form_id" = $2;`
+	query := `
+WITH deleted_position AS (
+	DELETE FROM form_input
+	WHERE "id" = $1 AND "form_id" = $2
+	RETURNING "position"
+)
+UPDATE form_input
+SET position=position-1
+WHERE position>(SELECT position FROM deleted_position);
+`
+
 	_, err = f.Exec(context.Background(), query, formInputId, formId)
 	return
 }

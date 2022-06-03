@@ -72,6 +72,8 @@ func (d *FirstResponseTimeGuildView) Refresh() error {
 		return err
 	}
 
+	defer tx.Rollback(context.Background())
+
 	return tx.Commit(context.Background())
 }
 
