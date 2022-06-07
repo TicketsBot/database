@@ -631,3 +631,9 @@ func (t *TicketTable) SetHasTranscript(guildId uint64, ticketId int, hasTranscri
 	_, err = t.Exec(context.Background(), query, guildId, ticketId, hasTranscript)
 	return
 }
+
+func (t *TicketTable) SetPanelId(guildId uint64, ticketId, panelId int) (err error) {
+	query := `UPDATE tickets SET "panel_id" = $3 WHERE "guild_id" = $1 AND "id" = $2;`
+	_, err = t.Exec(context.Background(), query, guildId, ticketId, panelId)
+	return
+}
