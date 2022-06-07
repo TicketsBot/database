@@ -112,8 +112,8 @@ SELECT EXISTS(
 
 	teamIdArray := &pgtype.Int4Array{}
 	if err := teamIdArray.Set(teamIds); err != nil {
-        return false, err
-    }
+		return false, err
+	}
 
 	err = s.QueryRow(context.Background(), query, guildId, roleIdArray, teamIdArray).Scan(&isSupport)
 	return
@@ -129,6 +129,32 @@ WHERE support_team.guild_id = $1;
 `
 
 	rows, err := s.Query(context.Background(), query, guildId)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var roleId uint64
+		if err := rows.Scan(&roleId); err != nil {
+			return nil, err
+		}
+
+		roles = append(roles, roleId)
+	}
+
+	return
+}
+
+func (s *SupportTeamRolesTable) GetAllSupportRolesForPanel(panelId int) (roles []uint64, err error) {
+	query := `
+SELECT DISTINCT support_team_roles.role_id
+FROM support_team_roles
+INNER JOIN panel_teams
+ON support_team_roles.team_id = panel_teams.team_id
+WHERE panel_teams.panel_id = 844271;
+`
+
+	rows, err := s.Query(context.Background(), query, panelId)
 	if err != nil {
 		return nil, err
 	}
