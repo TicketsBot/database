@@ -151,7 +151,7 @@ SELECT DISTINCT support_team_roles.role_id
 FROM support_team_roles
 INNER JOIN panel_teams
 ON support_team_roles.team_id = panel_teams.team_id
-WHERE panel_teams.panel_id = 844271;
+WHERE panel_teams.panel_id = $1;
 `
 
 	rows, err := s.Query(context.Background(), query, panelId)
