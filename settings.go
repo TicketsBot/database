@@ -191,10 +191,10 @@ DO UPDATE SET "context_menu_permission_level" = $2;
 
 func (s *SettingsTable) SetOverflow(guildId uint64, enabled bool, categoryId *uint64) (err error) {
 	query := `
-INSERT INTO settings("guild_id", "overflow_enabled", "overflow_channel_id")
+INSERT INTO settings("guild_id", "overflow_enabled", "overflow_category_id")
 VALUES($1, $2, $3)
 ON CONFLICT("guild_id")
-DO UPDATE SET "overflow_enabled" = $2, "overflow_channel_id" = $3;
+DO UPDATE SET "overflow_enabled" = $2, "overflow_category_id" = $3;
 `
 
 	_, err = s.Exec(context.Background(), query, guildId, enabled, categoryId)
