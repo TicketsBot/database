@@ -29,18 +29,14 @@ CREATE INDEX IF NOT EXISTS role_permissions_guild_id ON role_permissions("guild_
 `
 }
 
-func (p *RolePermissions) IsSupport(roleId uint64) (support bool, e error) {
-	var admin bool
+func (p *RolePermissions) IsSupport(roleId uint64) (bool, error) {
+	var support, admin bool
 
 	if err := p.QueryRow(context.Background(), `SELECT "support", "admin" from role_permissions WHERE "role_id" = $1;`, roleId).Scan(&support, &admin); err != nil && err != pgx.ErrNoRows {
-		e = err
+		return false, err
 	}
 
-	if admin {
-		support = true
-	}
-
-	return
+	return support || admin, nil
 }
 
 func (p *RolePermissions) IsAdmin(roleId uint64) (admin bool, e error) {
@@ -135,4 +131,3 @@ func (p *RolePermissions) RemoveSupport(guildId, roleId uint64) (err error) {
 	_, err = p.Exec(context.Background(), query, guildId, roleId)
 	return
 }
-
