@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -19,9 +20,24 @@ func (b RoleBlacklist) Schema() string {
 	return `CREATE TABLE IF NOT EXISTS role_blacklist("guild_id" int8 NOT NULL, "role_id" int8 NOT NULL, PRIMARY KEY("guild_id", "role_id"));`
 }
 
-func (b *RoleBlacklist) IsBlacklisted(guildId, roleId uint64) (exists bool, e error) {
+func (b *RoleBlacklist) IsBlacklisted(guildId, roleId uint64) (blacklisted bool, e error) {
 	query := `SELECT EXISTS(SELECT 1 FROM role_blacklist WHERE "guild_id"=$1 AND "role_id"=$2);`
-	if err := b.QueryRow(context.Background(), query, guildId, roleId).Scan(&exists); err != nil {
+	if err := b.QueryRow(context.Background(), query, guildId, roleId).Scan(&blacklisted); err != nil {
+		e = err
+	}
+
+	return
+}
+
+func (b *RoleBlacklist) IsAnyBlacklisted(guildId uint64, roles []uint64) (blacklisted bool, e error) {
+	query := `SELECT EXISTS(SELECT 1 FROM role_blacklist WHERE "guild_id"=$1 AND "role_id"=ANY($2));`
+
+	array := &pgtype.Int8Array{}
+	if err := array.Set(roles); err != nil {
+		return false, err
+	}
+
+	if err := b.QueryRow(context.Background(), query, guildId, array).Scan(&blacklisted); err != nil {
 		e = err
 	}
 
