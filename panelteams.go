@@ -67,8 +67,30 @@ func (p *PanelTeamsTable) DeleteAll(panelId int) (err error) {
 	return
 }
 
-func (p *PanelTeamsTable) Delete(panelId int, teamId uint64) (err error) {
+func (p *PanelTeamsTable) Delete(panelId, teamId int) (err error) {
 	query := `DELETE FROM panel_teams WHERE "panel_id"=$1 AND "team_id"=$2;`
 	_, err = p.Exec(context.Background(), query, panelId, teamId)
 	return
+}
+
+func (p *PanelTeamsTable) Replace(panelId int, teamIds []int) error {
+	tx, err := p.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// Remove existing teams from panel
+	if _, err = tx.Exec(context.Background(), `DELETE FROM panel_teams WHERE "panel_id"=$1;`, panelId); err != nil {
+		return err
+	}
+
+	// Add each provided team to panel
+	for _, teamId := range teamIds {
+		query := `INSERT INTO panel_teams("panel_id", "team_id") VALUES($1, $2) ON CONFLICT("panel_id", "team_id") DO NOTHING;`
+		if _, err = tx.Exec(context.Background(), query, panelId, teamId); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(context.Background())
 }
