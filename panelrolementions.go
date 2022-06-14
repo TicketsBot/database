@@ -72,3 +72,25 @@ func (p *PanelRoleMentions) Delete(panelId int, roleId uint64) (err error) {
 	_, err = p.Exec(context.Background(), query, panelId, roleId)
 	return
 }
+
+func (p *PanelRoleMentions) Replace(panelId int, roleIds []uint64) error {
+	tx, err := p.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// Remove existing mentions from panel
+	if _, err = tx.Exec(context.Background(), `DELETE FROM panel_role_mentions WHERE "panel_id" = $1;`, panelId); err != nil {
+		return err
+	}
+
+	// Add each provided mention to panel
+	for _, roleId := range roleIds {
+		query := `INSERT INTO panel_role_mentions("panel_id", "role_id") VALUES($1, $2) ON CONFLICT("panel_id", "role_id") DO NOTHING;`
+		if _, err = tx.Exec(context.Background(), query, panelId, roleId); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(context.Background())
+}
