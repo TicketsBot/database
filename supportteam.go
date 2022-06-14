@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -46,6 +47,38 @@ func (s *SupportTeamTable) Exists(teamId int, guildId uint64) (exists bool, err 
 	return
 }
 
+func (s *SupportTeamTable) AllTeamsMatchGuild(guildId uint64, teams []int) (valid bool, err error) {
+	query := `SELECT NOT EXISTS(SELECT 1 FROM support_team WHERE "id" = ANY($1) and "guild_id" != $2);`
+
+	array := &pgtype.Int4Array{}
+	if err := array.Set(teams); err != nil {
+		return false, err
+	}
+
+	err = s.QueryRow(context.Background(), query, array, guildId).Scan(&valid)
+	return
+}
+
+func (s *SupportTeamTable) AllTeamsExistForGuild(guildId uint64, teams []int) (valid bool, err error) {
+	query := `
+SELECT EXISTS(
+	SELECT 1
+	FROM support_team
+	WHERE "guild_id" = $1
+	GROUP BY "guild_id"
+	HAVING array_agg(id) @> $2
+);
+`
+
+	array := &pgtype.Int4Array{}
+	if err := array.Set(teams); err != nil {
+		return false, err
+	}
+
+	err = s.QueryRow(context.Background(), query, guildId, array).Scan(&valid)
+	return
+}
+
 func (s *SupportTeamTable) Get(guildId uint64) (teams []SupportTeam, e error) {
 	rows, err := s.Query(context.Background(), `SELECT "id", "name" from support_team WHERE "guild_id" = $1;`, guildId)
 	if err != nil {
@@ -80,7 +113,7 @@ WHERE support_team.guild_id = $1;
 		return nil, err
 	}
 
-	names := make(map[int]string) // team_id -> name
+	names := make(map[int]string)     // team_id -> name
 	members := make(map[int][]uint64) // team_id -> [user_id]
 
 	for rows.Next() {
