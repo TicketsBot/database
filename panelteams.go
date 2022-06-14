@@ -55,6 +55,27 @@ WHERE panel_teams.panel_id = $1;
 	return
 }
 
+func (p *PanelTeamsTable) GetTeamIds(panelId int) (teamIds []int, e error) {
+	query := `SELECT "team_id" FROM panel_teams WHERE "panel_id" = $1;`
+
+	rows, err := p.Query(context.Background(), query, panelId)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+
+		teamIds = append(teamIds, id)
+	}
+
+	return
+}
+
 func (p *PanelTeamsTable) Add(panelId, teamId int) (err error) {
 	query := `INSERT INTO panel_teams("panel_id", "team_id") VALUES($1, $2) ON CONFLICT("panel_id", "team_id") DO NOTHING;`
 	_, err = p.Exec(context.Background(), query, panelId, teamId)
