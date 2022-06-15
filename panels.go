@@ -170,7 +170,8 @@ func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
 	query := `
 SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
 FROM panels
-WHERE "guild_id" = $1;`
+WHERE "guild_id" = $1
+ORDER BY "panel_id" ASC;`
 
 	rows, err := p.Query(context.Background(), query, guildId)
 	defer rows.Close()
