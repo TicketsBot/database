@@ -39,7 +39,8 @@ SELECT
 	panels.content,
 	panels.colour,
 	panels.target_category,
-	panels.reaction_emote,
+	panels.emoji_name,
+	panels.emoji_id,
 	panels.welcome_message,
 	panels.default_team,
 	panels.custom_id,
@@ -71,7 +72,8 @@ WHERE "multi_panel_id" = $1;`
 			&panel.Content,
 			&panel.Colour,
 			&panel.TargetCategory,
-			&panel.ReactionEmote,
+			&panel.EmojiName,
+			&panel.EmojiId,
 			&panel.WelcomeMessage,
 			&panel.WithDefaultTeam,
 			&panel.CustomId,
@@ -92,7 +94,7 @@ WHERE "multi_panel_id" = $1;`
 	return
 }
 
-func (p *MultiPanelTargets) GetMultiPanels(panelId int) (multiPanels []MultiPanel, e error) {
+func (p *MultiPanelTargets) GetMultiPanels(panelId int) ([]MultiPanel, error) {
 	query := `
 SELECT multi_panels.id, multi_panels.message_id, multi_panels.channel_id, multi_panels.guild_id, multi_panels.title, multi_panels.content, multi_panels.colour
 FROM multi_panel_targets
@@ -104,21 +106,20 @@ WHERE multi_panel_targets.panel_id = $1;
 	rows, err := p.Query(context.Background(), query, panelId)
 	defer rows.Close()
 	if err != nil {
-		e = err
-		return
+		return nil, err
 	}
 
+	var multiPanels []MultiPanel
 	for rows.Next() {
 		var multiPanel MultiPanel
 		if err := rows.Scan(&multiPanel.Id, &multiPanel.MessageId, &multiPanel.ChannelId, &multiPanel.GuildId, &multiPanel.Title, &multiPanel.Content, &multiPanel.Colour); err != nil {
-			e = err
 			return nil, err
 		}
 
 		multiPanels = append(multiPanels, multiPanel)
 	}
 
-	return
+	return multiPanels, nil
 }
 
 func (p *MultiPanelTargets) Insert(multiPanelId, panelId int) (err error) {
