@@ -23,6 +23,7 @@ type Panel struct {
 	ImageUrl        *string `json:"image_url,omitempty"`
 	ThumbnailUrl    *string `json:"thumbnail_url,omitempty"`
 	ButtonStyle     int     `json:"button_style"`
+	ButtonLabel     string  `json:"button_label"`
 	FormId          *int    `json:"form_id"`
 }
 
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"image_url" varchar(255),
 	"thumbnail_url" varchar(255),
 	"button_style" int2 DEFAULT 1,
+	"button_label" varchar(80) NOT NULL,
 	"form_id" int DEFAULT NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
 	PRIMARY KEY("panel_id")
@@ -68,13 +70,46 @@ CREATE INDEX IF NOT EXISTS panels_custom_id ON panels("custom_id");`
 
 func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
+SELECT
+	panel_id,
+	message_id,
+	channel_id,
+	guild_id,
+	title,
+	content,
+	colour,
+	target_category,
+	reaction_emote,
+	welcome_message,
+	default_team,
+	custom_id,
+	image_url,
+	thumbnail_url,
+	button_style,
+	button_label,
+	form_id
 FROM panels
 WHERE "message_id" = $1;
 `
 
 	if err := p.QueryRow(context.Background(), query, messageId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+		&panel.PanelId,
+		&panel.MessageId,
+		&panel.ChannelId,
+		&panel.GuildId,
+		&panel.Title,
+		&panel.Content,
+		&panel.Colour,
+		&panel.TargetCategory,
+		&panel.ReactionEmote,
+		&panel.WelcomeMessage,
+		&panel.WithDefaultTeam,
+		&panel.CustomId,
+		&panel.ImageUrl,
+		&panel.ThumbnailUrl,
+		&panel.ButtonStyle,
+		&panel.ButtonLabel,
+		&panel.FormId,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -84,13 +119,46 @@ WHERE "message_id" = $1;
 
 func (p *PanelTable) GetById(panelId int) (panel Panel, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
+SELECT
+	panel_id,
+	message_id,
+	channel_id,
+	guild_id,
+	title,
+	content,
+	colour,
+	target_category,
+	reaction_emote,
+	welcome_message,
+	default_team,
+	custom_id,
+	image_url,
+	thumbnail_url,
+	button_style,
+	button_label,
+	form_id
 FROM panels
 WHERE "panel_id" = $1;
 `
 
 	if err := p.QueryRow(context.Background(), query, panelId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+		&panel.PanelId,
+		&panel.MessageId,
+		&panel.ChannelId,
+		&panel.GuildId,
+		&panel.Title,
+		&panel.Content,
+		&panel.Colour,
+		&panel.TargetCategory,
+		&panel.ReactionEmote,
+		&panel.WelcomeMessage,
+		&panel.WithDefaultTeam,
+		&panel.CustomId,
+		&panel.ImageUrl,
+		&panel.ThumbnailUrl,
+		&panel.ButtonStyle,
+		&panel.ButtonLabel,
+		&panel.FormId,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -100,13 +168,46 @@ WHERE "panel_id" = $1;
 
 func (p *PanelTable) GetByCustomId(guildId uint64, customId string) (panel Panel, ok bool, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
+SELECT
+	panel_id,
+	message_id,
+	channel_id,
+	guild_id,
+	title,
+	content,
+	colour,
+	target_category,
+	reaction_emote,
+	welcome_message,
+	default_team,
+	custom_id,
+	image_url,
+	thumbnail_url,
+	button_style,
+	button_label,
+	form_id
 FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
 
 	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+		&panel.PanelId,
+		&panel.MessageId,
+		&panel.ChannelId,
+		&panel.GuildId,
+		&panel.Title,
+		&panel.Content,
+		&panel.Colour,
+		&panel.TargetCategory,
+		&panel.ReactionEmote,
+		&panel.WelcomeMessage,
+		&panel.WithDefaultTeam,
+		&panel.CustomId,
+		&panel.ImageUrl,
+		&panel.ThumbnailUrl,
+		&panel.ButtonStyle,
+		&panel.ButtonLabel,
+		&panel.FormId,
 	)
 
 	switch err {
@@ -122,13 +223,46 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 
 func (p *PanelTable) GetByFormId(guildId uint64, formId int) (panel Panel, ok bool, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
+SELECT
+	panel_id,
+	message_id,
+	channel_id,
+	guild_id,
+	title,
+	content,
+	colour,
+	target_category,
+	reaction_emote,
+	welcome_message,
+	default_team,
+	custom_id,
+	image_url,
+	thumbnail_url,
+	button_style,
+	button_label,
+	form_id
 FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
 
 	err := p.QueryRow(context.Background(), query, guildId, formId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+		&panel.PanelId,
+		&panel.MessageId,
+		&panel.ChannelId,
+		&panel.GuildId,
+		&panel.Title,
+		&panel.Content,
+		&panel.Colour,
+		&panel.TargetCategory,
+		&panel.ReactionEmote,
+		&panel.WelcomeMessage,
+		&panel.WithDefaultTeam,
+		&panel.CustomId,
+		&panel.ImageUrl,
+		&panel.ThumbnailUrl,
+		&panel.ButtonStyle,
+		&panel.ButtonLabel,
+		&panel.FormId,
 	)
 
 	switch err {
@@ -144,7 +278,24 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 
 func (p *PanelTable) GetByFormCustomId(guildId uint64, customId string) (panel Panel, ok bool, e error) {
 	query := `
-SELECT panels.panel_id, panels.message_id, panels.channel_id, panels.guild_id, panels.title, panels.content, panels.colour, panels.target_category, panels.reaction_emote, panels.welcome_message, panels.default_team, panels.custom_id, panels.image_url, panels.thumbnail_url, panels.button_style, panels.form_id
+SELECT
+	panels.panel_id,
+	panels.message_id,
+	panels.channel_id,
+	panels.guild_id,
+	panels.title,
+	panels.content,
+	panels.colour,
+	panels.target_category,
+	panels.reaction_emote,
+	panels.welcome_message,
+	panels.default_team,
+	panels.custom_id,
+	panels.image_url,
+	panels.thumbnail_url,
+	panels.button_style,
+	panels.button_label,
+	panels.form_id
 FROM panels
 INNER JOIN forms
 ON forms.form_id = panels.form_id
@@ -152,7 +303,23 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 `
 
 	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
-		&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
+		&panel.PanelId,
+		&panel.MessageId,
+		&panel.ChannelId,
+		&panel.GuildId,
+		&panel.Title,
+		&panel.Content,
+		&panel.Colour,
+		&panel.TargetCategory,
+		&panel.ReactionEmote,
+		&panel.WelcomeMessage,
+		&panel.WithDefaultTeam,
+		&panel.CustomId,
+		&panel.ImageUrl,
+		&panel.ThumbnailUrl,
+		&panel.ButtonStyle,
+		&panel.ButtonLabel,
+		&panel.FormId,
 	)
 
 	switch err {
@@ -168,25 +335,58 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 
 func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
 	query := `
-SELECT panel_id, message_id, channel_id, guild_id, title, content, colour, target_category, reaction_emote, welcome_message, default_team, custom_id, image_url, thumbnail_url, button_style, form_id
+SELECT
+	panel_id,
+	message_id,
+	channel_id, 
+	guild_id,
+	title,
+	content,
+	colour,
+	target_category,
+	reaction_emote,
+	welcome_message,
+	default_team,
+	custom_id,
+	image_url,
+	thumbnail_url,
+	button_style,
+	button_label,
+	form_id
 FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
 
 	rows, err := p.Query(context.Background(), query, guildId)
 	defer rows.Close()
-	if err != nil && err != pgx.ErrNoRows {
-		e = err
-		return
+	if err != nil {
+		return nil, err
 	}
 
 	for rows.Next() {
 		var panel Panel
-		if err := rows.Scan(
-			&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle, &panel.FormId,
-		); err != nil {
-			e = err
-			continue
+		err := rows.Scan(
+			&panel.PanelId,
+			&panel.MessageId,
+			&panel.ChannelId,
+			&panel.GuildId,
+			&panel.Title,
+			&panel.Content,
+			&panel.Colour,
+			&panel.TargetCategory,
+			&panel.ReactionEmote,
+			&panel.WelcomeMessage,
+			&panel.WithDefaultTeam,
+			&panel.CustomId,
+			&panel.ImageUrl,
+			&panel.ThumbnailUrl,
+			&panel.ButtonStyle,
+			&panel.ButtonLabel,
+			&panel.FormId,
+		)
+
+		if err != nil {
+			return nil, err
 		}
 
 		panels = append(panels, panel)
@@ -197,12 +397,47 @@ ORDER BY "panel_id" ASC;`
 
 func (p *PanelTable) Create(panel Panel) (panelId int, err error) {
 	query := `
-INSERT INTO panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "target_category", "reaction_emote", "welcome_message", "default_team", "custom_id", "image_url", "thumbnail_url", "button_style", "form_id")
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+INSERT INTO panels(
+	"message_id",
+	"channel_id",
+	"guild_id",
+	"title",
+	"content",
+	"colour",
+	"target_category",
+	"reaction_emote",
+	"welcome_message",
+	"default_team",
+	"custom_id",
+	"image_url",
+	"thumbnail_url",
+	"button_style",
+	"button_label",
+	"form_id"
+)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
-	err = p.QueryRow(context.Background(), query, panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam, panel.CustomId, panel.ImageUrl, panel.ThumbnailUrl, panel.ButtonStyle, panel.FormId).Scan(&panelId)
+	err = p.QueryRow(context.Background(), query,
+		panel.MessageId,
+		panel.ChannelId,
+		panel.GuildId,
+		panel.Title,
+		panel.Content,
+		panel.Colour,
+		panel.TargetCategory,
+		panel.ReactionEmote,
+		panel.WelcomeMessage,
+		panel.WithDefaultTeam,
+		panel.CustomId,
+		panel.ImageUrl,
+		panel.ThumbnailUrl,
+		panel.ButtonStyle,
+		panel.ButtonLabel,
+		panel.FormId,
+	).Scan(&panelId)
+
 	return
 }
 
@@ -222,11 +457,29 @@ UPDATE panels
 		"image_url" = $12,
 		"thumbnail_url" = $13,
 		"button_style" = $14,
-		"form_id" = $15
+		"button_label" = $15,
+		"form_id" = $16
 	WHERE
 		"panel_id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query, panel.PanelId, panel.MessageId, panel.ChannelId, panel.Title, panel.Content, panel.Colour, panel.TargetCategory, panel.ReactionEmote, panel.WelcomeMessage, panel.WithDefaultTeam, panel.CustomId, panel.ImageUrl, panel.ThumbnailUrl, panel.ButtonStyle, panel.FormId)
+	_, err = p.Exec(context.Background(), query,
+		panel.PanelId,
+		panel.MessageId,
+		panel.ChannelId,
+		panel.Title,
+		panel.Content,
+		panel.Colour,
+		panel.TargetCategory,
+		panel.ReactionEmote,
+		panel.WelcomeMessage,
+		panel.WithDefaultTeam,
+		panel.CustomId,
+		panel.ImageUrl,
+		panel.ThumbnailUrl,
+		panel.ButtonStyle,
+		panel.ButtonLabel,
+		panel.FormId,
+	)
 	return
 }
 
