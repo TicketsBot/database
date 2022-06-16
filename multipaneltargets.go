@@ -30,7 +30,24 @@ CREATE INDEX IF NOT EXISTS multi_panel_targets_multi_panel_id ON multi_panel_tar
 
 func (p *MultiPanelTargets) GetPanels(multiPanelId int) (panels []Panel, e error) {
 	query := `
-SELECT panels.panel_id, panels.message_id, panels.channel_id, panels.guild_id, panels.title, panels.content, panels.colour, panels.target_category, panels.reaction_emote, panels.welcome_message, panels.default_team, panels.custom_id, panels.image_url, panels.thumbnail_url, panels.button_style
+SELECT
+	panels.panel_id,
+	panels.message_id,
+	panels.channel_id,
+	panels.guild_id,
+	panels.title,
+	panels.content,
+	panels.colour,
+	panels.target_category,
+	panels.reaction_emote,
+	panels.welcome_message,
+	panels.default_team,
+	panels.custom_id,
+	panels.image_url,
+	panels.thumbnail_url,
+	panels.button_style,
+	panels.button_label,
+	panels.form_id
 FROM multi_panel_targets
 INNER JOIN panels
 ON panels.panel_id = multi_panel_targets.panel_id
@@ -45,11 +62,28 @@ WHERE "multi_panel_id" = $1;`
 
 	for rows.Next() {
 		var panel Panel
-		if err := rows.Scan(
-			&panel.PanelId, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.TargetCategory, &panel.ReactionEmote, &panel.WelcomeMessage, &panel.WithDefaultTeam, &panel.CustomId, &panel.ImageUrl, &panel.ThumbnailUrl, &panel.ButtonStyle,
-		); err != nil {
-			e = err
-			continue
+		err := rows.Scan(
+			&panel.PanelId,
+			&panel.MessageId,
+			&panel.ChannelId,
+			&panel.GuildId,
+			&panel.Title,
+			&panel.Content,
+			&panel.Colour,
+			&panel.TargetCategory,
+			&panel.ReactionEmote,
+			&panel.WelcomeMessage,
+			&panel.WithDefaultTeam,
+			&panel.CustomId,
+			&panel.ImageUrl,
+			&panel.ThumbnailUrl,
+			&panel.ButtonStyle,
+			&panel.ButtonLabel,
+			&panel.FormId,
+		)
+
+		if err != nil {
+			return nil, err
 		}
 
 		panels = append(panels, panel)
