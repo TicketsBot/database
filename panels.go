@@ -26,6 +26,7 @@ type Panel struct {
 	ButtonStyle     int     `json:"button_style"`
 	ButtonLabel     string  `json:"button_label"`
 	FormId          *int    `json:"form_id"`
+	NamingScheme    *string `json:"naming_scheme"`
 }
 
 type PanelTable struct {
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"button_style" int2 DEFAULT 1,
 	"button_label" varchar(80) NOT NULL,
 	"form_id" int DEFAULT NULL,
+	"naming_scheme" varchar(100) DEFAULT NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
 	PRIMARY KEY("panel_id")
 );
@@ -90,7 +92,8 @@ SELECT
 	thumbnail_url,
 	button_style,
 	button_label,
-	form_id
+	form_id,
+	naming_scheme
 FROM panels
 WHERE "message_id" = $1;
 `
@@ -114,6 +117,7 @@ WHERE "message_id" = $1;
 		&panel.ButtonStyle,
 		&panel.ButtonLabel,
 		&panel.FormId,
+		&panel.NamingScheme,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -141,7 +145,8 @@ SELECT
 	thumbnail_url,
 	button_style,
 	button_label,
-	form_id
+	form_id,
+	naming_scheme
 FROM panels
 WHERE "panel_id" = $1;
 `
@@ -165,6 +170,7 @@ WHERE "panel_id" = $1;
 		&panel.ButtonStyle,
 		&panel.ButtonLabel,
 		&panel.FormId,
+		&panel.NamingScheme,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -192,7 +198,8 @@ SELECT
 	thumbnail_url,
 	button_style,
 	button_label,
-	form_id
+	form_id,
+	naming_scheme
 FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
@@ -216,6 +223,7 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 		&panel.ButtonStyle,
 		&panel.ButtonLabel,
 		&panel.FormId,
+		&panel.NamingScheme,
 	)
 
 	switch err {
@@ -249,7 +257,8 @@ SELECT
 	thumbnail_url,
 	button_style,
 	button_label,
-	form_id
+	form_id,
+	naming_scheme
 FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
@@ -273,6 +282,7 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 		&panel.ButtonStyle,
 		&panel.ButtonLabel,
 		&panel.FormId,
+		&panel.NamingScheme,
 	)
 
 	switch err {
@@ -306,7 +316,8 @@ SELECT
 	panels.thumbnail_url,
 	panels.button_style,
 	panels.button_label,
-	panels.form_id
+	panels.form_id,
+	panels.naming_scheme
 FROM panels
 INNER JOIN forms
 ON forms.form_id = panels.form_id
@@ -332,6 +343,7 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 		&panel.ButtonStyle,
 		&panel.ButtonLabel,
 		&panel.FormId,
+		&panel.NamingScheme,
 	)
 
 	switch err {
@@ -365,7 +377,8 @@ SELECT
 	thumbnail_url,
 	button_style,
 	button_label,
-	form_id
+	form_id,
+	naming_scheme
 FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
@@ -397,6 +410,7 @@ ORDER BY "panel_id" ASC;`
 			&panel.ButtonStyle,
 			&panel.ButtonLabel,
 			&panel.FormId,
+			&panel.NamingScheme,
 		)
 
 		if err != nil {
@@ -428,9 +442,10 @@ INSERT INTO panels(
 	"thumbnail_url",
 	"button_style",
 	"button_label",
-	"form_id"
+	"form_id",
+	"naming_scheme"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
@@ -452,6 +467,7 @@ RETURNING "panel_id";`
 		panel.ButtonStyle,
 		panel.ButtonLabel,
 		panel.FormId,
+		panel.NamingScheme,
 	).Scan(&panelId)
 
 	return
@@ -475,7 +491,8 @@ UPDATE panels
 		"thumbnail_url" = $14,
 		"button_style" = $15,
 		"button_label" = $16,
-		"form_id" = $17
+		"form_id" = $17,
+		"naming_scheme" = $18
 	WHERE
 		"panel_id" = $1
 ;`
@@ -497,6 +514,7 @@ UPDATE panels
 		panel.ButtonStyle,
 		panel.ButtonLabel,
 		panel.FormId,
+		panel.NamingScheme,
 	)
 	return
 }

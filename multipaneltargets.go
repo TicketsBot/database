@@ -48,7 +48,8 @@ SELECT
 	panels.thumbnail_url,
 	panels.button_style,
 	panels.button_label,
-	panels.form_id
+	panels.form_id,
+	panels.naming_scheme
 FROM multi_panel_targets
 INNER JOIN panels
 ON panels.panel_id = multi_panel_targets.panel_id
@@ -82,6 +83,7 @@ WHERE "multi_panel_id" = $1;`
 			&panel.ButtonStyle,
 			&panel.ButtonLabel,
 			&panel.FormId,
+			&panel.NamingScheme,
 		)
 
 		if err != nil {
