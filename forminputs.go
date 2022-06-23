@@ -214,6 +214,7 @@ WITH next AS (
 	SELECT id, position
 	FROM form_input
 	WHERE form_id = $2 AND position %s (SELECT position FROM form_input WHERE id=$1)
+	ORDER BY position DESC
 	LIMIT 1
 )
 UPDATE form_input
