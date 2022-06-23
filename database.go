@@ -11,6 +11,7 @@ type Database struct {
 	AutoClose                  *AutoCloseTable
 	AutoCloseExclude           *AutoCloseExclude
 	Blacklist                  *Blacklist
+	BotStaff                   *BotStaff
 	ChannelCategory            *ChannelCategory
 	ClaimSettings              *ClaimSettingsTable
 	CloseConfirmation          *CloseConfirmation
@@ -43,6 +44,7 @@ type Database struct {
 	ServerBlacklist            *ServerBlacklist
 	ServiceRatings             *ServiceRatings
 	Settings                   *SettingsTable
+	StaffOverride              *StaffOverride
 	SupportTeam                *SupportTeamTable
 	SupportTeamMembers         *SupportTeamMembersTable
 	SupportTeamRoles           *SupportTeamRolesTable
@@ -75,6 +77,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		AutoClose:                  newAutoCloseTable(pool),
 		AutoCloseExclude:           newAutoCloseExclude(pool),
 		Blacklist:                  newBlacklist(pool),
+		BotStaff:                   newBotStaff(pool),
 		ChannelCategory:            newChannelCategory(pool),
 		ClaimSettings:              newClaimSettingsTable(pool),
 		CloseConfirmation:          newCloseConfirmation(pool),
@@ -107,6 +110,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ServerBlacklist:            newServerBlacklist(pool),
 		ServiceRatings:             newServiceRatings(pool),
 		Settings:                   newSettingsTable(pool),
+		StaffOverride:              newStaffOverride(pool),
 		SupportTeam:                newSupportTeamTable(pool),
 		SupportTeamMembers:         newSupportTeamMembersTable(pool),
 		SupportTeamRoles:           newSupportTeamRolesTable(pool),
@@ -139,6 +143,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.ArchiveChannel,
 		d.AutoClose,
 		d.Blacklist,
+		d.BotStaff,
 		d.ChannelCategory,
 		d.ClaimSettings,
 		d.CloseConfirmation,
@@ -164,6 +169,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.RolePermissions,
 		d.ServerBlacklist,
 		d.Settings,
+		d.StaffOverride,
 		d.SupportTeam,
 		d.SupportTeamMembers,
 		d.SupportTeamRoles,
