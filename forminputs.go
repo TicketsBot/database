@@ -148,7 +148,7 @@ ORDER BY form_input.position ASC;
 func (f *FormInputTable) Create(formId int, customId string, style uint8, label string, placeholder *string, required bool) (int, error) {
 	query := `
 INSERT INTO form_input("form_id", "position", "custom_id", "style", "label", "placeholder", "required")
-VALUES($1, (SELECT COALESCE(MAX("id"), 0) + 1 FROM form_input WHERE "form_id" = $1), $2, $3, $4, $5, $6)
+VALUES($1, (SELECT COALESCE(MAX("position"), 0) + 1 FROM form_input WHERE "form_id" = $1), $2, $3, $4, $5, $6)
 RETURNING "id";
 `
 
