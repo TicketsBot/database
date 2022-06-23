@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS form_input(
 	"required" BOOL NOT NULL DEFAULT 't',
 	FOREIGN KEY("form_id") REFERENCES forms("form_id") ON DELETE CASCADE,
 	UNIQUE("form_id", "position") DEFERRABLE INITIALLY DEFERRED,
+	CHECK(position >= 1),
+	CHECK(position <= 5),
 	PRIMARY KEY("id")
 );
 CREATE INDEX IF NOT EXISTS form_input_form_id ON form_input("form_id");
