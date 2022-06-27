@@ -75,7 +75,7 @@ WHERE "multi_panel_id" = $1;`
 			&panel.TargetCategory,
 			&panel.EmojiName,
 			&panel.EmojiId,
-			&panel.WelcomeMessage,
+			&panel.WelcomeMessageEmbed,
 			&panel.WithDefaultTeam,
 			&panel.CustomId,
 			&panel.ImageUrl,

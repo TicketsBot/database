@@ -19,6 +19,8 @@ type Database struct {
 	CloseRequest               *CloseRequestTable
 	CustomColours              *CustomColours
 	DmOnOpen                   *DmOnOpen
+	EmbedFields                *EmbedFieldsTable
+	Embeds                     *EmbedsTable
 	FeedbackEnabled            *FeedbackEnabled
 	FirstResponseTime          *FirstResponseTime
 	FirstResponseTimeGuildView *FirstResponseTimeGuildView
@@ -85,6 +87,8 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		CloseRequest:               newCloseRequestTable(pool),
 		CustomColours:              newCustomColours(pool),
 		DmOnOpen:                   newDmOnOpen(pool),
+		EmbedFields:                newEmbedFieldsTable(pool),
+		Embeds:                     newEmbedsTable(pool),
 		FeedbackEnabled:            newFeedbackEnabled(pool),
 		FirstResponseTime:          newFirstResponseTime(pool),
 		FirstResponseTimeGuildView: newFirstResponseTimeGuildView(pool),
@@ -149,6 +153,8 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.CloseConfirmation,
 		d.CustomColours,
 		d.DmOnOpen,
+		d.Embeds,
+		d.EmbedFields, // depends on embeds
 		d.FeedbackEnabled,
 		d.Forms,
 		d.FormInput,

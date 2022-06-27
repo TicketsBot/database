@@ -8,25 +8,30 @@ import (
 
 // ALTER TABLE panels ADD COLUMN default_team bool NOT NULL DEFAULT 't';
 type Panel struct {
-	PanelId         int     `json:"panel_id"`
-	MessageId       uint64  `json:"message_id,string"`
-	ChannelId       uint64  `json:"channel_id,string"`
-	GuildId         uint64  `json:"guild_id,string"`
-	Title           string  `json:"title"`
-	Content         string  `json:"content"`
-	Colour          int32   `json:"colour"`
-	TargetCategory  uint64  `json:"category_id,string"`
-	EmojiName       *string `json:"emoji_name"`
-	EmojiId         *uint64 `json:"emoji_id,string"`
-	WelcomeMessage  *string `json:"welcome_message"`
-	WithDefaultTeam bool    `json:"default_team"`
-	CustomId        string  `json:"-"`
-	ImageUrl        *string `json:"image_url,omitempty"`
-	ThumbnailUrl    *string `json:"thumbnail_url,omitempty"`
-	ButtonStyle     int     `json:"button_style"`
-	ButtonLabel     string  `json:"button_label"`
-	FormId          *int    `json:"form_id"`
-	NamingScheme    *string `json:"naming_scheme"`
+	PanelId             int     `json:"panel_id"`
+	MessageId           uint64  `json:"message_id,string"`
+	ChannelId           uint64  `json:"channel_id,string"`
+	GuildId             uint64  `json:"guild_id,string"`
+	Title               string  `json:"title"`
+	Content             string  `json:"content"`
+	Colour              int32   `json:"colour"`
+	TargetCategory      uint64  `json:"category_id,string"`
+	EmojiName           *string `json:"emoji_name"`
+	EmojiId             *uint64 `json:"emoji_id,string"`
+	WelcomeMessageEmbed *int    `json:"welcome_message_embed"`
+	WithDefaultTeam     bool    `json:"default_team"`
+	CustomId            string  `json:"-"`
+	ImageUrl            *string `json:"image_url,omitempty"`
+	ThumbnailUrl        *string `json:"thumbnail_url,omitempty"`
+	ButtonStyle         int     `json:"button_style"`
+	ButtonLabel         string  `json:"button_label"`
+	FormId              *int    `json:"form_id"`
+	NamingScheme        *string `json:"naming_scheme"`
+}
+
+type PanelWithWelcomeMessage struct {
+	Panel
+	WelcomeMessage *CustomEmbed
 }
 
 type PanelTable struct {
@@ -53,7 +58,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"target_category" int8 NOT NULL,
 	"emoji_name" varchar(32) DEFAULT NULL,
 	"emoji_id" int8 DEFAULT NULL,
-	"welcome_message" text,
+	"welcome_message" int NULL,
 	"default_team" bool NOT NULL,
 	"custom_id" varchar(100) NOT NULL,
 	"image_url" varchar(255),
@@ -62,6 +67,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"button_label" varchar(80) NOT NULL,
 	"form_id" int DEFAULT NULL,
 	"naming_scheme" varchar(100) DEFAULT NULL,
+	FOREIGN KEY ("welcome_message") REFERENCES embeds("id") ON DELETE SET NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
 	PRIMARY KEY("panel_id")
 );
@@ -109,7 +115,7 @@ WHERE "message_id" = $1;
 		&panel.TargetCategory,
 		&panel.EmojiName,
 		&panel.EmojiId,
-		&panel.WelcomeMessage,
+		&panel.WelcomeMessageEmbed,
 		&panel.WithDefaultTeam,
 		&panel.CustomId,
 		&panel.ImageUrl,
@@ -162,7 +168,7 @@ WHERE "panel_id" = $1;
 		&panel.TargetCategory,
 		&panel.EmojiName,
 		&panel.EmojiId,
-		&panel.WelcomeMessage,
+		&panel.WelcomeMessageEmbed,
 		&panel.WithDefaultTeam,
 		&panel.CustomId,
 		&panel.ImageUrl,
@@ -215,7 +221,7 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 		&panel.TargetCategory,
 		&panel.EmojiName,
 		&panel.EmojiId,
-		&panel.WelcomeMessage,
+		&panel.WelcomeMessageEmbed,
 		&panel.WithDefaultTeam,
 		&panel.CustomId,
 		&panel.ImageUrl,
@@ -274,7 +280,7 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 		&panel.TargetCategory,
 		&panel.EmojiName,
 		&panel.EmojiId,
-		&panel.WelcomeMessage,
+		&panel.WelcomeMessageEmbed,
 		&panel.WithDefaultTeam,
 		&panel.CustomId,
 		&panel.ImageUrl,
@@ -335,7 +341,7 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 		&panel.TargetCategory,
 		&panel.EmojiName,
 		&panel.EmojiId,
-		&panel.WelcomeMessage,
+		&panel.WelcomeMessageEmbed,
 		&panel.WithDefaultTeam,
 		&panel.CustomId,
 		&panel.ImageUrl,
@@ -402,7 +408,7 @@ ORDER BY "panel_id" ASC;`
 			&panel.TargetCategory,
 			&panel.EmojiName,
 			&panel.EmojiId,
-			&panel.WelcomeMessage,
+			&panel.WelcomeMessageEmbed,
 			&panel.WithDefaultTeam,
 			&panel.CustomId,
 			&panel.ImageUrl,
@@ -418,6 +424,121 @@ ORDER BY "panel_id" ASC;`
 		}
 
 		panels = append(panels, panel)
+	}
+
+	return
+}
+
+func (p *PanelTable) GetByGuildWithWelcomeMessage(guildId uint64) (panels []PanelWithWelcomeMessage, e error) {
+	query := `
+SELECT
+	panels.panel_id,
+	panels.message_id,
+	panels.channel_id, 
+	panels.guild_id,
+	panels.title,
+	panels.content,
+	panels.colour,
+	panels.target_category,
+	panels.emoji_name,
+	panels.emoji_id,
+	panels.welcome_message,
+	panels.default_team,
+	panels.custom_id,
+	panels.image_url,
+	panels.thumbnail_url,
+	panels.button_style,
+	panels.button_label,
+	panels.form_id,
+	panels.naming_scheme,
+	embeds.id,
+	embeds.guild_id,
+	embeds.title,
+	embeds.description,
+	embeds.url,
+	embeds.colour,
+	embeds.author_name,
+	embeds.author_icon_url,
+	embeds.author_url,
+	embeds.image_url,
+	embeds.thumbnail_url,
+	embeds.footer_text,
+	embeds.footer_icon_url,
+	embeds.timestamp
+FROM panels
+LEFT JOIN embeds
+ON panels.welcome_message = embeds.id
+WHERE panels.guild_id = $1
+ORDER BY panels.panel_id ASC;`
+
+	rows, err := p.Query(context.Background(), query, guildId)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var panel Panel
+		var embed CustomEmbed
+
+		// Can't scan missing values into non-nullable fields
+		var embedId *int
+		var embedGuildId *uint64
+		var embedColour *uint32
+
+		err := rows.Scan(
+			&panel.PanelId,
+			&panel.MessageId,
+			&panel.ChannelId,
+			&panel.GuildId,
+			&panel.Title,
+			&panel.Content,
+			&panel.Colour,
+			&panel.TargetCategory,
+			&panel.EmojiName,
+			&panel.EmojiId,
+			&panel.WelcomeMessageEmbed,
+			&panel.WithDefaultTeam,
+			&panel.CustomId,
+			&panel.ImageUrl,
+			&panel.ThumbnailUrl,
+			&panel.ButtonStyle,
+			&panel.ButtonLabel,
+			&panel.FormId,
+			&panel.NamingScheme,
+			&embedId,
+			&embedGuildId,
+			&embed.Title,
+			&embed.Description,
+			&embed.Url,
+			&embedColour,
+			&embed.AuthorName,
+			&embed.AuthorIconUrl,
+			&embed.AuthorUrl,
+			&embed.ImageUrl,
+			&embed.ThumbnailUrl,
+			&embed.FooterText,
+			&embed.FooterIconUrl,
+			&embed.Timestamp,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		var embedPtr *CustomEmbed
+		if embedId != nil {
+			embed.Id = *embedId
+			embed.GuildId = *embedGuildId
+			embed.Colour = *embedColour
+
+			embedPtr = &embed
+		}
+
+		panels = append(panels, PanelWithWelcomeMessage{
+			Panel:          panel,
+			WelcomeMessage: embedPtr,
+		})
 	}
 
 	return
@@ -459,7 +580,7 @@ RETURNING "panel_id";`
 		panel.TargetCategory,
 		panel.EmojiName,
 		panel.EmojiId,
-		panel.WelcomeMessage,
+		panel.WelcomeMessageEmbed,
 		panel.WithDefaultTeam,
 		panel.CustomId,
 		panel.ImageUrl,
@@ -506,7 +627,7 @@ UPDATE panels
 		panel.TargetCategory,
 		panel.EmojiName,
 		panel.EmojiId,
-		panel.WelcomeMessage,
+		panel.WelcomeMessageEmbed,
 		panel.WithDefaultTeam,
 		panel.CustomId,
 		panel.ImageUrl,
