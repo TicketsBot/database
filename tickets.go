@@ -253,6 +253,29 @@ WHERE "channel_id" = $1;`
 	return
 }
 
+func (t *TicketTable) GetByChannelAndGuild(channelId, guildId uint64) (ticket Ticket, e error) {
+	query := `
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time
+FROM tickets
+WHERE "channel_id" = $1 AND "guild_id" = $2;`
+
+	if err := t.QueryRow(context.Background(), query, channelId, guildId).Scan(
+		&ticket.Id,
+		&ticket.GuildId,
+		&ticket.ChannelId,
+		&ticket.UserId,
+		&ticket.Open,
+		&ticket.OpenTime,
+		&ticket.WelcomeMessageId,
+		&ticket.PanelId,
+		&ticket.HasTranscript,
+		&ticket.CloseTime,
+	); err != nil && err != pgx.ErrNoRows {
+		e = err
+	}
+	return
+}
+
 func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time
