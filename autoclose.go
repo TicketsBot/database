@@ -64,6 +64,17 @@ ON CONFLICT("guild_id") DO
 	return
 }
 
+func (a *AutoCloseTable) Reset(guildId uint64) (err error) {
+	query := `
+UPDATE auto_close
+SET since_open_with_no_response = NULL, since_last_message = NULL
+WHERE "guild_id" = $1;
+`
+
+	_, err = a.Exec(context.Background(), query, guildId)
+	return
+}
+
 func (a *AutoCloseTable) Delete(guildId uint64) (err error) {
 	query := `
 DELETE FROM auto_close
