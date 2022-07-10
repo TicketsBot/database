@@ -18,6 +18,7 @@ type Database struct {
 	CloseReason                   *CloseReasonTable
 	CloseRequest                  *CloseRequestTable
 	CustomIntegrations            *CustomIntegrationTable
+	CustomIntegrationGuildCounts  *CustomIntegrationGuildCountsView
 	CustomIntegrationGuilds       *CustomIntegrationGuildsTable
 	CustomIntegrationHeaders      *CustomIntegrationHeadersTable
 	CustomIntegrationPlaceholders *CustomIntegrationPlaceholdersTable
@@ -92,6 +93,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		CloseReason:                   newCloseReasonTable(pool),
 		CloseRequest:                  newCloseRequestTable(pool),
 		CustomIntegrations:            newCustomIntegrationTable(pool),
+		CustomIntegrationGuildCounts:  newCustomIntegrationGuildCountsView(pool),
 		CustomIntegrationGuilds:       newCustomIntegrationGuildsTable(pool),
 		CustomIntegrationHeaders:      newCustomIntegrationHeadersTable(pool),
 		CustomIntegrationPlaceholders: newCustomIntegrationPlaceholdersTable(pool),
@@ -165,6 +167,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.CloseConfirmation,
 		d.CustomIntegrations,
 		d.CustomIntegrationGuilds,
+		d.CustomIntegrationGuildCounts,
 		d.CustomIntegrationHeaders,
 		d.CustomIntegrationPlaceholders,
 		d.CustomIntegrationSecrets,
@@ -233,6 +236,7 @@ func (d *Database) Views() []View {
 		d.TicketDurationView,
 		d.FirstResponseTimeGuildView,
 		d.TopCloseReasonsView,
+		d.CustomIntegrationGuildCounts,
 	}
 }
 
