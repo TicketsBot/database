@@ -33,6 +33,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS %[1]s
 AS
 	SELECT integration_id, COUNT(*) AS COUNT
 	FROM custom_integration_guilds
+	GROUP BY integration_id
 WITH DATA;
 `, tableName)
 }
