@@ -100,6 +100,8 @@ func (p *PanelTeamsTable) Replace(panelId int, teamIds []int) error {
 		return err
 	}
 
+	defer tx.Rollback(context.Background())
+
 	// Remove existing teams from panel
 	if _, err = tx.Exec(context.Background(), `DELETE FROM panel_teams WHERE "panel_id"=$1;`, panelId); err != nil {
 		return err

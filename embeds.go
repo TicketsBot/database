@@ -164,6 +164,8 @@ RETURNING "id";
 		return 0, err
 	}
 
+	defer tx.Rollback(context.Background())
+
 	// Create actual embed
 	var embedId int
 	err = tx.QueryRow(
@@ -270,6 +272,8 @@ WHERE "id" = $1;
 	if err != nil {
 		return err
 	}
+
+	defer tx.Rollback(context.Background())
 
 	// Update actual embed
 	_, err = tx.Exec(

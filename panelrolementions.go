@@ -79,6 +79,8 @@ func (p *PanelRoleMentions) Replace(panelId int, roleIds []uint64) error {
 		return err
 	}
 
+	defer tx.Rollback(context.Background())
+
 	// Remove existing mentions from panel
 	if _, err = tx.Exec(context.Background(), `DELETE FROM panel_role_mentions WHERE "panel_id" = $1;`, panelId); err != nil {
 		return err

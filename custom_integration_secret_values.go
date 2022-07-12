@@ -109,6 +109,8 @@ func (i *CustomIntegrationSecretValuesTable) UpdateAll(guildId uint64, integrati
 		return err
 	}
 
+	defer tx.Rollback(context.Background())
+
 	for secretId, secretValue := range secrets {
 		// Must upsert, in case the secret was created after the integration was activated
 		query := `
