@@ -544,6 +544,13 @@ ORDER BY panels.panel_id ASC;`
 	return
 }
 
+func (p *PanelTable) GetPanelCount(guildId uint64) (count int, err error) {
+	query := `SELECT COUNT(*) FROM panels WHERE "guild_id" = $1;`
+
+	err = p.QueryRow(context.Background(), query, guildId).Scan(&count)
+	return
+}
+
 func (p *PanelTable) Create(panel Panel) (panelId int, err error) {
 	query := `
 INSERT INTO panels(
