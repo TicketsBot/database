@@ -163,6 +163,21 @@ RETURNING "id";
 	return id, nil
 }
 
+func (f *FormInputTable) CreateTx(tx pgx.Tx, formId int, customId string, position int, style uint8, label string, placeholder *string, required bool) (int, error) {
+	query := `
+INSERT INTO form_input("form_id", "position", "custom_id", "style", "label", "placeholder", "required")
+VALUES($1, $2, $3, $4, $5, $6, $7)
+RETURNING "id";
+`
+
+	var id int
+	if err := tx.QueryRow(context.Background(), query, formId, position, customId, style, label, placeholder, required).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
 func (f *FormInputTable) Update(input FormInput) (err error) {
 	query := `
 UPDATE form_input
@@ -174,6 +189,21 @@ WHERE "id" = $1;
 `
 
 	_, err = f.Exec(context.Background(), query, input.Id, input.Style, input.Label, input.Placeholder, input.Required)
+	return
+}
+
+func (f *FormInputTable) UpdateTx(tx pgx.Tx, input FormInput) (err error) {
+	query := `
+UPDATE form_input
+SET "position" = $2,
+	"style" = $3,
+	"label"= $4,
+    "placeholder" = $5,
+	"required" = $6
+WHERE "id" = $1;
+`
+
+	_, err = tx.Exec(context.Background(), query, input.Id, input.Position, input.Style, input.Label, input.Placeholder, input.Required)
 	return
 }
 
@@ -244,5 +274,21 @@ WHERE form_id=$2 AND position>(SELECT position FROM deleted_position);
 `
 
 	_, err = f.Exec(context.Background(), query, formInputId, formId)
+	return
+}
+
+func (f *FormInputTable) DeleteTx(tx pgx.Tx, formInputId, formId int) (err error) {
+	query := `
+WITH deleted_position AS (
+	DELETE FROM form_input
+	WHERE "id" = $1 AND "form_id" = $2
+	RETURNING "position"
+)
+UPDATE form_input
+SET position=position-1
+WHERE form_id=$2 AND position>(SELECT position FROM deleted_position);
+`
+
+	_, err = tx.Exec(context.Background(), query, formInputId, formId)
 	return
 }

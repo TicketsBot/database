@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Database struct {
+	pool                          *pgxpool.Pool
 	ActiveLanguage                *ActiveLanguage
 	ArchiveChannel                *ArchiveChannel
 	AutoClose                     *AutoCloseTable
@@ -81,6 +83,7 @@ type Database struct {
 
 func NewDatabase(pool *pgxpool.Pool) *Database {
 	return &Database{
+		pool:                          pool,
 		ActiveLanguage:                newActiveLanguage(pool),
 		ArchiveChannel:                newArchiveChannel(pool),
 		AutoClose:                     newAutoCloseTable(pool),
@@ -153,6 +156,10 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		WhitelabelStatuses:            newWhitelabelStatuses(pool),
 		WhitelabelUsers:               newWhitelabelUsers(pool),
 	}
+}
+
+func (d *Database) BeginTx() (pgx.Tx, error) {
+	return d.pool.Begin(context.Background())
 }
 
 func (d *Database) CreateTables(pool *pgxpool.Pool) {
