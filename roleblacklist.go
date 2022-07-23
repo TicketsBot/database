@@ -67,6 +67,13 @@ func (b *RoleBlacklist) GetBlacklistedRoles(guildId uint64) (roles []uint64, e e
 	return
 }
 
+func (b *RoleBlacklist) GetBlacklistedCount(guildId uint64) (count int, err error) {
+	query := `SELECT COUNT(*) FROM role_blacklist WHERE "guild_id" = $1;`
+
+	err = b.QueryRow(context.Background(), query, guildId).Scan(&count)
+	return
+}
+
 func (b *RoleBlacklist) Add(guildId, roleId uint64) (err error) {
 	// on conflict, role is already role_blacklist
 	query := `INSERT INTO role_blacklist("guild_id", "role_id") VALUES($1, $2) ON CONFLICT DO NOTHING;`

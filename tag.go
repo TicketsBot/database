@@ -81,6 +81,12 @@ func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
 	return
 }
 
+func (t *Tag) GetTagCount(guildId uint64) (count int, err error) {
+	query := `SELECT COUNT(*) FROM tags WHERE "guild_id" = $1;`
+	err = t.QueryRow(context.Background(), query, guildId).Scan(&count)
+	return
+}
+
 func (t *Tag) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds []string, e error) {
 	query := `SELECT LOWER("tag_id") FROM tags WHERE "guild_id"=$1 AND "tag_id" LIKE $2 || '%' LIMIT $3;`
 	rows, err := t.Query(context.Background(), query, guildId, prefix, limit)
