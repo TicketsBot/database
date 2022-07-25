@@ -32,3 +32,8 @@ func (c *ActiveLanguage) Set(guildId uint64, language string) (err error) {
 	_, err = c.Exec(context.Background(), `INSERT INTO active_language("guild_id", "language") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "language" = $2;`, guildId, language)
 	return
 }
+
+func (c *ActiveLanguage) Delete(guildId uint64) (err error) {
+	_, err = c.Exec(context.Background(), `DELETE FROM active_language WHERE "guild_id" = $1;`, guildId)
+	return
+}

@@ -72,3 +72,22 @@ DO UPDATE SET "colour_code" = $3;`
 	_, err = c.Exec(context.Background(), query, guildId, colourId, colourCode)
 	return
 }
+
+// BatchSet colours = map[colour_id]value
+func (c *CustomColours) BatchSet(guildId uint64, colours map[int16]int) (err error) {
+	query := `
+INSERT INTO custom_colours("guild_id", "colour_id", "colour_code")
+VALUES($1, $2, $3) ON CONFLICT("guild_id", "colour_id")
+DO UPDATE SET "colour_code" = $3;`
+
+	batch := &pgx.Batch{}
+	for colourId, colourCode := range colours {
+		batch.Queue(query, guildId, colourId, colourCode)
+	}
+
+	res := c.SendBatch(context.Background(), batch)
+	defer res.Close()
+
+	_, err = res.Exec()
+	return
+}
