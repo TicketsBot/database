@@ -28,10 +28,15 @@ func (b *Blacklist) IsBlacklisted(guildId, userId uint64) (exists bool, e error)
 	return
 }
 
-func (b *Blacklist) GetBlacklistedUsers(guildId uint64) (blacklisted []uint64, e error) {
-	query := `SELECT "user_id" FROM blacklist WHERE "guild_id" = $1;`
+func (b *Blacklist) GetBlacklistedUsers(guildId uint64, limit, offset int) (blacklisted []uint64, e error) {
+	query := `
+SELECT "user_id"
+FROM blacklist
+WHERE "guild_id" = $1
+LIMIT $2
+OFFSET $3;`
 
-	rows, err := b.Query(context.Background(), query, guildId)
+	rows, err := b.Query(context.Background(), query, guildId, limit, offset)
 	defer rows.Close()
 	if err != nil {
 		e = err
