@@ -65,6 +65,7 @@ type Database struct {
 	TicketLastMessage             *TicketLastMessageTable
 	TicketLimit                   *TicketLimit
 	TicketMembers                 *TicketMembers
+	TicketPermissions             *TicketPermissionsTable
 	Tickets                       *TicketTable
 	TopCloseReasonsView           *TopCloseReasonsView
 	UsedKeys                      *UsedKeys
@@ -141,6 +142,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		TicketLastMessage:             newTicketLastMessageTable(pool),
 		TicketLimit:                   newTicketLimit(pool),
 		TicketMembers:                 newTicketMembers(pool),
+		TicketPermissions:             newTicketPermissionsTable(pool),
 		Tickets:                       newTicketTable(pool),
 		TopCloseReasonsView:           newTopCloseReasonsView(pool),
 		UsedKeys:                      newUsedKeys(pool),
@@ -210,6 +212,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.PanelTeams, // Must be created after panels & support teams tables
 		d.Tag,
 		d.TicketLimit,
+		d.TicketPermissions,
 		d.Tickets,            // Must be created before members table
 		d.TicketLastMessage,  // Must be created after Tickets table
 		d.TicketDurationView, // Must be created after Tickets table
