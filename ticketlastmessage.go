@@ -63,7 +63,7 @@ INSERT INTO ticket_last_message("guild_id", "ticket_id", "last_message_id", "las
 VALUES($1, $2, $3, NOW(), $4, $5) ON CONFLICT("guild_id", "ticket_id")
 DO UPDATE SET "last_message_id" = $3, "last_message_time" = NOW(), "user_id" = $4, "user_is_staff" = $5;`
 
-	_, err = m.Exec(context.Background(), query, guildId, ticketId, messageId, userId)
+	_, err = m.Exec(context.Background(), query, guildId, ticketId, messageId, userId, userIsStaff)
 	return
 }
 
