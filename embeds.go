@@ -225,7 +225,7 @@ VALUES($1, $2, $3, $4);
 		}
 	}
 
-	return embedId, tx.Commit(context.Background())
+	return embedId, nil
 }
 
 func (s *EmbedsTable) Update(embed *CustomEmbed) error {
@@ -349,7 +349,7 @@ VALUES($1, $2, $3, $4);
 		}
 	}
 
-	return tx.Commit(context.Background())
+	return nil
 }
 
 func (s *EmbedsTable) Delete(id int) (err error) {
