@@ -6,8 +6,8 @@ import (
 )
 
 type EmbedField struct {
-	FieldId int    `json:"id"`
-	EmbedId int    `json:"embed_id"`
+	FieldId int    `json:"-"`
+	EmbedId int    `json:"-"`
 	Name    string `json:"name"`
 	Value   string `json:"value"`
 	Inline  bool   `json:"inline"`

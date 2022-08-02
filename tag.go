@@ -7,35 +7,81 @@ import (
 )
 
 type Tag struct {
-	*pgxpool.Pool
+	Id              string
+	GuildId         uint64
+	UseGuildCommand bool
+	Content         *string
+	Embed           *CustomEmbedWithFields
 }
 
-func newTag(db *pgxpool.Pool) *Tag {
-	return &Tag{
-		db,
+type TagsTable struct {
+	*pgxpool.Pool
+	repository *Database
+}
+
+func newTag(db *pgxpool.Pool, repository *Database) *TagsTable {
+	return &TagsTable{
+		Pool:       db,
+		repository: repository,
 	}
 }
 
-func (t Tag) Schema() string {
+func (t TagsTable) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS tags(
-	"guild_id" int8 NOT NULL,
 	"tag_id" varchar(16) NOT NULL,
-	"content" text NOT NULL,
+	"guild_id" int8 NOT NULL,
+	"use_guild_command" bool NOT NULL DEFAULT false,
+	"content" text DEFAULT NULL CONSTRAINT content_length CHECK (length(content) <= 4096),
+	"embed" JSONB DEFAULT NULL,
+    FOREIGN KEY ("embed_id") REFERENCES embeds("id") ON DELETE CASCADE,
 	PRIMARY KEY("guild_id", "tag_id")
-);`
+);
+CREATE INDEX IF NOT EXISTS tags_guild_id_idx ON tags("guild_id");
+`
 }
 
-func (t *Tag) Get(guildId uint64, tagId string) (content string, e error) {
-	query := `SELECT "content" from tags WHERE "guild_id"=$1 AND LOWER("tag_id")=LOWER($2);`
-	if err := t.QueryRow(context.Background(), query, guildId, tagId).Scan(&content); err != nil && err != pgx.ErrNoRows {
-		e = err
-	}
-
+func (t *TagsTable) Exists(guildId uint64, tagId string) (exists bool, err error) {
+	query := `SELECT EXISTS(SELECT 1 FROM tags WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2));`
+	err = t.QueryRow(context.Background(), query, guildId, tagId).Scan(&exists)
 	return
 }
 
-func (t *Tag) GetTagIds(guildId uint64) (ids []string, e error) {
+func (t *TagsTable) Get(guildId uint64, tagId string) (Tag, bool, error) {
+	query := `
+SELECT LOWER(tag_id), "guild_id", "use_guild_command", "content", "embed"
+FROM tags
+WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2);
+`
+
+	var tag Tag
+	var embedRaw *string
+	err := t.QueryRow(context.Background(), query, guildId, tagId).Scan(
+		&tag.Id,
+		&tag.GuildId,
+		&tag.UseGuildCommand,
+		&tag.Content,
+		&embedRaw,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return Tag{}, false, nil
+		} else {
+			return Tag{}, false, err
+		}
+	}
+
+	if embedRaw != nil {
+		if err := json.UnmarshalFromString(*embedRaw, &tag.Embed); err != nil {
+			return Tag{}, false, err
+		}
+	}
+
+	return tag, true, nil
+}
+
+func (t *TagsTable) GetTagIds(guildId uint64) (ids []string, e error) {
 	query := `SELECT LOWER("tag_id") from tags WHERE "guild_id"=$1;`
 	rows, err := t.Query(context.Background(), query, guildId)
 	defer rows.Close()
@@ -57,37 +103,46 @@ func (t *Tag) GetTagIds(guildId uint64) (ids []string, e error) {
 	return
 }
 
-func (t *Tag) GetByGuild(guildId uint64) (tags map[string]string, e error) {
-	tags = make(map[string]string)
+func (t *TagsTable) GetByGuild(guildId uint64) (map[string]Tag, error) {
+	query := `
+SELECT LOWER(tags.tag_id), tags.guild_id, tags.use_guild_command, tags.content, tags.embed
+FROM tags
+WHERE "guild_id" = $1;`
 
-	query := `SELECT LOWER("tag_id"), "content" from tags WHERE "guild_id"=$1;`
 	rows, err := t.Query(context.Background(), query, guildId)
-	defer rows.Close()
-	if err != nil && err != pgx.ErrNoRows {
-		e = err
-		return
+	if err != nil {
+		return nil, err
 	}
 
+	defer rows.Close()
+
+	tags := make(map[string]Tag)
 	for rows.Next() {
-		var id, content string
-		if err := rows.Scan(&id, &content); err != nil {
-			e = err
-			continue
+		var tag Tag
+		var embedRaw *string
+		if err := rows.Scan(&tag.Id, &tag.GuildId, &tag.UseGuildCommand, &tag.Content, &embedRaw); err != nil {
+			return nil, err
 		}
 
-		tags[id] = content
+		if embedRaw != nil {
+			if err := json.UnmarshalFromString(*embedRaw, &tag.Embed); err != nil {
+				return nil, err
+			}
+		}
+
+		tags[tag.Id] = tag
 	}
 
-	return
+	return tags, nil
 }
 
-func (t *Tag) GetTagCount(guildId uint64) (count int, err error) {
+func (t *TagsTable) GetTagCount(guildId uint64) (count int, err error) {
 	query := `SELECT COUNT(*) FROM tags WHERE "guild_id" = $1;`
 	err = t.QueryRow(context.Background(), query, guildId).Scan(&count)
 	return
 }
 
-func (t *Tag) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds []string, e error) {
+func (t *TagsTable) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds []string, e error) {
 	query := `SELECT LOWER("tag_id") FROM tags WHERE "guild_id"=$1 AND "tag_id" LIKE $2 || '%' LIMIT $3;`
 	rows, err := t.Query(context.Background(), query, guildId, prefix, limit)
 	defer rows.Close()
@@ -99,8 +154,7 @@ func (t *Tag) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds 
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			e = err
-			continue
+			return nil, err
 		}
 
 		tagIds = append(tagIds, id)
@@ -109,14 +163,32 @@ func (t *Tag) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds 
 	return
 }
 
-func (t *Tag) Set(guildId uint64, tagId, content string) (err error) {
-	query := `INSERT INTO tags("guild_id", "tag_id", "content") VALUES($1, LOWER($2), $3) ON CONFLICT("guild_id", "tag_id") DO UPDATE SET "content"=$3;`
-	_, err = t.Exec(context.Background(), query, guildId, tagId, content)
-	return
+func (t *TagsTable) Set(tag Tag) error {
+	query := `
+INSERT INTO tags("tag_id", "guild_id", "use_guild_command", "content", "embed")
+VALUES(LOWER($1), $2, $3, $4, $5)
+ON CONFLICT("tag_id", "guild_id") DO
+UPDATE SET "use_guild_command" = $3, "content" = $4, "embed" = $5;`
+
+	var embedRaw *string
+	if tag.Embed != nil {
+		tmp, err := json.MarshalToString(tag.Embed)
+		if err != nil {
+			return err
+		}
+
+		embedRaw = &tmp
+	}
+
+	_, err := t.Exec(context.Background(), query, tag.Id, tag.GuildId, tag.UseGuildCommand, tag.Content, embedRaw)
+	return err
 }
 
-func (t *Tag) Delete(guildId uint64, tagId string) (err error) {
-	query := `DELETE FROM tags WHERE "guild_id"=$1 AND "tag_id"=LOWER($2);`
+func (t *TagsTable) Delete(guildId uint64, tagId string) (err error) {
+	query := `
+DELETE FROM tags 
+WHERE "guild_id" = $1 AND "tag_id" = LOWER($2);`
+
 	_, err = t.Exec(context.Background(), query, guildId, tagId)
 	return
 }

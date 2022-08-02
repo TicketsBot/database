@@ -59,7 +59,7 @@ type Database struct {
 	SupportTeam                   *SupportTeamTable
 	SupportTeamMembers            *SupportTeamMembersTable
 	SupportTeamRoles              *SupportTeamRolesTable
-	Tag                           *Tag
+	Tag                           *TagsTable
 	TicketClaims                  *TicketClaims
 	TicketDurationView            *TicketDurationView
 	TicketLastMessage             *TicketLastMessageTable
@@ -83,7 +83,7 @@ type Database struct {
 }
 
 func NewDatabase(pool *pgxpool.Pool) *Database {
-	return &Database{
+	db := &Database{
 		pool:                          pool,
 		ActiveLanguage:                newActiveLanguage(pool),
 		ArchiveChannel:                newArchiveChannel(pool),
@@ -136,28 +136,31 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		SupportTeam:                   newSupportTeamTable(pool),
 		SupportTeamMembers:            newSupportTeamMembersTable(pool),
 		SupportTeamRoles:              newSupportTeamRolesTable(pool),
-		Tag:                           newTag(pool),
-		TicketClaims:                  newTicketClaims(pool),
-		TicketDurationView:            newTicketDurationView(pool),
-		TicketLastMessage:             newTicketLastMessageTable(pool),
-		TicketLimit:                   newTicketLimit(pool),
-		TicketMembers:                 newTicketMembers(pool),
-		TicketPermissions:             newTicketPermissionsTable(pool),
-		Tickets:                       newTicketTable(pool),
-		TopCloseReasonsView:           newTopCloseReasonsView(pool),
-		UsedKeys:                      newUsedKeys(pool),
-		UsersCanClose:                 newUsersCanClose(pool),
-		UserGuilds:                    newUserGuildsTable(pool),
-		Votes:                         newVotes(pool),
-		Webhooks:                      newWebhookTable(pool),
-		WelcomeMessages:               newWelcomeMessages(pool),
-		Whitelabel:                    newWhitelabelBotTable(pool),
-		WhitelabelErrors:              newWhitelabelErrors(pool),
-		WhitelabelGuilds:              newWhitelabelGuilds(pool),
-		WhitelabelKeys:                newWhitelabelKeys(pool),
-		WhitelabelStatuses:            newWhitelabelStatuses(pool),
-		WhitelabelUsers:               newWhitelabelUsers(pool),
+		//Tag:                           newTag(pool),
+		TicketClaims:        newTicketClaims(pool),
+		TicketDurationView:  newTicketDurationView(pool),
+		TicketLastMessage:   newTicketLastMessageTable(pool),
+		TicketLimit:         newTicketLimit(pool),
+		TicketMembers:       newTicketMembers(pool),
+		TicketPermissions:   newTicketPermissionsTable(pool),
+		Tickets:             newTicketTable(pool),
+		TopCloseReasonsView: newTopCloseReasonsView(pool),
+		UsedKeys:            newUsedKeys(pool),
+		UsersCanClose:       newUsersCanClose(pool),
+		UserGuilds:          newUserGuildsTable(pool),
+		Votes:               newVotes(pool),
+		Webhooks:            newWebhookTable(pool),
+		WelcomeMessages:     newWelcomeMessages(pool),
+		Whitelabel:          newWhitelabelBotTable(pool),
+		WhitelabelErrors:    newWhitelabelErrors(pool),
+		WhitelabelGuilds:    newWhitelabelGuilds(pool),
+		WhitelabelKeys:      newWhitelabelKeys(pool),
+		WhitelabelStatuses:  newWhitelabelStatuses(pool),
+		WhitelabelUsers:     newWhitelabelUsers(pool),
 	}
+
+	db.Tag = newTag(pool, db)
+	return db
 }
 
 func (d *Database) BeginTx() (pgx.Tx, error) {

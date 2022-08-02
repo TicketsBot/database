@@ -2,25 +2,31 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
 )
 
 type CustomEmbed struct {
-	Id            int        `json:"id"`
-	GuildId       uint64     `json:"guild_id"`
-	Title         *string    `json:"title"`
-	Description   *string    `json:"description"`
-	Url           *string    `json:"url"`
-	Colour        uint32     `json:"colour"`
-	AuthorName    *string    `json:"author_name"`
-	AuthorIconUrl *string    `json:"author_icon_url"`
-	AuthorUrl     *string    `json:"author_url"`
-	ImageUrl      *string    `json:"image_url"`
-	ThumbnailUrl  *string    `json:"thumbnail_url"`
-	FooterText    *string    `json:"footer_text"`
-	FooterIconUrl *string    `json:"footer_icon_url"`
-	Timestamp     *time.Time `json:"timestamp"`
+	Id            int        `json:"-"`
+	GuildId       uint64     `json:"-"`
+	Title         *string    `json:"title,omitempty"`
+	Description   *string    `json:"description,omitempty"`
+	Url           *string    `json:"url,omitempty"`
+	Colour        uint32     `json:"colour,omitempty"`
+	AuthorName    *string    `json:"author_name,omitempty"`
+	AuthorIconUrl *string    `json:"author_icon_url,omitempty"`
+	AuthorUrl     *string    `json:"author_url,omitempty"`
+	ImageUrl      *string    `json:"image_url,omitempty"`
+	ThumbnailUrl  *string    `json:"thumbnail_url,omitempty"`
+	FooterText    *string    `json:"footer_text,omitempty"`
+	FooterIconUrl *string    `json:"footer_icon_url,omitempty"`
+	Timestamp     *time.Time `json:"timestamp,omitempty"`
+}
+
+type CustomEmbedWithFields struct {
+	*CustomEmbed
+	Fields []EmbedField `json:"fields,omitempty"`
 }
 
 type EmbedsTable struct {
@@ -139,6 +145,26 @@ RETURNING "id";
 }
 
 func (s *EmbedsTable) CreateWithFields(embed *CustomEmbed, fields []EmbedField) (int, error) {
+	tx, err := s.Begin(context.Background())
+	if err != nil {
+		return 0, err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	id, err := s.CreateWithFieldsTx(tx, embed, fields)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (s *EmbedsTable) CreateWithFieldsTx(tx pgx.Tx, embed *CustomEmbed, fields []EmbedField) (int, error) {
 	query := `
 INSERT INTO embeds(
 	"guild_id",
@@ -159,16 +185,9 @@ VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 RETURNING "id";
 `
 
-	tx, err := s.Begin(context.Background())
-	if err != nil {
-		return 0, err
-	}
-
-	defer tx.Rollback(context.Background())
-
 	// Create actual embed
 	var embedId int
-	err = tx.QueryRow(
+	err := tx.QueryRow(
 		context.Background(),
 		query,
 		embed.GuildId,
@@ -250,6 +269,21 @@ WHERE "id" = $1;
 }
 
 func (s *EmbedsTable) UpdateWithFields(embed *CustomEmbed, fields []EmbedField) error {
+	tx, err := s.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	if err := s.UpdateWithFieldsTx(tx, embed, fields); err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (s *EmbedsTable) UpdateWithFieldsTx(tx pgx.Tx, embed *CustomEmbed, fields []EmbedField) error {
 	query := `
 UPDATE embeds
 SET
@@ -324,5 +358,14 @@ DELETE FROM embeds
 WHERE "id" = $1;`
 
 	_, err = s.Exec(context.Background(), query, id)
+	return
+}
+
+func (s *EmbedsTable) DeleteTx(tx pgx.Tx, id int) (err error) {
+	query := `
+DELETE FROM embeds
+WHERE "id" = $1;`
+
+	_, err = tx.Exec(context.Background(), query, id)
 	return
 }
