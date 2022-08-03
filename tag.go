@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS tags(
 	"use_guild_command" bool NOT NULL DEFAULT false,
 	"content" text DEFAULT NULL CONSTRAINT content_length CHECK (length(content) <= 4096),
 	"embed" JSONB DEFAULT NULL,
-    FOREIGN KEY ("embed_id") REFERENCES embeds("id") ON DELETE CASCADE,
 	PRIMARY KEY("guild_id", "tag_id")
 );
 CREATE INDEX IF NOT EXISTS tags_guild_id_idx ON tags("guild_id");
