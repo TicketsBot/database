@@ -302,15 +302,8 @@ SET
 WHERE "id" = $1;
 `
 
-	tx, err := s.Begin(context.Background())
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback(context.Background())
-
 	// Update actual embed
-	_, err = tx.Exec(
+	_, err := tx.Exec(
 		context.Background(),
 		query,
 		embed.Id,
