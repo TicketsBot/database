@@ -98,7 +98,17 @@ WHERE "multi_panel_id" = $1;`
 
 func (p *MultiPanelTargets) GetMultiPanels(panelId int) ([]MultiPanel, error) {
 	query := `
-SELECT multi_panels.id, multi_panels.message_id, multi_panels.channel_id, multi_panels.guild_id, multi_panels.title, multi_panels.content, multi_panels.colour
+SELECT
+	multi_panels.id,
+	multi_panels.message_id,
+	multi_panels.channel_id,
+	multi_panels.guild_id,
+	multi_panels.title,
+	multi_panels.content,
+	multi_panels.colour,
+	multi_panels.select_menu,
+	multi_panels.image_url,
+	multi_panels.thumbnail_url
 FROM multi_panel_targets
 INNER JOIN multi_panels
 ON multi_panels.id = multi_panel_targets.multi_panel_id
@@ -114,7 +124,20 @@ WHERE multi_panel_targets.panel_id = $1;
 	var multiPanels []MultiPanel
 	for rows.Next() {
 		var multiPanel MultiPanel
-		if err := rows.Scan(&multiPanel.Id, &multiPanel.MessageId, &multiPanel.ChannelId, &multiPanel.GuildId, &multiPanel.Title, &multiPanel.Content, &multiPanel.Colour); err != nil {
+		err := rows.Scan(
+			&multiPanel.Id,
+			&multiPanel.MessageId,
+			&multiPanel.ChannelId,
+			&multiPanel.GuildId,
+			&multiPanel.Title,
+			&multiPanel.Content,
+			&multiPanel.Colour,
+			&multiPanel.SelectMenu,
+			&multiPanel.ImageUrl,
+			&multiPanel.ThumbnailUrl,
+		)
+
+		if err != nil {
 			return nil, err
 		}
 
