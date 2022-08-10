@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS role_permissions(
 	"role_id" int8 NOT NULL,
 	"support" bool NOT NULL,
 	"admin" bool NOT NULL,
-	PRIMARY KEY("role_id")
+	CHECK ("role_id" != "guild_id"),
+	PRIMARY KEY ("role_id")
 );
 CREATE INDEX IF NOT EXISTS role_permissions_guild_id ON role_permissions("guild_id");
 `
