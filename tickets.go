@@ -399,6 +399,47 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 	return
 }
 
+func (t *TicketTable) GetClosedByUserPrefixed(guildId, userId uint64, prefix string, limit int) (tickets []Ticket, e error) {
+	query := `
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id
+FROM tickets
+WHERE "user_id" = $1 AND "open" = false AND "guild_id" = $2 AND id::TEXT LIKE $3 || '%'
+ORDER BY "id" DESC
+LIMIT $4;`
+
+	rows, err := t.Query(context.Background(), query, userId, guildId, prefix, limit)
+	defer rows.Close()
+	if err != nil && err != pgx.ErrNoRows {
+		e = err
+		return
+	}
+
+	for rows.Next() {
+		var ticket Ticket
+		if err := rows.Scan(
+			&ticket.Id,
+			&ticket.GuildId,
+			&ticket.ChannelId,
+			&ticket.UserId,
+			&ticket.Open,
+			&ticket.OpenTime,
+			&ticket.WelcomeMessageId,
+			&ticket.PanelId,
+			&ticket.HasTranscript,
+			&ticket.CloseTime,
+			&ticket.IsThread,
+			&ticket.JoinMessageId,
+		); err != nil {
+			e = err
+			continue
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return
+}
+
 func (t *TicketTable) GetClosedByAnyBefore(guildId uint64, userIds []uint64, before, limit int) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id
