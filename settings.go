@@ -15,6 +15,7 @@ type Settings struct {
 	ContextMenuPanel           *int    `json:"context_menu_panel"`
 	StoreTranscripts           bool    `json:"store_transcripts"`
 	UseThreads                 bool    `json:"use_threads"`
+	TicketNotificationChannel  *uint64 `json:"ticket_notification_channel,string"`
 	ThreadArchiveDuration      int     `json:"thread_archive_duration"`
 	OverflowEnabled            bool    `json:"overflow_enabled"`
 	OverflowCategoryId         *uint64 `json:"overflow_category_id,string"` // If overflow_enabled and nil, use root
@@ -29,6 +30,7 @@ func defaultSettings() Settings {
 		ContextMenuPanel:           nil,
 		StoreTranscripts:           true,
 		UseThreads:                 false,
+		TicketNotificationChannel:  nil,
 		ThreadArchiveDuration:      10080,
 		OverflowEnabled:            false,
 		OverflowCategoryId:         nil,
@@ -56,11 +58,13 @@ CREATE TABLE IF NOT EXISTS settings(
 	"context_menu_panel" int DEFAULT NULL,
 	"store_transcripts" bool DEFAULT 't',
     "use_threads" bool DEFAULT 'f',
+	"ticket_notification_channel" int8 DEFAULT NULL,
     "thread_archive_duration" int DEFAULT '10080',
 	"overflow_enabled" bool DEFAULT 'f',
 	"overflow_category_id" int8 DEFAULT NULL,
 	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
-	PRIMARY KEY("guild_id")
+	PRIMARY KEY("guild_id"),
+	CHECK (use_threads = false OR ticket_notification_channel IS NOT NULL)
 );
 `
 }
@@ -76,6 +80,7 @@ SELECT
 	"context_menu_panel",
 	"store_transcripts",
     "use_threads",
+	"ticket_notification_channel",
     "thread_archive_duration",
 	"overflow_enabled",
 	"overflow_category_id"
@@ -92,6 +97,7 @@ WHERE "guild_id" = $1;
 		&settings.ContextMenuPanel,
 		&settings.StoreTranscripts,
 		&settings.UseThreads,
+		&settings.TicketNotificationChannel,
 		&settings.ThreadArchiveDuration,
 		&settings.OverflowEnabled,
 		&settings.OverflowCategoryId,
@@ -117,11 +123,12 @@ INSERT INTO settings(
 	"context_menu_panel",
 	"store_transcripts",
     "use_threads",
+	"ticket_notification_channel",
     "thread_archive_duration",
 	"overflow_enabled",
 	"overflow_category_id"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 ON CONFLICT("guild_id")
 DO UPDATE SET
 	"hide_claim_button" = $2,
@@ -131,9 +138,10 @@ DO UPDATE SET
 	"context_menu_panel" = $6,
 	"store_transcripts" = $7,
     "use_threads" = $8,
-    "thread_archive_duration" = $9,
-	"overflow_enabled" = $10,
-	"overflow_category_id" = $11;
+    "ticket_notification_channel" = $9,
+    "thread_archive_duration" = $10,
+	"overflow_enabled" = $11,
+	"overflow_category_id" = $12;
 `
 
 	_, err = s.Exec(context.Background(), query,
@@ -145,6 +153,7 @@ DO UPDATE SET
 		settings.ContextMenuPanel,
 		settings.StoreTranscripts,
 		settings.UseThreads,
+		settings.TicketNotificationChannel,
 		settings.ThreadArchiveDuration,
 		settings.OverflowEnabled,
 		settings.OverflowCategoryId,
@@ -198,5 +207,29 @@ DO UPDATE SET "overflow_enabled" = $2, "overflow_category_id" = $3;
 `
 
 	_, err = s.Exec(context.Background(), query, guildId, enabled, categoryId)
+	return
+}
+
+func (s *SettingsTable) EnableThreads(guildId uint64, ticketNotificationChannel uint64) (err error) {
+	query := `
+INSERT INTO settings("guild_id", "use_threads", "ticket_notification_channel")
+VALUES($1, true, $2)
+ON CONFLICT("guild_id")
+DO UPDATE SET "use_threads" = true, "ticket_notification_channel" = $2;
+`
+
+	_, err = s.Exec(context.Background(), query, guildId, ticketNotificationChannel)
+	return
+}
+
+func (s *SettingsTable) DisableThreads(guildId uint64) (err error) {
+	query := `
+INSERT INTO settings("guild_id", "use_threads", "ticket_notification_channel")
+VALUES($1, false, NULL)
+ON CONFLICT("guild_id")
+DO UPDATE SET "use_threads" = false, "ticket_notification_channel" = NULL;
+`
+
+	_, err = s.Exec(context.Background(), query, guildId)
 	return
 }

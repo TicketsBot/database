@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS panel_teams_panel_id ON panel_teams("panel_id");
 
 func (p *PanelTeamsTable) GetTeams(panelId int) (teams []SupportTeam, e error) {
 	query := `
-SELECT support_team.id, support_team.guild_id, support_team.name
+SELECT support_team.id, support_team.guild_id, support_team.name, support_team.on_call_role_id
 FROM panel_teams
 INNER JOIN support_team
 ON panel_teams.team_id = support_team.id
@@ -45,7 +45,7 @@ WHERE panel_teams.panel_id = $1;
 
 	for rows.Next() {
 		var team SupportTeam
-		if err := rows.Scan(&team.Id, &team.GuildId, &team.Name); err != nil {
+		if err := rows.Scan(&team.Id, &team.GuildId, &team.Name, &team.OnCallRole); err != nil {
 			return nil, err
 		}
 

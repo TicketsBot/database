@@ -170,3 +170,35 @@ WHERE panel_teams.panel_id = $1;
 
 	return
 }
+
+func (s *SupportTeamRolesTable) GetAllTeamsForRoles(guildId uint64, roleIds []uint64) ([]int, error) {
+	query := `
+SELECT support_team_roles.team_id
+FROM support_team_roles
+INNER JOIN support_team
+ON support_team_roles.team_id = support_team.id
+WHERE support_team.guild_id = $1 AND support_team_roles.role_id = ANY($2);
+`
+
+	roleIdArray := &pgtype.Int8Array{}
+	if err := roleIdArray.Set(roleIds); err != nil {
+		return nil, err
+	}
+
+	rows, err := s.Query(context.Background(), query, guildId, roleIdArray)
+	if err != nil {
+		return nil, err
+	}
+
+	var teamIds []int
+	for rows.Next() {
+		var teamId int
+		if err := rows.Scan(&teamId); err != nil {
+			return nil, err
+		}
+
+		teamIds = append(teamIds, teamId)
+	}
+
+	return teamIds, nil
+}

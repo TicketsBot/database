@@ -140,3 +140,32 @@ WHERE panel_teams.panel_id = $1;
 
 	return
 }
+
+func (s *SupportTeamMembersTable) GetAllTeamsForUser(guildId, userId uint64) ([]int, error) {
+	query := `
+SELECT support_team_members.team_id
+FROM support_team_members
+INNER JOIN support_team
+ON support_team_members.team_id = support_team.id
+WHERE support_team.guild_id = $1 AND support_team_members.user_id = $2;
+`
+
+	rows, err := s.Query(context.Background(), query, guildId, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var teamIds []int
+	for rows.Next() {
+		var teamId int
+		if err := rows.Scan(&teamId); err != nil {
+			return nil, err
+		}
+
+		teamIds = append(teamIds, teamId)
+	}
+
+	return teamIds, nil
+}

@@ -37,9 +37,11 @@ type Database struct {
 	Forms                         *FormsTable
 	GlobalBlacklist               *GlobalBlacklist
 	GuildLeaveTime                *GuildLeaveTime
+	GuildMetadata                 *GuildMetadataTable
 	MultiPanels                   *MultiPanelTable
 	MultiPanelTargets             *MultiPanelTargets
 	NamingScheme                  *TicketNamingScheme
+	OnCall                        *OnCall
 	Panel                         *PanelTable
 	PanelTeams                    *PanelTeamsTable
 	Participants                  *ParticipantTable
@@ -114,9 +116,11 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		Forms:                         newFormsTable(pool),
 		GlobalBlacklist:               newGlobalBlacklist(pool),
 		GuildLeaveTime:                newGuildLeaveTime(pool),
+		GuildMetadata:                 newGuildMetadataTable(pool),
 		MultiPanels:                   newMultiMultiPanelTable(pool),
 		MultiPanelTargets:             newMultiPanelTargets(pool),
 		NamingScheme:                  newTicketNamingScheme(pool),
+		OnCall:                        newOnCall(pool),
 		Panel:                         newPanelTable(pool),
 		PanelTeams:                    newPanelTeamsTable(pool),
 		Participants:                  newParticipantTable(pool),
@@ -193,8 +197,10 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.FormInput,
 		d.GlobalBlacklist,
 		d.GuildLeaveTime,
+		d.GuildMetadata,
 		d.MultiPanels,
 		d.NamingScheme,
+		d.OnCall,
 		d.Panel,
 		d.MultiPanelTargets, // must be created after panels table
 		d.PanelRoleMentions,
