@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -27,6 +28,7 @@ type Panel struct {
 	ButtonLabel         string  `json:"button_label"`
 	FormId              *int    `json:"form_id"`
 	NamingScheme        *string `json:"naming_scheme"`
+	ForceDisabled       bool    `json:"force_disabled"`
 }
 
 type PanelWithWelcomeMessage struct {
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"button_label" varchar(80) NOT NULL,
 	"form_id" int DEFAULT NULL,
 	"naming_scheme" varchar(100) DEFAULT NULL,
+	"force_disabled" bool NOT NULL DEFAULT false,
 	FOREIGN KEY ("welcome_message") REFERENCES embeds("id") ON DELETE SET NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
 	PRIMARY KEY("panel_id")
@@ -99,7 +102,8 @@ SELECT
 	button_style,
 	button_label,
 	form_id,
-	naming_scheme
+	naming_scheme,
+	force_disabled
 FROM panels
 WHERE "message_id" = $1;
 `
@@ -124,6 +128,7 @@ WHERE "message_id" = $1;
 		&panel.ButtonLabel,
 		&panel.FormId,
 		&panel.NamingScheme,
+		&panel.ForceDisabled,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -152,7 +157,8 @@ SELECT
 	button_style,
 	button_label,
 	form_id,
-	naming_scheme
+	naming_scheme,
+	force_disabled
 FROM panels
 WHERE "panel_id" = $1;
 `
@@ -177,6 +183,7 @@ WHERE "panel_id" = $1;
 		&panel.ButtonLabel,
 		&panel.FormId,
 		&panel.NamingScheme,
+		&panel.ForceDisabled,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -205,7 +212,8 @@ SELECT
 	button_style,
 	button_label,
 	form_id,
-	naming_scheme
+	naming_scheme,
+	force_disabled
 FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
@@ -230,6 +238,7 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 		&panel.ButtonLabel,
 		&panel.FormId,
 		&panel.NamingScheme,
+		&panel.ForceDisabled,
 	)
 
 	switch err {
@@ -255,7 +264,7 @@ SELECT
 	colour,
 	target_category,
 	emoji_name,
-	emoji_id,,
+	emoji_id,
 	welcome_message,
 	default_team,
 	custom_id,
@@ -264,7 +273,8 @@ SELECT
 	button_style,
 	button_label,
 	form_id,
-	naming_scheme
+	naming_scheme,
+	force_disabled
 FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
@@ -289,6 +299,7 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 		&panel.ButtonLabel,
 		&panel.FormId,
 		&panel.NamingScheme,
+		&panel.ForceDisabled,
 	)
 
 	switch err {
@@ -323,7 +334,8 @@ SELECT
 	panels.button_style,
 	panels.button_label,
 	panels.form_id,
-	panels.naming_scheme
+	panels.naming_scheme,
+	panels.force_disabled
 FROM panels
 INNER JOIN forms
 ON forms.form_id = panels.form_id
@@ -350,6 +362,7 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 		&panel.ButtonLabel,
 		&panel.FormId,
 		&panel.NamingScheme,
+		&panel.ForceDisabled,
 	)
 
 	switch err {
@@ -384,7 +397,8 @@ SELECT
 	button_style,
 	button_label,
 	form_id,
-	naming_scheme
+	naming_scheme,
+	force_disabled
 FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
@@ -417,6 +431,7 @@ ORDER BY "panel_id" ASC;`
 			&panel.ButtonLabel,
 			&panel.FormId,
 			&panel.NamingScheme,
+			&panel.ForceDisabled,
 		)
 
 		if err != nil {
@@ -451,6 +466,7 @@ SELECT
 	panels.button_label,
 	panels.form_id,
 	panels.naming_scheme,
+	panels.force_disabled,
 	embeds.id,
 	embeds.guild_id,
 	embeds.title,
@@ -506,6 +522,7 @@ ORDER BY panels.panel_id ASC;`
 			&panel.ButtonLabel,
 			&panel.FormId,
 			&panel.NamingScheme,
+			&panel.ForceDisabled,
 			&embedId,
 			&embedGuildId,
 			&embed.Title,
@@ -571,9 +588,10 @@ INSERT INTO panels(
 	"button_style",
 	"button_label",
 	"form_id",
-	"naming_scheme"
+	"naming_scheme",
+    "force_disabled"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
@@ -596,6 +614,7 @@ RETURNING "panel_id";`
 		panel.ButtonLabel,
 		panel.FormId,
 		panel.NamingScheme,
+		panel.ForceDisabled,
 	).Scan(&panelId)
 
 	return
@@ -620,7 +639,8 @@ UPDATE panels
 		"button_style" = $15,
 		"button_label" = $16,
 		"form_id" = $17,
-		"naming_scheme" = $18
+		"naming_scheme" = $18,
+	    "force_disabled" = $19
 	WHERE
 		"panel_id" = $1
 ;`
@@ -643,6 +663,7 @@ UPDATE panels
 		panel.ButtonLabel,
 		panel.FormId,
 		panel.NamingScheme,
+		panel.ForceDisabled,
 	)
 	return
 }
@@ -656,6 +677,73 @@ WHERE "panel_id" = $2;
 
 	_, err = p.Exec(context.Background(), query, messageId, panelId)
 	return
+}
+
+func (p *PanelTable) EnableAll(guildId uint64) (err error) {
+	query := `
+UPDATE panels
+SET "force_disabled" = false
+WHERE "guild_id" = $1;
+`
+
+	_, err = p.Exec(context.Background(), query, guildId)
+	return
+}
+
+func (p *PanelTable) DisableSome(guildId uint64, freeLimit int) error {
+	txOpts := pgx.TxOptions{
+		IsoLevel:       pgx.Serializable,
+		AccessMode:     pgx.ReadWrite,
+		DeferrableMode: pgx.NotDeferrable,
+	}
+
+	tx, err := p.BeginTx(context.Background(), txOpts)
+	if err != nil {
+		return err
+	}
+
+	var panelCount int
+	{
+		query := `SELECT COUNT(*) FROM panels WHERE guild_id = $1 and "force_disabled" = false;`
+		if err := tx.QueryRow(context.Background(), query, guildId).Scan(&panelCount); err != nil {
+			return err
+		}
+	}
+
+	if panelCount > freeLimit {
+		// Find panels to disable
+		query := `SELECT "panel_id" FROM panels WHERE guild_id = $1 and "force_disabled" = false ORDER BY "panel_id" DESC LIMIT $2;`
+		rows, err := tx.Query(context.Background(), query, guildId, panelCount-freeLimit)
+		if err != nil {
+			return err
+		}
+
+		var toDisable []int
+		for rows.Next() {
+			var panelId int
+			if err := rows.Scan(&panelId); err != nil {
+				return err
+			}
+
+			toDisable = append(toDisable, panelId)
+		}
+
+		// Disable panels
+		if len(toDisable) > 0 {
+			query := `UPDATE panels SET "force_disabled" = true WHERE "panel_id" = ANY($1) AND "guild_id" = $2;`
+
+			idArray := &pgtype.Int4Array{}
+			if err := idArray.Set(toDisable); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(context.Background(), query, idArray, guildId); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit(context.Background())
 }
 
 func (p *PanelTable) Delete(panelId int) (err error) {
