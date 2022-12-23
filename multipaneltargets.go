@@ -49,7 +49,9 @@ SELECT
 	panels.button_style,
 	panels.button_label,
 	panels.form_id,
-	panels.naming_scheme
+	panels.naming_scheme,
+	panels.force_disabled,
+	panels.disabled
 FROM multi_panel_targets
 INNER JOIN panels
 ON panels.panel_id = multi_panel_targets.panel_id
@@ -84,6 +86,8 @@ WHERE "multi_panel_id" = $1;`
 			&panel.ButtonLabel,
 			&panel.FormId,
 			&panel.NamingScheme,
+			&panel.ForceDisabled,
+			&panel.Disabled,
 		)
 
 		if err != nil {

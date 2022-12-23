@@ -29,6 +29,7 @@ type Panel struct {
 	FormId              *int    `json:"form_id"`
 	NamingScheme        *string `json:"naming_scheme"`
 	ForceDisabled       bool    `json:"force_disabled"`
+	Disabled            bool    `json:"disabled"`
 }
 
 type PanelWithWelcomeMessage struct {
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"form_id" int DEFAULT NULL,
 	"naming_scheme" varchar(100) DEFAULT NULL,
 	"force_disabled" bool NOT NULL DEFAULT false,
+	"disabled" bool NOT NULL DEFAULT false,
 	FOREIGN KEY ("welcome_message") REFERENCES embeds("id") ON DELETE SET NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
 	PRIMARY KEY("panel_id")
@@ -103,7 +105,8 @@ SELECT
 	button_label,
 	form_id,
 	naming_scheme,
-	force_disabled
+	force_disabled,
+	disabled
 FROM panels
 WHERE "message_id" = $1;
 `
@@ -129,6 +132,7 @@ WHERE "message_id" = $1;
 		&panel.FormId,
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
+		&panel.Disabled,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -158,7 +162,8 @@ SELECT
 	button_label,
 	form_id,
 	naming_scheme,
-	force_disabled
+	force_disabled,
+	disabled
 FROM panels
 WHERE "panel_id" = $1;
 `
@@ -184,6 +189,7 @@ WHERE "panel_id" = $1;
 		&panel.FormId,
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
+		&panel.Disabled,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -213,7 +219,8 @@ SELECT
 	button_label,
 	form_id,
 	naming_scheme,
-	force_disabled
+	force_disabled,
+	disabled
 FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
@@ -239,6 +246,7 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 		&panel.FormId,
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
+		&panel.Disabled,
 	)
 
 	switch err {
@@ -274,7 +282,8 @@ SELECT
 	button_label,
 	form_id,
 	naming_scheme,
-	force_disabled
+	force_disabled,
+	disabled
 FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
@@ -300,6 +309,7 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 		&panel.FormId,
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
+		&panel.Disabled,
 	)
 
 	switch err {
@@ -335,7 +345,8 @@ SELECT
 	panels.button_label,
 	panels.form_id,
 	panels.naming_scheme,
-	panels.force_disabled
+	panels.force_disabled,
+	panels.disabled
 FROM panels
 INNER JOIN forms
 ON forms.form_id = panels.form_id
@@ -363,6 +374,7 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 		&panel.FormId,
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
+		&panel.Disabled,
 	)
 
 	switch err {
@@ -398,7 +410,8 @@ SELECT
 	button_label,
 	form_id,
 	naming_scheme,
-	force_disabled
+	force_disabled,
+	disabled
 FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
@@ -432,6 +445,7 @@ ORDER BY "panel_id" ASC;`
 			&panel.FormId,
 			&panel.NamingScheme,
 			&panel.ForceDisabled,
+			&panel.Disabled,
 		)
 
 		if err != nil {
@@ -467,6 +481,7 @@ SELECT
 	panels.form_id,
 	panels.naming_scheme,
 	panels.force_disabled,
+	panels.disabled,
 	embeds.id,
 	embeds.guild_id,
 	embeds.title,
@@ -523,6 +538,7 @@ ORDER BY panels.panel_id ASC;`
 			&panel.FormId,
 			&panel.NamingScheme,
 			&panel.ForceDisabled,
+			&panel.Disabled,
 			&embedId,
 			&embedGuildId,
 			&embed.Title,
@@ -589,9 +605,10 @@ INSERT INTO panels(
 	"button_label",
 	"form_id",
 	"naming_scheme",
-    "force_disabled"
+    "force_disabled",
+	"disabled"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
@@ -615,6 +632,7 @@ RETURNING "panel_id";`
 		panel.FormId,
 		panel.NamingScheme,
 		panel.ForceDisabled,
+		panel.Disabled,
 	).Scan(&panelId)
 
 	return
@@ -640,7 +658,8 @@ UPDATE panels
 		"button_label" = $16,
 		"form_id" = $17,
 		"naming_scheme" = $18,
-	    "force_disabled" = $19
+	    "force_disabled" = $19,
+	    "disabled" = $20
 	WHERE
 		"panel_id" = $1
 ;`
@@ -664,6 +683,7 @@ UPDATE panels
 		panel.FormId,
 		panel.NamingScheme,
 		panel.ForceDisabled,
+		panel.Disabled,
 	)
 	return
 }
