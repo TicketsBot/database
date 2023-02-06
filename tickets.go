@@ -360,6 +360,20 @@ WHERE "guild_id" = $1 AND "user_id" = $2;`
 	return
 }
 
+func (t *TicketTable) GetTotalCountByUser(guildId, userId uint64) (int, error) {
+	query := `
+SELECT COUNT(id)
+FROM tickets
+WHERE "guild_id" = $1 AND "user_id" = $2;`
+
+	var count int
+	if err := t.QueryRow(context.Background(), query, guildId, userId).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id
@@ -397,6 +411,20 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 	}
 
 	return
+}
+
+func (t *TicketTable) GetOpenCountByUser(guildId, userId uint64) (int, error) {
+	query := `
+SELECT COUNT(id)
+FROM tickets
+WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
+
+	var count int
+	if err := t.QueryRow(context.Background(), query, userId, guildId).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (t *TicketTable) GetClosedByUserPrefixed(guildId, userId uint64, prefix string, limit int) (tickets []Ticket, e error) {
