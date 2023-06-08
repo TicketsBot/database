@@ -271,7 +271,7 @@ SELECT EXISTS(
 func (i *CustomIntegrationTable) Create(ownerId uint64, webhookUrl string, validationUrl *string, httpMethod, name, description string, imageUrl, privacyPolicyUrl *string) (CustomIntegration, error) {
 	query := `
 INSERT INTO custom_integrations("owner_id", "webhook_url", "validation_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved")
-VALUES ($1, $2, $3, $4, $5, $6, $7, 'f', 'f')
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'f', 'f')
 RETURNING "id";
 ;`
 
