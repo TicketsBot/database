@@ -16,6 +16,7 @@ type CustomIntegration struct {
 	OwnerId          uint64  `json:"owner_id"`
 	HttpMethod       string  `json:"http_method"`
 	WebhookUrl       string  `json:"webhook_url"`
+	ValidationUrl    *string `json:"validation_url"`
 	Name             string  `json:"name"`
 	Description      string  `json:"description"`
 	ImageUrl         *string `json:"image_url"`
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS custom_integrations(
 	"id" SERIAL NOT NULL UNIQUE,
 	"owner_id" int8 NOT NULL,
 	"webhook_url" VARCHAR(255) NOT NULL,
+	"validation_url" VARCHAR(255) NULL,
     "http_method" VARCHAR(4) NOT NULL,
 	"name" VARCHAR(32) NOT NULL,
 	"description" VARCHAR(255) NOT NULL,
@@ -60,13 +62,14 @@ CREATE INDEX IF NOT EXISTS custom_integrations_owner_id ON custom_integrations("
 }
 
 func (i *CustomIntegrationTable) Get(id int) (CustomIntegration, bool, error) {
-	query := `SELECT "id", "owner_id", "webhook_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved" FROM custom_integrations WHERE "id" = $1;`
+	query := `SELECT "id", "owner_id", "webhook_url", "validation_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved" FROM custom_integrations WHERE "id" = $1;`
 
 	var integration CustomIntegration
 	err := i.QueryRow(context.Background(), query, id).Scan(
 		&integration.Id,
 		&integration.OwnerId,
 		&integration.WebhookUrl,
+		&integration.ValidationUrl,
 		&integration.HttpMethod,
 		&integration.Name,
 		&integration.Description,
@@ -89,7 +92,7 @@ func (i *CustomIntegrationTable) Get(id int) (CustomIntegration, bool, error) {
 
 func (i *CustomIntegrationTable) GetAll(ids []int) ([]CustomIntegration, error) {
 	query := `
-SELECT "id", "owner_id", "webhook_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved"
+SELECT "id", "owner_id", "webhook_url", "validation_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved"
 FROM custom_integrations
 WHERE "id" = ANY($1);`
 
@@ -110,6 +113,7 @@ WHERE "id" = ANY($1);`
 			&integration.Id,
 			&integration.OwnerId,
 			&integration.WebhookUrl,
+			&integration.ValidationUrl,
 			&integration.HttpMethod,
 			&integration.Name,
 			&integration.Description,
@@ -141,6 +145,7 @@ SELECT
 	integrations.id,
 	integrations.owner_id,
 	integrations.webhook_url,
+	integrations.validation_url,
 	integrations.http_method,
 	integrations.name,
 	integrations.description,
@@ -165,6 +170,7 @@ WHERE "owner_id" = $1;`
 			&integration.Id,
 			&integration.OwnerId,
 			&integration.WebhookUrl,
+			&integration.ValidationUrl,
 			&integration.HttpMethod,
 			&integration.Name,
 			&integration.Description,
@@ -196,6 +202,7 @@ SELECT
 	integrations.id,
 	integrations.owner_id,
 	integrations.webhook_url,
+	integrations.validation_url,
 	integrations.http_method,
 	integrations.name,
 	integrations.description,
@@ -226,6 +233,7 @@ LIMIT $3 OFFSET $4;
 			&integration.Id,
 			&integration.OwnerId,
 			&integration.WebhookUrl,
+			&integration.ValidationUrl,
 			&integration.HttpMethod,
 			&integration.Name,
 			&integration.Description,
@@ -260,9 +268,9 @@ SELECT EXISTS(
 	return
 }
 
-func (i *CustomIntegrationTable) Create(ownerId uint64, webhookUrl, httpMethod, name, description string, imageUrl, privacyPolicyUrl *string) (CustomIntegration, error) {
+func (i *CustomIntegrationTable) Create(ownerId uint64, webhookUrl string, validationUrl *string, httpMethod, name, description string, imageUrl, privacyPolicyUrl *string) (CustomIntegration, error) {
 	query := `
-INSERT INTO custom_integrations("owner_id", "webhook_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved")
+INSERT INTO custom_integrations("owner_id", "webhook_url", "validation_url", "http_method", "name", "description", "image_url", "privacy_policy_url", "public", "approved")
 VALUES ($1, $2, $3, $4, $5, $6, $7, 'f', 'f')
 RETURNING "id";
 ;`
@@ -271,6 +279,7 @@ RETURNING "id";
 		OwnerId:          ownerId,
 		Name:             name,
 		WebhookUrl:       webhookUrl,
+		ValidationUrl:    validationUrl,
 		HttpMethod:       httpMethod,
 		Description:      description,
 		ImageUrl:         imageUrl,
@@ -279,7 +288,7 @@ RETURNING "id";
 		Approved:         false,
 	}
 
-	if err := i.QueryRow(context.Background(), query, ownerId, webhookUrl, httpMethod, name, description, imageUrl, privacyPolicyUrl).Scan(&integration.Id); err != nil {
+	if err := i.QueryRow(context.Background(), query, ownerId, webhookUrl, validationUrl, httpMethod, name, description, imageUrl, privacyPolicyUrl).Scan(&integration.Id); err != nil {
 		return CustomIntegration{}, err
 	}
 
@@ -297,13 +306,14 @@ func (i *CustomIntegrationTable) Update(integration CustomIntegration) (err erro
 UPDATE custom_integrations
 SET
 	"webhook_url" = $2,
-	"http_method" = $3,
-	"name" = $4,
-	"description" = $5,
-	"image_url" = $6,
-	"privacy_policy_url" = $7,
-	"public" = $8,
-	"approved" = $9
+	"validation_url" = $3,
+	"http_method" = $4,
+	"name" = $5,
+	"description" = $6,
+	"image_url" = $7,
+	"privacy_policy_url" = $8,
+	"public" = $9,
+	"approved" = $10
 WHERE "id" = $1;
 `
 
@@ -312,6 +322,7 @@ WHERE "id" = $1;
 		query,
 		integration.Id,
 		integration.WebhookUrl,
+		integration.ValidationUrl,
 		integration.HttpMethod,
 		integration.Name,
 		integration.Description,
