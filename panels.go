@@ -30,6 +30,7 @@ type Panel struct {
 	NamingScheme        *string `json:"naming_scheme"`
 	ForceDisabled       bool    `json:"force_disabled"`
 	Disabled            bool    `json:"disabled"`
+	ExitSurveyFormId    *int    `json:"exit_survey_form_id"`
 }
 
 type PanelWithWelcomeMessage struct {
@@ -72,8 +73,10 @@ CREATE TABLE IF NOT EXISTS panels(
 	"naming_scheme" varchar(100) DEFAULT NULL,
 	"force_disabled" bool NOT NULL DEFAULT false,
 	"disabled" bool NOT NULL DEFAULT false,
+	"exit_survey_form_id" int DEFAULT NULL,
 	FOREIGN KEY ("welcome_message") REFERENCES embeds("id") ON DELETE SET NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
+	FOREIGN KEY ("exit_survey_form_id") REFERENCES forms("form_id"),
 	PRIMARY KEY("panel_id")
 );
 CREATE INDEX IF NOT EXISTS panels_guild_id ON panels("guild_id");
@@ -106,7 +109,8 @@ SELECT
 	form_id,
 	naming_scheme,
 	force_disabled,
-	disabled
+	disabled,
+	exit_survey_form_id
 FROM panels
 WHERE "message_id" = $1;
 `
@@ -133,6 +137,7 @@ WHERE "message_id" = $1;
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
 		&panel.Disabled,
+		&panel.ExitSurveyFormId,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -163,7 +168,8 @@ SELECT
 	form_id,
 	naming_scheme,
 	force_disabled,
-	disabled
+	disabled,
+	exit_survey_form_id
 FROM panels
 WHERE "panel_id" = $1;
 `
@@ -190,6 +196,7 @@ WHERE "panel_id" = $1;
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
 		&panel.Disabled,
+		&panel.ExitSurveyFormId,
 	); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -220,7 +227,8 @@ SELECT
 	form_id,
 	naming_scheme,
 	force_disabled,
-	disabled
+	disabled,
+	exit_survey_form_id
 FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
@@ -247,6 +255,7 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
 		&panel.Disabled,
+		&panel.ExitSurveyFormId,
 	)
 
 	switch err {
@@ -283,7 +292,8 @@ SELECT
 	form_id,
 	naming_scheme,
 	force_disabled,
-	disabled
+	disabled,
+	exit_survey_form_id
 FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
@@ -310,6 +320,7 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
 		&panel.Disabled,
+		&panel.ExitSurveyFormId,
 	)
 
 	switch err {
@@ -346,7 +357,8 @@ SELECT
 	panels.form_id,
 	panels.naming_scheme,
 	panels.force_disabled,
-	panels.disabled
+	panels.disabled,
+	panels.exit_survey_form_id
 FROM panels
 INNER JOIN forms
 ON forms.form_id = panels.form_id
@@ -375,6 +387,7 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 		&panel.NamingScheme,
 		&panel.ForceDisabled,
 		&panel.Disabled,
+		&panel.ExitSurveyFormId,
 	)
 
 	switch err {
@@ -411,7 +424,8 @@ SELECT
 	form_id,
 	naming_scheme,
 	force_disabled,
-	disabled
+	disabled,
+	exit_survey_form_id
 FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
@@ -446,6 +460,7 @@ ORDER BY "panel_id" ASC;`
 			&panel.NamingScheme,
 			&panel.ForceDisabled,
 			&panel.Disabled,
+			&panel.ExitSurveyFormId,
 		)
 
 		if err != nil {
@@ -482,6 +497,7 @@ SELECT
 	panels.naming_scheme,
 	panels.force_disabled,
 	panels.disabled,
+	panels.exit_survey_form_id,
 	embeds.id,
 	embeds.guild_id,
 	embeds.title,
@@ -539,6 +555,7 @@ ORDER BY panels.panel_id ASC;`
 			&panel.NamingScheme,
 			&panel.ForceDisabled,
 			&panel.Disabled,
+			&panel.ExitSurveyFormId,
 			&embedId,
 			&embedGuildId,
 			&embed.Title,
@@ -606,9 +623,10 @@ INSERT INTO panels(
 	"form_id",
 	"naming_scheme",
     "force_disabled",
-	"disabled"
+	"disabled",
+    "exit_survey_form_id"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
@@ -633,6 +651,7 @@ RETURNING "panel_id";`
 		panel.NamingScheme,
 		panel.ForceDisabled,
 		panel.Disabled,
+		panel.ExitSurveyFormId,
 	).Scan(&panelId)
 
 	return
@@ -659,7 +678,8 @@ UPDATE panels
 		"form_id" = $17,
 		"naming_scheme" = $18,
 	    "force_disabled" = $19,
-	    "disabled" = $20
+	    "disabled" = $20,
+	    "exit_survey_form_id" = $21
 	WHERE
 		"panel_id" = $1
 ;`
@@ -684,6 +704,7 @@ UPDATE panels
 		panel.NamingScheme,
 		panel.ForceDisabled,
 		panel.Disabled,
+		panel.ExitSurveyFormId,
 	)
 	return
 }

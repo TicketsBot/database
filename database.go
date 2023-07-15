@@ -4,12 +4,16 @@ import (
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"time"
 )
+
+const defaultTransactionTimeout = time.Second * 3
 
 type Database struct {
 	pool                          *pgxpool.Pool
 	ActiveLanguage                *ActiveLanguage
 	ArchiveChannel                *ArchiveChannel
+	ArchiveMessages               *ArchiveMessages
 	AutoClose                     *AutoCloseTable
 	AutoCloseExclude              *AutoCloseExclude
 	Blacklist                     *Blacklist
@@ -17,7 +21,7 @@ type Database struct {
 	ChannelCategory               *ChannelCategory
 	ClaimSettings                 *ClaimSettingsTable
 	CloseConfirmation             *CloseConfirmation
-	CloseReason                   *CloseReasonTable
+	CloseReason                   *CloseMetadataTable
 	CloseRequest                  *CloseRequestTable
 	CustomIntegrations            *CustomIntegrationTable
 	CustomIntegrationGuildCounts  *CustomIntegrationGuildCountsView
@@ -30,6 +34,7 @@ type Database struct {
 	DmOnOpen                      *DmOnOpen
 	EmbedFields                   *EmbedFieldsTable
 	Embeds                        *EmbedsTable
+	ExitSurveyResponses           *ExitSurveyResponses
 	FeedbackEnabled               *FeedbackEnabled
 	FirstResponseTime             *FirstResponseTime
 	FirstResponseTimeGuildView    *FirstResponseTimeGuildView
@@ -89,6 +94,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		pool:                          pool,
 		ActiveLanguage:                newActiveLanguage(pool),
 		ArchiveChannel:                newArchiveChannel(pool),
+		ArchiveMessages:               newArchiveMessages(pool),
 		AutoClose:                     newAutoCloseTable(pool),
 		AutoCloseExclude:              newAutoCloseExclude(pool),
 		Blacklist:                     newBlacklist(pool),
@@ -109,6 +115,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		DmOnOpen:                      newDmOnOpen(pool),
 		EmbedFields:                   newEmbedFieldsTable(pool),
 		Embeds:                        newEmbedsTable(pool),
+		ExitSurveyResponses:           newExitSurveyResponses(pool),
 		FeedbackEnabled:               newFeedbackEnabled(pool),
 		FirstResponseTime:             newFirstResponseTime(pool),
 		FirstResponseTimeGuildView:    newFirstResponseTimeGuildView(pool),
@@ -140,30 +147,29 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		SupportTeam:                   newSupportTeamTable(pool),
 		SupportTeamMembers:            newSupportTeamMembersTable(pool),
 		SupportTeamRoles:              newSupportTeamRolesTable(pool),
-		//Tag:                           newTag(pool),
-		TicketClaims:        newTicketClaims(pool),
-		TicketDurationView:  newTicketDurationView(pool),
-		TicketLastMessage:   newTicketLastMessageTable(pool),
-		TicketLimit:         newTicketLimit(pool),
-		TicketMembers:       newTicketMembers(pool),
-		TicketPermissions:   newTicketPermissionsTable(pool),
-		Tickets:             newTicketTable(pool),
-		TopCloseReasonsView: newTopCloseReasonsView(pool),
-		UsedKeys:            newUsedKeys(pool),
-		UsersCanClose:       newUsersCanClose(pool),
-		UserGuilds:          newUserGuildsTable(pool),
-		Votes:               newVotes(pool),
-		Webhooks:            newWebhookTable(pool),
-		WelcomeMessages:     newWelcomeMessages(pool),
-		Whitelabel:          newWhitelabelBotTable(pool),
-		WhitelabelErrors:    newWhitelabelErrors(pool),
-		WhitelabelGuilds:    newWhitelabelGuilds(pool),
-		WhitelabelKeys:      newWhitelabelKeys(pool),
-		WhitelabelStatuses:  newWhitelabelStatuses(pool),
-		WhitelabelUsers:     newWhitelabelUsers(pool),
+		Tag:                           newTag(pool),
+		TicketClaims:                  newTicketClaims(pool),
+		TicketDurationView:            newTicketDurationView(pool),
+		TicketLastMessage:             newTicketLastMessageTable(pool),
+		TicketLimit:                   newTicketLimit(pool),
+		TicketMembers:                 newTicketMembers(pool),
+		TicketPermissions:             newTicketPermissionsTable(pool),
+		Tickets:                       newTicketTable(pool),
+		TopCloseReasonsView:           newTopCloseReasonsView(pool),
+		UsedKeys:                      newUsedKeys(pool),
+		UsersCanClose:                 newUsersCanClose(pool),
+		UserGuilds:                    newUserGuildsTable(pool),
+		Votes:                         newVotes(pool),
+		Webhooks:                      newWebhookTable(pool),
+		WelcomeMessages:               newWelcomeMessages(pool),
+		Whitelabel:                    newWhitelabelBotTable(pool),
+		WhitelabelErrors:              newWhitelabelErrors(pool),
+		WhitelabelGuilds:              newWhitelabelGuilds(pool),
+		WhitelabelKeys:                newWhitelabelKeys(pool),
+		WhitelabelStatuses:            newWhitelabelStatuses(pool),
+		WhitelabelUsers:               newWhitelabelUsers(pool),
 	}
 
-	db.Tag = newTag(pool, db)
 	return db
 }
 
@@ -222,14 +228,16 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.Tag,
 		d.TicketLimit,
 		d.TicketPermissions,
-		d.Tickets,            // Must be created before members table
-		d.TicketLastMessage,  // Must be created after Tickets table
-		d.TicketDurationView, // Must be created after Tickets table
-		d.Participants,       // Must be created after Tickets table
-		d.AutoCloseExclude,   // Must be created after Tickets table
-		d.CloseReason,        // Must be created after Tickets table
-		d.CloseRequest,       // Must be created after Tickets table
-		d.ServiceRatings,     // Must be created after Tickets table
+		d.Tickets,             // Must be created before members table
+		d.TicketLastMessage,   // Must be created after Tickets table
+		d.TicketDurationView,  // Must be created after Tickets table
+		d.Participants,        // Must be created after Tickets table
+		d.AutoCloseExclude,    // Must be created after Tickets table
+		d.CloseReason,         // Must be created after Tickets table
+		d.CloseRequest,        // Must be created after Tickets table
+		d.ServiceRatings,      // Must be created after Tickets table
+		d.ExitSurveyResponses, // Must be created after Tickets table
+		d.ArchiveMessages,     // Must be created after Tickets table
 		d.FirstResponseTime,
 		d.FirstResponseTimeGuildView,
 		d.TicketMembers,

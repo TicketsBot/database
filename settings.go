@@ -19,6 +19,7 @@ type Settings struct {
 	ThreadArchiveDuration      int     `json:"thread_archive_duration"`
 	OverflowEnabled            bool    `json:"overflow_enabled"`
 	OverflowCategoryId         *uint64 `json:"overflow_category_id,string"` // If overflow_enabled and nil, use root
+	ExitSurveyFormId           *uint64 `json:"exit_survey_form_id,string"`
 }
 
 func defaultSettings() Settings {
@@ -34,6 +35,7 @@ func defaultSettings() Settings {
 		ThreadArchiveDuration:      10080,
 		OverflowEnabled:            false,
 		OverflowCategoryId:         nil,
+		ExitSurveyFormId:           nil,
 	}
 }
 
@@ -62,7 +64,9 @@ CREATE TABLE IF NOT EXISTS settings(
     "thread_archive_duration" int DEFAULT '10080',
 	"overflow_enabled" bool DEFAULT 'f',
 	"overflow_category_id" int8 DEFAULT NULL,
+	"exit_survey_form_id" int4 DEFAULT NULL,
 	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
+	FOREIGN KEY("exit_survey_form_id") REFERENCES forms("form_id") ON DELETE SET NULL,
 	PRIMARY KEY("guild_id"),
 	CHECK (use_threads = false OR ticket_notification_channel IS NOT NULL)
 );
@@ -71,6 +75,10 @@ CREATE TABLE IF NOT EXISTS settings(
 
 // TODO: GetSome func
 func (s *SettingsTable) Get(guildId uint64) (Settings, error) {
+	return s.GetWithContext(context.Background(), guildId)
+}
+
+func (s *SettingsTable) GetWithContext(ctx context.Context, guildId uint64) (Settings, error) {
 	query := `
 SELECT
 	"hide_claim_button",
@@ -89,7 +97,7 @@ WHERE "guild_id" = $1;
 `
 
 	var settings Settings
-	err := s.QueryRow(context.Background(), query, guildId).Scan(
+	err := s.QueryRow(ctx, query, guildId).Scan(
 		&settings.HideClaimButton,
 		&settings.DisableOpenCommand,
 		&settings.ContextMenuPermissionLevel,

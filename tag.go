@@ -19,10 +19,9 @@ type TagsTable struct {
 	repository *Database
 }
 
-func newTag(db *pgxpool.Pool, repository *Database) *TagsTable {
+func newTag(db *pgxpool.Pool) *TagsTable {
 	return &TagsTable{
-		Pool:       db,
-		repository: repository,
+		Pool: db,
 	}
 }
 
