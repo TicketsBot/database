@@ -31,6 +31,7 @@ type Database struct {
 	CustomIntegrationSecretValues *CustomIntegrationSecretValuesTable
 	CustomIntegrationSecrets      *CustomIntegrationSecretsTable
 	CustomColours                 *CustomColours
+	DashboardUsers                *DashboardUsersTable
 	DmOnOpen                      *DmOnOpen
 	EmbedFields                   *EmbedFieldsTable
 	Embeds                        *EmbedsTable
@@ -113,6 +114,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		CustomIntegrationSecrets:      newCustomIntegrationSecretsTable(pool),
 		CustomColours:                 newCustomColours(pool),
 		DmOnOpen:                      newDmOnOpen(pool),
+		DashboardUsers:                newDashboardUsersTable(pool),
 		EmbedFields:                   newEmbedFieldsTable(pool),
 		Embeds:                        newEmbedsTable(pool),
 		ExitSurveyResponses:           newExitSurveyResponses(pool),
@@ -195,6 +197,7 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.CustomIntegrationSecrets,
 		d.CustomIntegrationSecretValues,
 		d.CustomColours,
+		d.DashboardUsers,
 		d.DmOnOpen,
 		d.Embeds,
 		d.EmbedFields, // depends on embeds

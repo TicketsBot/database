@@ -25,7 +25,7 @@ func newUserGuildsTable(db *pgxpool.Pool) *UserGuildsTable {
 	}
 }
 
-func (u UserGuildsTable) Schema() string {
+func (u *UserGuildsTable) Schema() string {
 	return `
 CREATE TABLE IF NOT EXISTS user_guilds(
 	"user_id" int8 NOT NULL,
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS user_guilds(
 	"owner" bool NOT NULL,
 	"permissions" int8 NOT NULL,
 	"icon" varchar(34),
+	FOREIGN KEY ("user_id") REFERENCES dashboard_users("user_id") ON DELETE CASCADE,
 	PRIMARY KEY("user_id", "guild_id")
 );`
 }
