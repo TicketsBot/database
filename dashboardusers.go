@@ -38,12 +38,12 @@ func (d *DashboardUsersTable) UpdateLastSeen(ctx context.Context, userId uint64)
 	return err
 }
 
-func (d *DashboardUsersTable) PurgeOldUsers(ctx context.Context, threshold time.Duration) error {
+func (d *DashboardUsersTable) PurgeOldUsers(ctx context.Context, threshold time.Duration) (int64, error) {
 	var interval pgtype.Interval
 	if err := interval.Set(threshold); err != nil {
-		return err
+		return 0, err
 	}
 
-	_, err := d.Exec(ctx, dashboardPurgeOldUsers, threshold)
-	return err
+	metadata, err := d.Exec(ctx, dashboardPurgeOldUsers, threshold)
+	return metadata.RowsAffected(), err
 }
