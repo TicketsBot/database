@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -102,18 +103,26 @@ func (p *PanelTeamsTable) Replace(panelId int, teamIds []int) error {
 
 	defer tx.Rollback(context.Background())
 
+	if err := p.ReplaceWithTx(tx, panelId, teamIds); err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (p *PanelTeamsTable) ReplaceWithTx(tx pgx.Tx, panelId int, teamIds []int) error {
 	// Remove existing teams from panel
-	if _, err = tx.Exec(context.Background(), `DELETE FROM panel_teams WHERE "panel_id"=$1;`, panelId); err != nil {
+	if _, err := tx.Exec(context.Background(), `DELETE FROM panel_teams WHERE "panel_id"=$1;`, panelId); err != nil {
 		return err
 	}
 
 	// Add each provided team to panel
 	for _, teamId := range teamIds {
 		query := `INSERT INTO panel_teams("panel_id", "team_id") VALUES($1, $2) ON CONFLICT("panel_id", "team_id") DO NOTHING;`
-		if _, err = tx.Exec(context.Background(), query, panelId, teamId); err != nil {
+		if _, err := tx.Exec(context.Background(), query, panelId, teamId); err != nil {
 			return err
 		}
 	}
 
-	return tx.Commit(context.Background())
+	return nil
 }

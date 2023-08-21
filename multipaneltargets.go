@@ -67,32 +67,7 @@ WHERE "multi_panel_id" = $1;`
 
 	for rows.Next() {
 		var panel Panel
-		err := rows.Scan(
-			&panel.PanelId,
-			&panel.MessageId,
-			&panel.ChannelId,
-			&panel.GuildId,
-			&panel.Title,
-			&panel.Content,
-			&panel.Colour,
-			&panel.TargetCategory,
-			&panel.EmojiName,
-			&panel.EmojiId,
-			&panel.WelcomeMessageEmbed,
-			&panel.WithDefaultTeam,
-			&panel.CustomId,
-			&panel.ImageUrl,
-			&panel.ThumbnailUrl,
-			&panel.ButtonStyle,
-			&panel.ButtonLabel,
-			&panel.FormId,
-			&panel.NamingScheme,
-			&panel.ForceDisabled,
-			&panel.Disabled,
-			&panel.ExitSurveyFormId,
-		)
-
-		if err != nil {
+		if err := rows.Scan(panel.fieldPtrs()...); err != nil {
 			return nil, err
 		}
 

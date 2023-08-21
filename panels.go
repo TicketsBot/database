@@ -115,30 +115,8 @@ FROM panels
 WHERE "message_id" = $1;
 `
 
-	if err := p.QueryRow(context.Background(), query, messageId).Scan(
-		&panel.PanelId,
-		&panel.MessageId,
-		&panel.ChannelId,
-		&panel.GuildId,
-		&panel.Title,
-		&panel.Content,
-		&panel.Colour,
-		&panel.TargetCategory,
-		&panel.EmojiName,
-		&panel.EmojiId,
-		&panel.WelcomeMessageEmbed,
-		&panel.WithDefaultTeam,
-		&panel.CustomId,
-		&panel.ImageUrl,
-		&panel.ThumbnailUrl,
-		&panel.ButtonStyle,
-		&panel.ButtonLabel,
-		&panel.FormId,
-		&panel.NamingScheme,
-		&panel.ForceDisabled,
-		&panel.Disabled,
-		&panel.ExitSurveyFormId,
-	); err != nil && err != pgx.ErrNoRows {
+	if err := p.QueryRow(context.Background(), query, messageId).
+		Scan(panel.fieldPtrs()...); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
@@ -174,30 +152,8 @@ FROM panels
 WHERE "panel_id" = $1;
 `
 
-	if err := p.QueryRow(context.Background(), query, panelId).Scan(
-		&panel.PanelId,
-		&panel.MessageId,
-		&panel.ChannelId,
-		&panel.GuildId,
-		&panel.Title,
-		&panel.Content,
-		&panel.Colour,
-		&panel.TargetCategory,
-		&panel.EmojiName,
-		&panel.EmojiId,
-		&panel.WelcomeMessageEmbed,
-		&panel.WithDefaultTeam,
-		&panel.CustomId,
-		&panel.ImageUrl,
-		&panel.ThumbnailUrl,
-		&panel.ButtonStyle,
-		&panel.ButtonLabel,
-		&panel.FormId,
-		&panel.NamingScheme,
-		&panel.ForceDisabled,
-		&panel.Disabled,
-		&panel.ExitSurveyFormId,
-	); err != nil && err != pgx.ErrNoRows {
+	if err := p.QueryRow(context.Background(), query, panelId).
+		Scan(panel.fieldPtrs()...); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
@@ -233,32 +189,7 @@ FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
 
-	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
-		&panel.PanelId,
-		&panel.MessageId,
-		&panel.ChannelId,
-		&panel.GuildId,
-		&panel.Title,
-		&panel.Content,
-		&panel.Colour,
-		&panel.TargetCategory,
-		&panel.EmojiName,
-		&panel.EmojiId,
-		&panel.WelcomeMessageEmbed,
-		&panel.WithDefaultTeam,
-		&panel.CustomId,
-		&panel.ImageUrl,
-		&panel.ThumbnailUrl,
-		&panel.ButtonStyle,
-		&panel.ButtonLabel,
-		&panel.FormId,
-		&panel.NamingScheme,
-		&panel.ForceDisabled,
-		&panel.Disabled,
-		&panel.ExitSurveyFormId,
-	)
-
-	switch err {
+	switch err := p.QueryRow(context.Background(), query, guildId, customId).Scan(panel.fieldPtrs()...); err {
 	case nil:
 		ok = true
 	case pgx.ErrNoRows:
@@ -298,32 +229,7 @@ FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
 
-	err := p.QueryRow(context.Background(), query, guildId, formId).Scan(
-		&panel.PanelId,
-		&panel.MessageId,
-		&panel.ChannelId,
-		&panel.GuildId,
-		&panel.Title,
-		&panel.Content,
-		&panel.Colour,
-		&panel.TargetCategory,
-		&panel.EmojiName,
-		&panel.EmojiId,
-		&panel.WelcomeMessageEmbed,
-		&panel.WithDefaultTeam,
-		&panel.CustomId,
-		&panel.ImageUrl,
-		&panel.ThumbnailUrl,
-		&panel.ButtonStyle,
-		&panel.ButtonLabel,
-		&panel.FormId,
-		&panel.NamingScheme,
-		&panel.ForceDisabled,
-		&panel.Disabled,
-		&panel.ExitSurveyFormId,
-	)
-
-	switch err {
+	switch err := p.QueryRow(context.Background(), query, guildId, formId).Scan(panel.fieldPtrs()...); err {
 	case nil:
 		ok = true
 	case pgx.ErrNoRows:
@@ -365,32 +271,7 @@ ON forms.form_id = panels.form_id
 WHERE forms.guild_id = $1 AND forms.form_id = $2;
 `
 
-	err := p.QueryRow(context.Background(), query, guildId, customId).Scan(
-		&panel.PanelId,
-		&panel.MessageId,
-		&panel.ChannelId,
-		&panel.GuildId,
-		&panel.Title,
-		&panel.Content,
-		&panel.Colour,
-		&panel.TargetCategory,
-		&panel.EmojiName,
-		&panel.EmojiId,
-		&panel.WelcomeMessageEmbed,
-		&panel.WithDefaultTeam,
-		&panel.CustomId,
-		&panel.ImageUrl,
-		&panel.ThumbnailUrl,
-		&panel.ButtonStyle,
-		&panel.ButtonLabel,
-		&panel.FormId,
-		&panel.NamingScheme,
-		&panel.ForceDisabled,
-		&panel.Disabled,
-		&panel.ExitSurveyFormId,
-	)
-
-	switch err {
+	switch err := p.QueryRow(context.Background(), query, guildId, customId).Scan(panel.fieldPtrs()...); err {
 	case nil:
 		ok = true
 	case pgx.ErrNoRows:
@@ -438,32 +319,7 @@ ORDER BY "panel_id" ASC;`
 
 	for rows.Next() {
 		var panel Panel
-		err := rows.Scan(
-			&panel.PanelId,
-			&panel.MessageId,
-			&panel.ChannelId,
-			&panel.GuildId,
-			&panel.Title,
-			&panel.Content,
-			&panel.Colour,
-			&panel.TargetCategory,
-			&panel.EmojiName,
-			&panel.EmojiId,
-			&panel.WelcomeMessageEmbed,
-			&panel.WithDefaultTeam,
-			&panel.CustomId,
-			&panel.ImageUrl,
-			&panel.ThumbnailUrl,
-			&panel.ButtonStyle,
-			&panel.ButtonLabel,
-			&panel.FormId,
-			&panel.NamingScheme,
-			&panel.ForceDisabled,
-			&panel.Disabled,
-			&panel.ExitSurveyFormId,
-		)
-
-		if err != nil {
+		if err := rows.Scan(panel.fieldPtrs()...); err != nil {
 			return nil, err
 		}
 
@@ -533,29 +389,7 @@ ORDER BY panels.panel_id ASC;`
 		var embedGuildId *uint64
 		var embedColour *uint32
 
-		err := rows.Scan(
-			&panel.PanelId,
-			&panel.MessageId,
-			&panel.ChannelId,
-			&panel.GuildId,
-			&panel.Title,
-			&panel.Content,
-			&panel.Colour,
-			&panel.TargetCategory,
-			&panel.EmojiName,
-			&panel.EmojiId,
-			&panel.WelcomeMessageEmbed,
-			&panel.WithDefaultTeam,
-			&panel.CustomId,
-			&panel.ImageUrl,
-			&panel.ThumbnailUrl,
-			&panel.ButtonStyle,
-			&panel.ButtonLabel,
-			&panel.FormId,
-			&panel.NamingScheme,
-			&panel.ForceDisabled,
-			&panel.Disabled,
-			&panel.ExitSurveyFormId,
+		err := rows.Scan(append(panel.fieldPtrs(),
 			&embedId,
 			&embedGuildId,
 			&embed.Title,
@@ -570,7 +404,7 @@ ORDER BY panels.panel_id ASC;`
 			&embed.FooterText,
 			&embed.FooterIconUrl,
 			&embed.Timestamp,
-		)
+		)...)
 
 		if err != nil {
 			return nil, err
@@ -601,7 +435,18 @@ func (p *PanelTable) GetPanelCount(guildId uint64) (count int, err error) {
 	return
 }
 
-func (p *PanelTable) Create(panel Panel) (panelId int, err error) {
+func (p *PanelTable) Create(panel Panel) (int, error) {
+	tx, err := p.Begin(context.Background())
+	if err != nil {
+		return 0, err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	return p.CreateWithTx(tx, panel)
+}
+
+func (p *PanelTable) CreateWithTx(tx pgx.Tx, panel Panel) (panelId int, err error) {
 	query := `
 INSERT INTO panels(
 	"message_id",
@@ -630,7 +475,7 @@ VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $1
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
-	err = p.QueryRow(context.Background(), query,
+	err = tx.QueryRow(context.Background(), query,
 		panel.MessageId,
 		panel.ChannelId,
 		panel.GuildId,
@@ -658,6 +503,21 @@ RETURNING "panel_id";`
 }
 
 func (p *PanelTable) Update(panel Panel) (err error) {
+	tx, err := p.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	if err := p.UpdateWithTx(tx, panel); err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (p *PanelTable) UpdateWithTx(tx pgx.Tx, panel Panel) error {
 	query := `
 UPDATE panels
 	SET "message_id" = $2,
@@ -683,7 +543,8 @@ UPDATE panels
 	WHERE
 		"panel_id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query,
+
+	_, err := tx.Exec(context.Background(), query,
 		panel.PanelId,
 		panel.MessageId,
 		panel.ChannelId,
@@ -706,7 +567,8 @@ UPDATE panels
 		panel.Disabled,
 		panel.ExitSurveyFormId,
 	)
-	return
+
+	return err
 }
 
 func (p *PanelTable) UpdateMessageId(panelId int, messageId uint64) (err error) {
@@ -791,4 +653,31 @@ func (p *PanelTable) Delete(panelId int) (err error) {
 	query := `DELETE FROM panels WHERE "panel_id"=$1;`
 	_, err = p.Exec(context.Background(), query, panelId)
 	return
+}
+
+func (p *Panel) fieldPtrs() []interface{} {
+	return []interface{}{
+		&p.PanelId,
+		&p.MessageId,
+		&p.ChannelId,
+		&p.GuildId,
+		&p.Title,
+		&p.Content,
+		&p.Colour,
+		&p.TargetCategory,
+		&p.EmojiName,
+		&p.EmojiId,
+		&p.WelcomeMessageEmbed,
+		&p.WithDefaultTeam,
+		&p.CustomId,
+		&p.ImageUrl,
+		&p.ThumbnailUrl,
+		&p.ButtonStyle,
+		&p.ButtonLabel,
+		&p.FormId,
+		&p.NamingScheme,
+		&p.ForceDisabled,
+		&p.Disabled,
+		&p.ExitSurveyFormId,
+	}
 }

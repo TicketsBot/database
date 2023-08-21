@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -81,18 +82,26 @@ func (p *PanelRoleMentions) Replace(panelId int, roleIds []uint64) error {
 
 	defer tx.Rollback(context.Background())
 
+	if err := p.ReplaceWithTx(tx, panelId, roleIds); err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (p *PanelRoleMentions) ReplaceWithTx(tx pgx.Tx, panelId int, roleIds []uint64) error {
 	// Remove existing mentions from panel
-	if _, err = tx.Exec(context.Background(), `DELETE FROM panel_role_mentions WHERE "panel_id" = $1;`, panelId); err != nil {
+	if _, err := tx.Exec(context.Background(), `DELETE FROM panel_role_mentions WHERE "panel_id" = $1;`, panelId); err != nil {
 		return err
 	}
 
 	// Add each provided mention to panel
 	for _, roleId := range roleIds {
 		query := `INSERT INTO panel_role_mentions("panel_id", "role_id") VALUES($1, $2) ON CONFLICT("panel_id", "role_id") DO NOTHING;`
-		if _, err = tx.Exec(context.Background(), query, panelId, roleId); err != nil {
+		if _, err := tx.Exec(context.Background(), query, panelId, roleId); err != nil {
 			return err
 		}
 	}
 
-	return tx.Commit(context.Background())
+	return nil
 }

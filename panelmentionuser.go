@@ -37,8 +37,23 @@ func (p *PanelUserMention) ShouldMentionUser(panelId int) (shouldMention bool, e
 	return
 }
 
-func (p *PanelUserMention) Set(panelId int, shouldMentionUser bool) (err error) {
+func (p *PanelUserMention) Set(panelId int, shouldMentionUser bool) error {
+	tx, err := p.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	if err := p.SetWithTx(tx, panelId, shouldMentionUser); err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (p *PanelUserMention) SetWithTx(tx pgx.Tx, panelId int, shouldMentionUser bool) (err error) {
 	query := `INSERT INTO panel_user_mentions("panel_id", "should_mention_user") VALUES($1, $2) ON CONFLICT("panel_id") DO UPDATE SET "should_mention_user" = $2;`
-	_, err = p.Exec(context.Background(), query, panelId, shouldMentionUser)
+	_, err = tx.Exec(context.Background(), query, panelId, shouldMentionUser)
 	return
 }

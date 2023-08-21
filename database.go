@@ -49,10 +49,11 @@ type Database struct {
 	NamingScheme                  *TicketNamingScheme
 	OnCall                        *OnCall
 	Panel                         *PanelTable
-	PanelTeams                    *PanelTeamsTable
-	Participants                  *ParticipantTable
+	PanelAccessControlRules       *PanelAccessControlRules
 	PanelRoleMentions             *PanelRoleMentions
+	PanelTeams                    *PanelTeamsTable
 	PanelUserMention              *PanelUserMention
+	Participants                  *ParticipantTable
 	Permissions                   *Permissions
 	PingEveryone                  *PingEveryone
 	Prefix                        *Prefix
@@ -131,10 +132,11 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		NamingScheme:                  newTicketNamingScheme(pool),
 		OnCall:                        newOnCall(pool),
 		Panel:                         newPanelTable(pool),
-		PanelTeams:                    newPanelTeamsTable(pool),
-		Participants:                  newParticipantTable(pool),
+		PanelAccessControlRules:       newPanelAccessControlRules(pool),
 		PanelRoleMentions:             newPanelRoleMentions(pool),
+		PanelTeams:                    newPanelTeamsTable(pool),
 		PanelUserMention:              newPanelUserMention(pool),
+		Participants:                  newParticipantTable(pool),
 		Permissions:                   newPermissions(pool),
 		PingEveryone:                  newPingEveryone(pool),
 		Prefix:                        newPrefix(pool),
@@ -211,7 +213,8 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.NamingScheme,
 		d.OnCall,
 		d.Panel,
-		d.MultiPanelTargets, // must be created after panels table
+		d.PanelAccessControlRules, // must be created after panels table
+		d.MultiPanelTargets,       // must be created after panels table
 		d.PanelRoleMentions,
 		d.PanelUserMention,
 		d.Permissions,
