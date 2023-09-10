@@ -45,7 +45,8 @@ func (s *SupportTeamRolesTable) Get(teamId int) (roles []uint64, e error) {
 }
 
 func (s *SupportTeamRolesTable) Add(teamId int, roleId uint64) (err error) {
-	_, err = s.Exec(context.Background(), `INSERT INTO support_team_roles("team_id", "role_id") VALUES($1, $2);`, teamId, roleId)
+	query := `INSERT INTO support_team_roles("team_id", "role_id") VALUES($1, $2) ON CONFLICT (team_id, role_id) DO NOTHING;`
+	_, err = s.Exec(context.Background(), query, teamId, roleId)
 	return
 }
 
