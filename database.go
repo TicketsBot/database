@@ -55,8 +55,6 @@ type Database struct {
 	PanelUserMention              *PanelUserMention
 	Participants                  *ParticipantTable
 	Permissions                   *Permissions
-	PingEveryone                  *PingEveryone
-	Prefix                        *Prefix
 	PremiumGuilds                 *PremiumGuilds
 	PremiumKeys                   *PremiumKeys
 	RoleBlacklist                 *RoleBlacklist
@@ -138,8 +136,6 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PanelUserMention:              newPanelUserMention(pool),
 		Participants:                  newParticipantTable(pool),
 		Permissions:                   newPermissions(pool),
-		PingEveryone:                  newPingEveryone(pool),
-		Prefix:                        newPrefix(pool),
 		PremiumGuilds:                 newPremiumGuilds(pool),
 		PremiumKeys:                   newPremiumKeys(pool),
 		RoleBlacklist:                 newRoleBlacklist(pool),
@@ -218,8 +214,6 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.PanelRoleMentions,
 		d.PanelUserMention,
 		d.Permissions,
-		d.PingEveryone,
-		d.Prefix,
 		d.PremiumGuilds,
 		d.PremiumKeys,
 		d.RoleBlacklist,
