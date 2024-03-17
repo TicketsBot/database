@@ -7,16 +7,17 @@ import (
 )
 
 type MultiPanel struct {
-	Id           int     `json:"id"`
-	MessageId    uint64  `json:"message_id,string"`
-	ChannelId    uint64  `json:"channel_id,string"`
-	GuildId      uint64  `json:"guild_id,string"`
-	Title        string  `json:"title"`
-	Content      string  `json:"content"`
-	Colour       int     `json:"colour"`
-	SelectMenu   bool    `json:"select_menu"`
-	ImageUrl     *string `json:"image_url,omitempty"`
-	ThumbnailUrl *string `json:"thumbnail_url,omitempty"`
+	Id             int     `json:"id"`
+	MessageId      uint64  `json:"message_id,string"`
+	ChannelId      uint64  `json:"channel_id,string"`
+	GuildId        uint64  `json:"guild_id,string"`
+	Title          string  `json:"title"`
+	Content        string  `json:"content"`
+	Colour         int     `json:"colour"`
+	SelectMenu     bool    `json:"select_menu"`
+	SelectMenuText *string `json:"select_menu_text"`
+	ImageUrl       *string `json:"image_url,omitempty"`
+	ThumbnailUrl   *string `json:"thumbnail_url,omitempty"`
 }
 
 type MultiPanelTable struct {

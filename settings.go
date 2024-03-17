@@ -8,18 +8,19 @@ import (
 
 // TODO: Migrate all settings to this table
 type Settings struct {
-	HideClaimButton            bool    `json:"hide_claim_button"`
-	DisableOpenCommand         bool    `json:"disable_open_command"`
-	ContextMenuPermissionLevel int     `json:"context_menu_permission_level,string"`
-	ContextMenuAddSender       bool    `json:"context_menu_add_sender"`
-	ContextMenuPanel           *int    `json:"context_menu_panel"`
-	StoreTranscripts           bool    `json:"store_transcripts"`
-	UseThreads                 bool    `json:"use_threads"`
-	TicketNotificationChannel  *uint64 `json:"ticket_notification_channel,string"`
-	ThreadArchiveDuration      int     `json:"thread_archive_duration"`
-	OverflowEnabled            bool    `json:"overflow_enabled"`
-	OverflowCategoryId         *uint64 `json:"overflow_category_id,string"` // If overflow_enabled and nil, use root
-	ExitSurveyFormId           *uint64 `json:"exit_survey_form_id,string"`
+	HideClaimButton             bool    `json:"hide_claim_button"`
+	DisableOpenCommand          bool    `json:"disable_open_command"`
+	ContextMenuPermissionLevel  int     `json:"context_menu_permission_level,string"`
+	ContextMenuAddSender        bool    `json:"context_menu_add_sender"`
+	ContextMenuPanel            *int    `json:"context_menu_panel"`
+	StoreTranscripts            bool    `json:"store_transcripts"`
+	UseThreads                  bool    `json:"use_threads"`
+	TicketNotificationChannel   *uint64 `json:"ticket_notification_channel,string"`
+	ThreadArchiveDuration       int     `json:"thread_archive_duration"`
+	OverflowEnabled             bool    `json:"overflow_enabled"`
+	OverflowCategoryId          *uint64 `json:"overflow_category_id,string"` // If overflow_enabled and nil, use root
+	ExitSurveyFormId            *uint64 `json:"exit_survey_form_id,string"`
+	AnonymiseDashboardResponses bool    `json:"anonymise_dashboard_responses"`
 }
 
 func defaultSettings() Settings {
@@ -65,6 +66,7 @@ CREATE TABLE IF NOT EXISTS settings(
 	"overflow_enabled" bool DEFAULT 'f',
 	"overflow_category_id" int8 DEFAULT NULL,
 	"exit_survey_form_id" int4 DEFAULT NULL,
+	"anonymise_dashboard_responses" bool DEFAULT 'f',
 	FOREIGN KEY("context_menu_panel") REFERENCES panels("panel_id") ON DELETE SET NULL,
 	FOREIGN KEY("exit_survey_form_id") REFERENCES forms("form_id") ON DELETE SET NULL,
 	PRIMARY KEY("guild_id"),
@@ -91,7 +93,8 @@ SELECT
 	"ticket_notification_channel",
     "thread_archive_duration",
 	"overflow_enabled",
-	"overflow_category_id"
+	"overflow_category_id",
+	"anonymise_dashboard_responses"
 FROM settings
 WHERE "guild_id" = $1;
 `
@@ -109,6 +112,7 @@ WHERE "guild_id" = $1;
 		&settings.ThreadArchiveDuration,
 		&settings.OverflowEnabled,
 		&settings.OverflowCategoryId,
+		&settings.AnonymiseDashboardResponses,
 	)
 
 	if err == nil {
@@ -134,9 +138,10 @@ INSERT INTO settings(
 	"ticket_notification_channel",
     "thread_archive_duration",
 	"overflow_enabled",
-	"overflow_category_id"
+	"overflow_category_id",
+	"anonymise_dashboard_responses"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 ON CONFLICT("guild_id")
 DO UPDATE SET
 	"hide_claim_button" = $2,
@@ -149,7 +154,9 @@ DO UPDATE SET
     "ticket_notification_channel" = $9,
     "thread_archive_duration" = $10,
 	"overflow_enabled" = $11,
-	"overflow_category_id" = $12;
+	"overflow_category_id" = $12,
+	"anonymise_dashboard_responses" = $13
+;
 `
 
 	_, err = s.Exec(context.Background(), query,
@@ -165,6 +172,7 @@ DO UPDATE SET
 		settings.ThreadArchiveDuration,
 		settings.OverflowEnabled,
 		settings.OverflowCategoryId,
+		settings.AnonymiseDashboardResponses,
 	)
 
 	return
