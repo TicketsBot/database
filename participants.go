@@ -99,14 +99,14 @@ SELECT EXISTS(
 	return
 }
 
-func (p *ParticipantTable) Set(guildId uint64, ticketId int, userId uint64) (err error) {
+func (p *ParticipantTable) Set(ctx context.Context, guildId uint64, ticketId int, userId uint64) (err error) {
 	query := `
 INSERT INTO participant("guild_id", "ticket_id", "user_id")
 VALUES($1, $2, $3)
 ON CONFLICT("guild_id", "ticket_id", "user_id")
 DO NOTHING;`
 
-	_, err = p.Exec(context.Background(), query, guildId, ticketId, userId)
+	_, err = p.Exec(ctx, query, guildId, ticketId, userId)
 	return
 }
 
@@ -132,7 +132,8 @@ WHERE "guild_id" = $1 AND "user_id" = $2;
 }
 
 func (p *ParticipantTable) GetParticipatedCountInterval(guildId, userId uint64, interval time.Duration) (count int, err error) {
-	parsed, err := toInterval(interval); if err != nil {
+	parsed, err := toInterval(interval)
+	if err != nil {
 		return 0, err
 	}
 
@@ -147,4 +148,3 @@ WHERE participant.guild_id = $1 AND participant.user_id = $2 AND tickets.open_ti
 	err = p.QueryRow(context.Background(), query, guildId, userId, parsed).Scan(&count)
 	return
 }
-

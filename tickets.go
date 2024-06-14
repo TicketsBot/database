@@ -302,13 +302,13 @@ WHERE "channel_id" = $1;`
 	return
 }
 
-func (t *TicketTable) GetByChannelAndGuild(channelId, guildId uint64) (ticket Ticket, e error) {
+func (t *TicketTable) GetByChannelAndGuild(ctx context.Context, channelId, guildId uint64) (ticket Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "channel_id" = $1 AND "guild_id" = $2;`
 
-	if err := t.QueryRow(context.Background(), query, channelId, guildId).Scan(
+	if err := t.QueryRow(ctx, query, channelId, guildId).Scan(
 		&ticket.Id,
 		&ticket.GuildId,
 		&ticket.ChannelId,
