@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -276,13 +277,14 @@ FROM tickets`
 	return
 }
 
-func (t *TicketTable) GetByChannel(channelId uint64) (ticket Ticket, e error) {
+func (t *TicketTable) GetByChannel(ctx context.Context, channelId uint64) (Ticket, bool, error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "channel_id" = $1;`
 
-	if err := t.QueryRow(context.Background(), query, channelId).Scan(
+	var ticket Ticket
+	if err := t.QueryRow(ctx, query, channelId).Scan(
 		&ticket.Id,
 		&ticket.GuildId,
 		&ticket.ChannelId,
@@ -296,10 +298,15 @@ WHERE "channel_id" = $1;`
 		&ticket.IsThread,
 		&ticket.JoinMessageId,
 		&ticket.NotesThreadId,
-	); err != nil && err != pgx.ErrNoRows {
-		e = err
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Ticket{}, false, nil
+		} else {
+			return Ticket{}, false, err
+		}
 	}
-	return
+
+	return ticket, true, nil
 }
 
 func (t *TicketTable) GetByChannelAndGuild(ctx context.Context, channelId, guildId uint64) (ticket Ticket, e error) {
