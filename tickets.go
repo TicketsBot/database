@@ -89,7 +89,7 @@ CREATE INDEX IF NOT EXISTS tickets_panel_id ON tickets("panel_id");
 `
 }
 
-func (t *TicketTable) Create(guildId, userId uint64, isThread bool, panelId *uint64) (id int, err error) {
+func (t *TicketTable) Create(guildId, userId uint64, isThread bool, panelId *int) (id int, err error) {
 	query := `
 INSERT INTO tickets("id", "guild_id", "user_id", "open", "open_time", "is_thread", "panel_id")
 VALUES(
