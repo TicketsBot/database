@@ -89,19 +89,36 @@ CREATE INDEX IF NOT EXISTS tickets_panel_id ON tickets("panel_id");
 `
 }
 
-func (t *TicketTable) Create(guildId, userId uint64, isThread bool) (id int, err error) {
-	query := `INSERT INTO tickets("id", "guild_id", "user_id", "open", "open_time", "is_thread") VALUES((SELECT COALESCE(MAX("id"), 0) + 1 FROM tickets WHERE "guild_id" = $1), $1, $2, true, NOW(), $3) RETURNING "id";`
-	err = t.QueryRow(context.Background(), query, guildId, userId, isThread).Scan(&id)
+func (t *TicketTable) Create(guildId, userId uint64, isThread bool, panelId *uint64) (id int, err error) {
+	query := `
+INSERT INTO tickets("id", "guild_id", "user_id", "open", "open_time", "is_thread", "panel_id")
+VALUES(
+       (SELECT COALESCE(MAX("id"), 0) + 1 FROM tickets WHERE "guild_id" = $1), 
+       $1, $2, true, NOW(), $3, $4
+)
+RETURNING "id";`
+
+	err = t.QueryRow(context.Background(), query, guildId, userId, isThread, panelId).Scan(&id)
 	return
 }
 
-func (t *TicketTable) SetTicketProperties(guildId uint64, ticketId int, channelId, welcomeMessageId uint64, joinMessageId *uint64, panelId *int) (err error) {
+func (t *TicketTable) SetChannelId(guildId uint64, ticketId int, channelId uint64) (err error) {
 	query := `
 UPDATE tickets
-SET "channel_id" = $1, "welcome_message_id" = $2, "join_message_id" = $3, "panel_id" = $4
-WHERE "guild_id" = $5 AND "id" = $6;`
+SET "channel_id" = $1
+WHERE "guild_id" = $2 AND "id" = $3;`
 
-	_, err = t.Exec(context.Background(), query, channelId, welcomeMessageId, joinMessageId, panelId, guildId, ticketId)
+	_, err = t.Exec(context.Background(), query, channelId, guildId, ticketId)
+	return
+}
+
+func (t *TicketTable) SetMessageIds(guildId uint64, ticketId int, welcomeMessageId uint64, joinMessageId *uint64) (err error) {
+	query := `
+UPDATE tickets
+SET "welcome_message_id" = $1, "join_message_id" = $2
+WHERE "guild_id" = $3 AND "id" = $4;`
+
+	_, err = t.Exec(context.Background(), query, welcomeMessageId, joinMessageId, guildId, ticketId)
 	return
 }
 
