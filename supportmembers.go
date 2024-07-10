@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS support_team_members(
 );`
 }
 
-func (s *SupportTeamMembersTable) Get(teamId int) (members []uint64, e error) {
-	rows, err := s.Query(context.Background(), `SELECT "user_id" from support_team_members WHERE "team_id" = $1;`, teamId)
+func (s *SupportTeamMembersTable) Get(ctx context.Context, teamId int) (members []uint64, e error) {
+	rows, err := s.Query(ctx, `SELECT "user_id" from support_team_members WHERE "team_id" = $1;`, teamId)
 	if err != nil {
 		return nil, err
 	}
@@ -44,18 +44,18 @@ func (s *SupportTeamMembersTable) Get(teamId int) (members []uint64, e error) {
 	return
 }
 
-func (s *SupportTeamMembersTable) Add(teamId int, userId uint64) (err error) {
+func (s *SupportTeamMembersTable) Add(ctx context.Context, teamId int, userId uint64) (err error) {
 	query := `INSERT INTO support_team_members("team_id", "user_id") VALUES($1, $2) ON CONFLICT (team_id, user_id) DO NOTHING;`
-	_, err = s.Exec(context.Background(), query, teamId, userId)
+	_, err = s.Exec(ctx, query, teamId, userId)
 	return
 }
 
-func (s *SupportTeamMembersTable) Delete(teamId int, userId uint64) (err error) {
-	_, err = s.Exec(context.Background(), `DELETE FROM support_team_members WHERE "team_id"=$1 AND "user_id"=$2;`, teamId, userId)
+func (s *SupportTeamMembersTable) Delete(ctx context.Context, teamId int, userId uint64) (err error) {
+	_, err = s.Exec(ctx, `DELETE FROM support_team_members WHERE "team_id"=$1 AND "user_id"=$2;`, teamId, userId)
 	return
 }
 
-func (s *SupportTeamMembersTable) IsSupport(guildId, userId uint64) (isSupport bool, err error) {
+func (s *SupportTeamMembersTable) IsSupport(ctx context.Context, guildId, userId uint64) (isSupport bool, err error) {
 	query := `
 SELECT EXISTS(
 	SELECT 1
@@ -66,11 +66,11 @@ SELECT EXISTS(
 );
 `
 
-	err = s.QueryRow(context.Background(), query, guildId, userId).Scan(&isSupport)
+	err = s.QueryRow(ctx, query, guildId, userId).Scan(&isSupport)
 	return
 }
 
-func (s *SupportTeamMembersTable) IsSupportSubset(guildId, userId uint64, teams []int) (isSupport bool, err error) {
+func (s *SupportTeamMembersTable) IsSupportSubset(ctx context.Context, guildId, userId uint64, teams []int) (isSupport bool, err error) {
 	query := `
 SELECT EXISTS(
 	SELECT 1
@@ -86,11 +86,11 @@ SELECT EXISTS(
 		return false, err
 	}
 
-	err = s.QueryRow(context.Background(), query, guildId, userId, teamIdArray).Scan(&isSupport)
+	err = s.QueryRow(ctx, query, guildId, userId, teamIdArray).Scan(&isSupport)
 	return
 }
 
-func (s *SupportTeamMembersTable) GetAllSupportMembers(guildId uint64) (users []uint64, err error) {
+func (s *SupportTeamMembersTable) GetAllSupportMembers(ctx context.Context, guildId uint64) (users []uint64, err error) {
 	query := `
 SELECT support_team_members.user_id
 FROM support_team_members
@@ -99,7 +99,7 @@ ON support_team_members.team_id = support_team.id
 WHERE support_team.guild_id = $1;
 `
 
-	rows, err := s.Query(context.Background(), query, guildId)
+	rows, err := s.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ WHERE support_team.guild_id = $1;
 	return
 }
 
-func (s *SupportTeamMembersTable) GetAllSupportMembersForPanel(panelId int) (users []uint64, err error) {
+func (s *SupportTeamMembersTable) GetAllSupportMembersForPanel(ctx context.Context, panelId int) (users []uint64, err error) {
 	query := `
 SELECT DISTINCT support_team_members.user_id
 FROM support_team_members
@@ -125,7 +125,7 @@ ON support_team_members.team_id = panel_teams.team_id
 WHERE panel_teams.panel_id = $1;
 `
 
-	rows, err := s.Query(context.Background(), query, panelId)
+	rows, err := s.Query(ctx, query, panelId)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ WHERE panel_teams.panel_id = $1;
 	return
 }
 
-func (s *SupportTeamMembersTable) GetAllTeamsForUser(guildId, userId uint64) ([]int, error) {
+func (s *SupportTeamMembersTable) GetAllTeamsForUser(ctx context.Context, guildId, userId uint64) ([]int, error) {
 	query := `
 SELECT support_team_members.team_id
 FROM support_team_members
@@ -151,7 +151,7 @@ ON support_team_members.team_id = support_team.id
 WHERE support_team.guild_id = $1 AND support_team_members.user_id = $2;
 `
 
-	rows, err := s.Query(context.Background(), query, guildId, userId)
+	rows, err := s.Query(ctx, query, guildId, userId)
 	if err != nil {
 		return nil, err
 	}

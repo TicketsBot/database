@@ -54,10 +54,10 @@ func (f FormInputTable) Schema() string {
 	`
 }
 
-func (f *FormInputTable) Get(id int) (input FormInput, ok bool, e error) {
+func (f *FormInputTable) Get(ctx context.Context, id int) (input FormInput, ok bool, e error) {
 	query := `SELECT "id", "form_id", "position", "custom_id", "style", "label", "placeholder", "required", "min_length", "max_length" FROM form_input WHERE "id" = $1; `
 
-	err := f.QueryRow(context.Background(), query, id).Scan(
+	err := f.QueryRow(ctx, query, id).Scan(
 		&input.Id,
 		&input.FormId,
 		&input.Position,
@@ -81,14 +81,14 @@ func (f *FormInputTable) Get(id int) (input FormInput, ok bool, e error) {
 	return input, true, nil
 }
 
-func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {
+func (f *FormInputTable) GetInputs(ctx context.Context, formId int) (inputs []FormInput, e error) {
 	query := `
 	SELECT "id", "form_id", "position", "custom_id", "style", "label", "placeholder", "required", "min_length", "max_length"
 	FROM form_input
 	WHERE "form_id" = $1
 	ORDER BY "position" ASC; `
 
-	rows, err := f.Query(context.Background(), query, formId)
+	rows, err := f.Query(ctx, query, formId)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (f *FormInputTable) GetInputs(formId int) (inputs []FormInput, e error) {
 }
 
 // Form ID -> Form Input
-func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int][]FormInput, e error) {
+func (f *FormInputTable) GetInputsForGuild(ctx context.Context, guildId uint64) (inputs map[int][]FormInput, e error) {
 	query := `
 	SELECT form_input.id, form_input.form_id, form_input.position, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder, form_input.required, form_input.min_length, form_input.max_length
 	FROM form_input
@@ -115,7 +115,7 @@ func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int][]For
 	ORDER BY form_input.form_id, form_input.position ASC;
 	`
 
-	rows, err := f.Query(context.Background(), query, guildId)
+	rows, err := f.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (f *FormInputTable) GetInputsForGuild(guildId uint64) (inputs map[int][]For
 }
 
 // custom_id -> FormInput
-func (f *FormInputTable) GetAllInputsByCustomId(guildId uint64) (map[string]FormInput, error) {
+func (f *FormInputTable) GetAllInputsByCustomId(ctx context.Context, guildId uint64) (map[string]FormInput, error) {
 	query := `
 	SELECT form_input.id, form_input.form_id, form_input.position, form_input.custom_id, form_input.style, form_input.label, form_input.placeholder, form_input.required, form_input.min_length, form_input.max_length
 	FROM form_input
@@ -147,7 +147,7 @@ func (f *FormInputTable) GetAllInputsByCustomId(guildId uint64) (map[string]Form
 	ORDER BY form_input.position ASC;
 	`
 
-	rows, err := f.Query(context.Background(), query, guildId)
+	rows, err := f.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (f *FormInputTable) GetAllInputsByCustomId(guildId uint64) (map[string]Form
 	return inputs, nil
 }
 
-func (f *FormInputTable) Create(
+func (f *FormInputTable) Create(ctx context.Context,
 	formId int,
 	customId string,
 	style uint8,
@@ -182,7 +182,7 @@ func (f *FormInputTable) Create(
 	`
 
 	var id int
-	if err := f.QueryRow(context.Background(), query, formId, customId, style, label, placeholder, required, minLength, maxLength).Scan(&id); err != nil {
+	if err := f.QueryRow(ctx, query, formId, customId, style, label, placeholder, required, minLength, maxLength).Scan(&id); err != nil {
 		return 0, err
 	}
 
@@ -190,6 +190,7 @@ func (f *FormInputTable) Create(
 }
 
 func (f *FormInputTable) CreateTx(
+	ctx context.Context,
 	tx pgx.Tx,
 	formId int,
 	customId string,
@@ -208,14 +209,14 @@ func (f *FormInputTable) CreateTx(
 	`
 
 	var id int
-	if err := tx.QueryRow(context.Background(), query, formId, position, customId, style, label, placeholder, required, minLength, maxLength).Scan(&id); err != nil {
+	if err := tx.QueryRow(ctx, query, formId, position, customId, style, label, placeholder, required, minLength, maxLength).Scan(&id); err != nil {
 		return 0, err
 	}
 
 	return id, nil
 }
 
-func (f *FormInputTable) Update(input FormInput) (err error) {
+func (f *FormInputTable) Update(ctx context.Context, input FormInput) (err error) {
 	query := `
 	UPDATE form_input
 	SET "style" = $2,
@@ -227,11 +228,11 @@ func (f *FormInputTable) Update(input FormInput) (err error) {
 	WHERE "id" = $1;
 	`
 
-	_, err = f.Exec(context.Background(), query, input.Id, input.Style, input.Label, input.Placeholder, input.Required, input.MinLength, input.MaxLength)
+	_, err = f.Exec(ctx, query, input.Id, input.Style, input.Label, input.Placeholder, input.Required, input.MinLength, input.MaxLength)
 	return
 }
 
-func (f *FormInputTable) UpdateTx(tx pgx.Tx, input FormInput) (err error) {
+func (f *FormInputTable) UpdateTx(ctx context.Context, tx pgx.Tx, input FormInput) (err error) {
 	query := `
 	UPDATE form_input
 	SET "position" = $2,
@@ -244,12 +245,12 @@ func (f *FormInputTable) UpdateTx(tx pgx.Tx, input FormInput) (err error) {
 	WHERE "id" = $1;
 	`
 
-	_, err = tx.Exec(context.Background(), query, input.Id, input.Position, input.Style, input.Label, input.Placeholder, input.Required, input.MinLength, input.MaxLength)
+	_, err = tx.Exec(ctx, query, input.Id, input.Position, input.Style, input.Label, input.Placeholder, input.Required, input.MinLength, input.MaxLength)
 	return
 }
 
 // TODO: Remove this function. It is unused.
-func (f *FormInputTable) Swap(inputId, otherId int) error {
+func (f *FormInputTable) Swap(ctx context.Context, inputId, otherId int) error {
 	query := `
 	UPDATE form_input
 	SET position = CASE
@@ -259,7 +260,7 @@ func (f *FormInputTable) Swap(inputId, otherId int) error {
 	WHERE id in ($1,$2);
 	`
 
-	_, err := f.Exec(context.Background(), query, inputId, otherId)
+	_, err := f.Exec(ctx, query, inputId, otherId)
 	return err
 }
 
@@ -282,7 +283,7 @@ func (d InputSwapDirection) operator() string {
 }
 
 // TODO: Remove this function. It is unused.
-func (f *FormInputTable) SwapDirection(inputId, formId int, direction InputSwapDirection) error {
+func (f *FormInputTable) SwapDirection(ctx context.Context, inputId, formId int, direction InputSwapDirection) error {
 	query := fmt.Sprintf(`
 	WITH next AS (
 	SELECT id, position
@@ -300,11 +301,11 @@ func (f *FormInputTable) SwapDirection(inputId, formId int, direction InputSwapD
 	WHERE form_input.id in ($1, next.id);
 	`, direction.operator())
 
-	_, err := f.Exec(context.Background(), query, inputId, formId)
+	_, err := f.Exec(ctx, query, inputId, formId)
 	return err
 }
 
-func (f *FormInputTable) Delete(formInputId, formId int) (err error) {
+func (f *FormInputTable) Delete(ctx context.Context, formInputId, formId int) (err error) {
 	query := `
 	WITH deleted_position AS (
 	DELETE FROM form_input
@@ -316,11 +317,11 @@ func (f *FormInputTable) Delete(formInputId, formId int) (err error) {
 	WHERE form_id = $2 AND position>(SELECT position FROM deleted_position);
 	`
 
-	_, err = f.Exec(context.Background(), query, formInputId, formId)
+	_, err = f.Exec(ctx, query, formInputId, formId)
 	return
 }
 
-func (f *FormInputTable) DeleteTx(tx pgx.Tx, formInputId, formId int) (err error) {
+func (f *FormInputTable) DeleteTx(ctx context.Context, tx pgx.Tx, formInputId, formId int) (err error) {
 	query := `
 	WITH deleted_position AS (
 	DELETE FROM form_input
@@ -332,6 +333,6 @@ func (f *FormInputTable) DeleteTx(tx pgx.Tx, formInputId, formId int) (err error
 	WHERE form_id = $2 AND position>(SELECT position FROM deleted_position)
 `
 
-	_, err = tx.Exec(context.Background(), query, formInputId, formId)
+	_, err = tx.Exec(ctx, query, formInputId, formId)
 	return
 }

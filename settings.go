@@ -75,12 +75,7 @@ CREATE TABLE IF NOT EXISTS settings(
 `
 }
 
-// TODO: GetSome func
-func (s *SettingsTable) Get(guildId uint64) (Settings, error) {
-	return s.GetWithContext(context.Background(), guildId)
-}
-
-func (s *SettingsTable) GetWithContext(ctx context.Context, guildId uint64) (Settings, error) {
+func (s *SettingsTable) Get(ctx context.Context, guildId uint64) (Settings, error) {
 	query := `
 SELECT
 	"hide_claim_button",
@@ -124,7 +119,7 @@ WHERE "guild_id" = $1;
 	}
 }
 
-func (s *SettingsTable) Set(guildId uint64, settings Settings) (err error) {
+func (s *SettingsTable) Set(ctx context.Context, guildId uint64, settings Settings) (err error) {
 	query := `
 INSERT INTO settings(
 	"guild_id",
@@ -159,7 +154,7 @@ DO UPDATE SET
 ;
 `
 
-	_, err = s.Exec(context.Background(), query,
+	_, err = s.Exec(ctx, query,
 		guildId,
 		settings.HideClaimButton,
 		settings.DisableOpenCommand,
@@ -178,7 +173,7 @@ DO UPDATE SET
 	return
 }
 
-func (s *SettingsTable) SetHideClaimButton(guildId uint64, hideClaimButton bool) (err error) {
+func (s *SettingsTable) SetHideClaimButton(ctx context.Context, guildId uint64, hideClaimButton bool) (err error) {
 	query := `
 INSERT INTO settings("guild_id", "hide_claim_button")
 VALUES($1, $2)
@@ -186,11 +181,11 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "hide_claim_button" = $2;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, hideClaimButton)
+	_, err = s.Exec(ctx, query, guildId, hideClaimButton)
 	return
 }
 
-func (s *SettingsTable) SetDisableOpenCommand(guildId uint64, disableOpenCommand bool) (err error) {
+func (s *SettingsTable) SetDisableOpenCommand(ctx context.Context, guildId uint64, disableOpenCommand bool) (err error) {
 	query := `
 INSERT INTO settings("guild_id", "disable_open_command")
 VALUES($1, $2)
@@ -198,11 +193,11 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "disable_open_command" = $2;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, disableOpenCommand)
+	_, err = s.Exec(ctx, query, guildId, disableOpenCommand)
 	return
 }
 
-func (s *SettingsTable) SetContextMenuPermissionLevel(guildId uint64, permissionLevel int) (err error) {
+func (s *SettingsTable) SetContextMenuPermissionLevel(ctx context.Context, guildId uint64, permissionLevel int) (err error) {
 	query := `
 INSERT INTO settings("guild_id", "context_menu_permission_level")
 VALUES($1, $2)
@@ -210,11 +205,11 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "context_menu_permission_level" = $2;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, permissionLevel)
+	_, err = s.Exec(ctx, query, guildId, permissionLevel)
 	return
 }
 
-func (s *SettingsTable) SetOverflow(guildId uint64, enabled bool, categoryId *uint64) (err error) {
+func (s *SettingsTable) SetOverflow(ctx context.Context, guildId uint64, enabled bool, categoryId *uint64) (err error) {
 	query := `
 INSERT INTO settings("guild_id", "overflow_enabled", "overflow_category_id")
 VALUES($1, $2, $3)
@@ -222,11 +217,11 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "overflow_enabled" = $2, "overflow_category_id" = $3;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, enabled, categoryId)
+	_, err = s.Exec(ctx, query, guildId, enabled, categoryId)
 	return
 }
 
-func (s *SettingsTable) EnableThreads(guildId uint64, ticketNotificationChannel uint64) (err error) {
+func (s *SettingsTable) EnableThreads(ctx context.Context, guildId uint64, ticketNotificationChannel uint64) (err error) {
 	query := `
 INSERT INTO settings("guild_id", "use_threads", "ticket_notification_channel")
 VALUES($1, true, $2)
@@ -234,11 +229,11 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "use_threads" = true, "ticket_notification_channel" = $2;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, ticketNotificationChannel)
+	_, err = s.Exec(ctx, query, guildId, ticketNotificationChannel)
 	return
 }
 
-func (s *SettingsTable) DisableThreads(guildId uint64) (err error) {
+func (s *SettingsTable) DisableThreads(ctx context.Context, guildId uint64) (err error) {
 	query := `
 INSERT INTO settings("guild_id", "use_threads", "ticket_notification_channel")
 VALUES($1, false, NULL)
@@ -246,6 +241,6 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "use_threads" = false, "ticket_notification_channel" = NULL;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId)
+	_, err = s.Exec(ctx, query, guildId)
 	return
 }

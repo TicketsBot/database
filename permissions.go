@@ -29,10 +29,10 @@ CREATE INDEX IF NOT EXISTS permissions_guild_id ON permissions("guild_id");
 `
 }
 
-func (p *Permissions) IsSupport(guildId, userId uint64) (support bool, e error) {
+func (p *Permissions) IsSupport(ctx context.Context, guildId, userId uint64) (support bool, e error) {
 	var admin bool
 
-	if err := p.QueryRow(context.Background(), `SELECT "support", "admin" from permissions WHERE "guild_id" = $1 AND "user_id" = $2;`, guildId, userId).Scan(&support, &admin); err != nil && err != pgx.ErrNoRows {
+	if err := p.QueryRow(ctx, `SELECT "support", "admin" from permissions WHERE "guild_id" = $1 AND "user_id" = $2;`, guildId, userId).Scan(&support, &admin); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
@@ -43,16 +43,16 @@ func (p *Permissions) IsSupport(guildId, userId uint64) (support bool, e error) 
 	return
 }
 
-func (p *Permissions) IsAdmin(guildId, userId uint64) (admin bool, e error) {
-	if err := p.QueryRow(context.Background(), `SELECT "admin" from permissions WHERE "guild_id" = $1 AND "user_id" = $2;`, guildId, userId).Scan(&admin); err != nil && err != pgx.ErrNoRows {
+func (p *Permissions) IsAdmin(ctx context.Context, guildId, userId uint64) (admin bool, e error) {
+	if err := p.QueryRow(ctx, `SELECT "admin" from permissions WHERE "guild_id" = $1 AND "user_id" = $2;`, guildId, userId).Scan(&admin); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (p *Permissions) GetAdmins(guildId uint64) (admins []uint64, e error) {
-	rows, err := p.Query(context.Background(), `SELECT "user_id" from permissions WHERE "guild_id" = $1 AND "admin" = true;`, guildId)
+func (p *Permissions) GetAdmins(ctx context.Context, guildId uint64) (admins []uint64, e error) {
+	rows, err := p.Query(ctx, `SELECT "user_id" from permissions WHERE "guild_id" = $1 AND "admin" = true;`, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -71,8 +71,8 @@ func (p *Permissions) GetAdmins(guildId uint64) (admins []uint64, e error) {
 	return
 }
 
-func (p *Permissions) GetSupport(guildId uint64) (support []uint64, e error) {
-	rows, err := p.Query(context.Background(), `SELECT "user_id" from permissions WHERE "guild_id" = $1 AND ("admin" = true OR "support" = true);`, guildId)
+func (p *Permissions) GetSupport(ctx context.Context, guildId uint64) (support []uint64, e error) {
+	rows, err := p.Query(ctx, `SELECT "user_id" from permissions WHERE "guild_id" = $1 AND ("admin" = true OR "support" = true);`, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -91,9 +91,9 @@ func (p *Permissions) GetSupport(guildId uint64) (support []uint64, e error) {
 	return
 }
 
-func (p *Permissions) GetSupportOnly(guildId uint64) (support []uint64, e error) {
+func (p *Permissions) GetSupportOnly(ctx context.Context, guildId uint64) (support []uint64, e error) {
 	query := `SELECT "user_id" from permissions WHERE "guild_id" = $1 AND "admin" = false AND "support" = true;`
-	rows, err := p.Query(context.Background(), query, guildId)
+	rows, err := p.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -112,27 +112,26 @@ func (p *Permissions) GetSupportOnly(guildId uint64) (support []uint64, e error)
 	return
 }
 
-func (p *Permissions) AddAdmin(guildId, userId uint64) (err error) {
+func (p *Permissions) AddAdmin(ctx context.Context, guildId, userId uint64) (err error) {
 	query := `INSERT INTO permissions("guild_id", "user_id", "support", "admin") VALUES($1, $2, true, true) ON CONFLICT("guild_id", "user_id") DO UPDATE SET "admin" = true, "support" = true;`
-	_, err = p.Exec(context.Background(), query, guildId, userId)
+	_, err = p.Exec(ctx, query, guildId, userId)
 	return
 }
 
-func (p *Permissions) AddSupport(guildId, userId uint64) (err error) {
+func (p *Permissions) AddSupport(ctx context.Context, guildId, userId uint64) (err error) {
 	query := `INSERT INTO permissions("guild_id", "user_id", "support", "admin") VALUES($1, $2, true, false) ON CONFLICT("guild_id", "user_id") DO UPDATE SET "admin" = false, "support" = true;`
-	_, err = p.Exec(context.Background(), query, guildId, userId)
+	_, err = p.Exec(ctx, query, guildId, userId)
 	return
 }
 
-func (p *Permissions) RemoveAdmin(guildId, userId uint64) (err error) {
+func (p *Permissions) RemoveAdmin(ctx context.Context, guildId, userId uint64) (err error) {
 	query := `UPDATE permissions SET "admin" = false WHERE "guild_id" = $1 AND "user_id" = $2;`
-	_, err = p.Exec(context.Background(), query, guildId, userId)
+	_, err = p.Exec(ctx, query, guildId, userId)
 	return
 }
 
-func (p *Permissions) RemoveSupport(guildId, userId uint64) (err error) {
+func (p *Permissions) RemoveSupport(ctx context.Context, guildId, userId uint64) (err error) {
 	query := `UPDATE permissions SET "admin" = false, "support" = false WHERE "guild_id" = $1 AND "user_id" = $2;`
-	_, err = p.Exec(context.Background(), query, guildId, userId)
+	_, err = p.Exec(ctx, query, guildId, userId)
 	return
 }
-

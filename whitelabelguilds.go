@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS whitelabel_guilds(
 );`
 }
 
-func (w *WhitelabelGuilds) GetGuilds(botId uint64) (guilds []uint64, e error) {
+func (w *WhitelabelGuilds) GetGuilds(ctx context.Context, botId uint64) (guilds []uint64, e error) {
 	query := `SELECT "guild_id" from whitelabel_guilds WHERE "bot_id"=$1;`
 
-	rows, err := w.Query(context.Background(), query, botId)
+	rows, err := w.Query(ctx, query, botId)
 	defer rows.Close()
 	if err != nil {
 		e = err
@@ -48,10 +48,10 @@ func (w *WhitelabelGuilds) GetGuilds(botId uint64) (guilds []uint64, e error) {
 	return
 }
 
-func (w *WhitelabelGuilds) GetBotByGuild(guildId uint64) (botId uint64, found bool, e error) {
+func (w *WhitelabelGuilds) GetBotByGuild(ctx context.Context, guildId uint64) (botId uint64, found bool, e error) {
 	query := `SELECT "bot_id" from whitelabel_guilds WHERE "guild_id"=$1 LIMIT 1;`
 
-	if err := w.QueryRow(context.Background(), query, guildId).Scan(&botId); err != nil {
+	if err := w.QueryRow(ctx, query, guildId).Scan(&botId); err != nil {
 		if err == pgx.ErrNoRows {
 			found = false
 		} else {
@@ -65,14 +65,14 @@ func (w *WhitelabelGuilds) GetBotByGuild(guildId uint64) (botId uint64, found bo
 	return
 }
 
-func (w *WhitelabelGuilds) Add(botId, guildId uint64) (err error) {
+func (w *WhitelabelGuilds) Add(ctx context.Context, botId, guildId uint64) (err error) {
 	query := `INSERT INTO whitelabel_guilds("bot_id", "guild_id") VALUES($1, $2) ON CONFLICT("bot_id", "guild_id") DO NOTHING;`
-	_, err = w.Exec(context.Background(), query, botId, guildId)
+	_, err = w.Exec(ctx, query, botId, guildId)
 	return
 }
 
-func (w *WhitelabelGuilds) Delete(botId, guildId uint64) (err error) {
+func (w *WhitelabelGuilds) Delete(ctx context.Context, botId, guildId uint64) (err error) {
 	query := `DELETE FROM whitelabel_guilds WHERE "bot_id"=$1 AND "guild_id"=$2;`
-	_, err = w.Exec(context.Background(), query, botId, guildId)
+	_, err = w.Exec(ctx, query, botId, guildId)
 	return
 }

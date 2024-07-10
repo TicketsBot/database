@@ -39,13 +39,13 @@ CREATE TABLE IF NOT EXISTS ticket_last_message(
 `
 }
 
-func (m *TicketLastMessageTable) Get(guildId uint64, ticketId int) (lastMessage TicketLastMessage, e error) {
+func (m *TicketLastMessageTable) Get(ctx context.Context, guildId uint64, ticketId int) (lastMessage TicketLastMessage, e error) {
 	query := `
 SELECT "last_message_id", "last_message_time", "user_id", "user_is_staff"
 FROM ticket_last_message
 WHERE "guild_id" = $1 AND "ticket_id" = $2;`
 
-	if err := m.QueryRow(context.Background(), query, guildId, ticketId).Scan(
+	if err := m.QueryRow(ctx, query, guildId, ticketId).Scan(
 		&lastMessage.LastMessageId,
 		&lastMessage.LastMessageTime,
 		&lastMessage.UserId,
@@ -57,18 +57,18 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;`
 	return
 }
 
-func (m *TicketLastMessageTable) Set(guildId uint64, ticketId int, messageId, userId uint64, userIsStaff bool) (err error) {
+func (m *TicketLastMessageTable) Set(ctx context.Context, guildId uint64, ticketId int, messageId, userId uint64, userIsStaff bool) (err error) {
 	query := `
 INSERT INTO ticket_last_message("guild_id", "ticket_id", "last_message_id", "last_message_time", "user_id", "user_is_staff")
 VALUES($1, $2, $3, NOW(), $4, $5) ON CONFLICT("guild_id", "ticket_id")
 DO UPDATE SET "last_message_id" = $3, "last_message_time" = NOW(), "user_id" = $4, "user_is_staff" = $5;`
 
-	_, err = m.Exec(context.Background(), query, guildId, ticketId, messageId, userId, userIsStaff)
+	_, err = m.Exec(ctx, query, guildId, ticketId, messageId, userId, userIsStaff)
 	return
 }
 
-func (m *TicketLastMessageTable) Delete(guildId uint64, ticketId int) (err error) {
+func (m *TicketLastMessageTable) Delete(ctx context.Context, guildId uint64, ticketId int) (err error) {
 	query := `DELETE FROM ticket_last_message WHERE "guild_id"=$1 AND "ticket_id"=$2;`
-	_, err = m.Exec(context.Background(), query, guildId, ticketId)
+	_, err = m.Exec(ctx, query, guildId, ticketId)
 	return
 }

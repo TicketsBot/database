@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS multi_panels_guild_id ON multi_panels("guild_id");
 CREATE INDEX IF NOT EXISTS multi_panels_message_id ON multi_panels("message_id");`
 }
 
-func (p *MultiPanelTable) Get(id int) (MultiPanel, bool, error) {
+func (p *MultiPanelTable) Get(ctx context.Context, id int) (MultiPanel, bool, error) {
 	query := `
 SELECT
 	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
@@ -60,7 +60,7 @@ WHERE
 ;`
 
 	var panel MultiPanel
-	err := p.QueryRow(context.Background(), query, id).Scan(
+	err := p.QueryRow(ctx, query, id).Scan(
 		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
 	)
 
@@ -75,7 +75,7 @@ WHERE
 	return panel, true, nil
 }
 
-func (p *MultiPanelTable) GetByMessageId(messageId uint64) (MultiPanel, bool, error) {
+func (p *MultiPanelTable) GetByMessageId(ctx context.Context, messageId uint64) (MultiPanel, bool, error) {
 	query := `
 SELECT
 	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
@@ -86,7 +86,7 @@ WHERE
 ;`
 
 	var panel MultiPanel
-	err := p.QueryRow(context.Background(), query, messageId).Scan(
+	err := p.QueryRow(ctx, query, messageId).Scan(
 		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
 	)
 
@@ -101,14 +101,14 @@ WHERE
 	return panel, true, nil
 }
 
-func (p *MultiPanelTable) GetByGuild(guildId uint64) ([]MultiPanel, error) {
+func (p *MultiPanelTable) GetByGuild(ctx context.Context, guildId uint64) ([]MultiPanel, error) {
 	query := `
 SELECT "id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
 FROM multi_panels
 WHERE "guild_id" = $1;
 `
 
-	rows, err := p.Query(context.Background(), query, guildId)
+	rows, err := p.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ WHERE "guild_id" = $1;
 	return panels, nil
 }
 
-func (p *MultiPanelTable) Create(panel MultiPanel) (multiPanelId int, err error) {
+func (p *MultiPanelTable) Create(ctx context.Context, panel MultiPanel) (multiPanelId int, err error) {
 	query := `
 INSERT INTO
 	multi_panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url")
@@ -142,14 +142,14 @@ RETURNING
 ;
 `
 
-	err = p.QueryRow(context.Background(), query,
+	err = p.QueryRow(ctx, query,
 		panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.SelectMenu, panel.ImageUrl, panel.ThumbnailUrl,
 	).Scan(&multiPanelId)
 
 	return
 }
 
-func (p *MultiPanelTable) Update(multiPanelId int, multiPanel MultiPanel) (err error) {
+func (p *MultiPanelTable) Update(ctx context.Context, multiPanelId int, multiPanel MultiPanel) (err error) {
 	query := `
 UPDATE multi_panels
 	SET "message_id" = $2,
@@ -163,25 +163,25 @@ UPDATE multi_panels
 	WHERE
 		"id" = $1
 ;`
-	_, err = p.Exec(context.Background(), query,
+	_, err = p.Exec(ctx, query,
 		multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour, multiPanel.SelectMenu, multiPanel.ImageUrl, multiPanel.ThumbnailUrl,
 	)
 
 	return
 }
 
-func (p *MultiPanelTable) UpdateMessageId(multiPanelId int, messageId uint64) (err error) {
+func (p *MultiPanelTable) UpdateMessageId(ctx context.Context, multiPanelId int, messageId uint64) (err error) {
 	query := `
 UPDATE multi_panels
 SET "message_id" = $1
 WHERE "id" = $2;
 `
 
-	_, err = p.Exec(context.Background(), query, messageId, multiPanelId)
+	_, err = p.Exec(ctx, query, messageId, multiPanelId)
 	return
 }
 
-func (p *MultiPanelTable) Delete(guildId uint64, multiPanelId int) (success bool, err error) {
+func (p *MultiPanelTable) Delete(ctx context.Context, guildId uint64, multiPanelId int) (success bool, err error) {
 	query := `
 WITH deleted AS (
 	DELETE FROM
@@ -201,7 +201,7 @@ FROM
 `
 
 	var count int
-	err = p.QueryRow(context.Background(), query, guildId, multiPanelId).Scan(&count)
+	err = p.QueryRow(ctx, query, guildId, multiPanelId).Scan(&count)
 	success = count > 0
 
 	return

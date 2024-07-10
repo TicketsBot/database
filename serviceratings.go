@@ -28,26 +28,26 @@ CREATE TABLE IF NOT EXISTS service_ratings(
 );`
 }
 
-func (r *ServiceRatings) Get(guildId uint64, ticketId int) (rating uint8, ok bool, e error) {
+func (r *ServiceRatings) Get(ctx context.Context, guildId uint64, ticketId int) (rating uint8, ok bool, e error) {
 	query := `SELECT "rating" from service_ratings WHERE "guild_id" = $1 AND "ticket_id" = $2;`
 
-	err := r.QueryRow(context.Background(), query, guildId, ticketId).Scan(&rating)
+	err := r.QueryRow(ctx, query, guildId, ticketId).Scan(&rating)
 	if err == nil {
 		return rating, true, nil
 	} else if err == pgx.ErrNoRows {
 		return 0, false, nil
- 	} else {
- 		return 0, false, err
+	} else {
+		return 0, false, err
 	}
 }
 
-func (r *ServiceRatings) GetCount(guildId uint64) (count int, err error) {
+func (r *ServiceRatings) GetCount(ctx context.Context, guildId uint64) (count int, err error) {
 	query := `SELECT COUNT(*) from service_ratings WHERE "guild_id" = $1;`
-	err = r.QueryRow(context.Background(), query, guildId).Scan(&count)
+	err = r.QueryRow(ctx, query, guildId).Scan(&count)
 	return
 }
 
-func (r *ServiceRatings) GetCountClaimedBy(guildId, userId uint64) (count int, err error) {
+func (r *ServiceRatings) GetCountClaimedBy(ctx context.Context, guildId, userId uint64) (count int, err error) {
 	query := `
 SELECT COUNT(service_ratings.rating)
 FROM service_ratings
@@ -56,17 +56,17 @@ ON service_ratings.guild_id = ticket_claims.guild_id AND service_ratings.ticket_
 WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 `
 
-	err = r.QueryRow(context.Background(), query, guildId, userId).Scan(&count)
+	err = r.QueryRow(ctx, query, guildId, userId).Scan(&count)
 	return
 }
 
 // TODO: Materialized view?
-func (r *ServiceRatings) GetAverage(guildId uint64) (average float32, err error) {
+func (r *ServiceRatings) GetAverage(ctx context.Context, guildId uint64) (average float32, err error) {
 	// Returns NULL if no ratings
 	var f *float32
 
 	query := `SELECT AVG(rating) from service_ratings WHERE "guild_id" = $1;`
-	err = r.QueryRow(context.Background(), query, guildId).Scan(&f)
+	err = r.QueryRow(ctx, query, guildId).Scan(&f)
 	if f != nil {
 		average = *f
 	}
@@ -74,9 +74,8 @@ func (r *ServiceRatings) GetAverage(guildId uint64) (average float32, err error)
 	return
 }
 
-
 // TODO: Materialized view?
-func (r *ServiceRatings) GetAverageClaimedBy(guildId, userId uint64) (average float32, err error) {
+func (r *ServiceRatings) GetAverageClaimedBy(ctx context.Context, guildId, userId uint64) (average float32, err error) {
 	// Returns NULL if no tickets claimed
 	var f *float32
 
@@ -88,7 +87,7 @@ ON service_ratings.guild_id = ticket_claims.guild_id AND service_ratings.ticket_
 WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 `
 
-	err = r.QueryRow(context.Background(), query, guildId, userId).Scan(&f)
+	err = r.QueryRow(ctx, query, guildId, userId).Scan(&f)
 	if f != nil {
 		average = *f
 	}
@@ -96,7 +95,7 @@ WHERE service_ratings.guild_id = $1 AND ticket_claims.user_id = $2;
 	return
 }
 
-func (r *ServiceRatings) GetMulti(guildId uint64, ticketIds []int) (map[int]uint8, error) {
+func (r *ServiceRatings) GetMulti(ctx context.Context, guildId uint64, ticketIds []int) (map[int]uint8, error) {
 	query := `SELECT "ticket_id", "rating" from service_ratings WHERE "guild_id" = $1 AND "ticket_id" = ANY($2);`
 
 	idArray := &pgtype.Int4Array{}
@@ -106,7 +105,7 @@ func (r *ServiceRatings) GetMulti(guildId uint64, ticketIds []int) (map[int]uint
 
 	ratings := make(map[int]uint8)
 
-	rows, err := r.Query(context.Background(), query, guildId, idArray)
+	rows, err := r.Query(ctx, query, guildId, idArray)
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +125,12 @@ func (r *ServiceRatings) GetMulti(guildId uint64, ticketIds []int) (map[int]uint
 }
 
 // [lower,upper]
-func (r *ServiceRatings) GetRange(guildId uint64, lowerId, upperId int) (map[int]uint8, error) {
+func (r *ServiceRatings) GetRange(ctx context.Context, guildId uint64, lowerId, upperId int) (map[int]uint8, error) {
 	query := `SELECT "ticket_id", "rating" from service_ratings WHERE "guild_id" = $1 AND "ticket_id" >= $2 AND "ticket_id" <= 3;`
 
 	ratings := make(map[int]uint8)
 
-	rows, err := r.Query(context.Background(), query, guildId, lowerId, upperId)
+	rows, err := r.Query(ctx, query, guildId, lowerId, upperId)
 	if err != nil {
 		return nil, err
 	}
@@ -150,12 +149,12 @@ func (r *ServiceRatings) GetRange(guildId uint64, lowerId, upperId int) (map[int
 	return ratings, nil
 }
 
-func (r *ServiceRatings) Set(guildId uint64, ticketId int, rating uint8) (err error) {
+func (r *ServiceRatings) Set(ctx context.Context, guildId uint64, ticketId int, rating uint8) (err error) {
 	query := `
 INSERT INTO service_ratings("guild_id", "ticket_id", "rating")
 VALUES($1, $2, $3)
 ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "rating" = $3;`
 
-	_, err = r.Exec(context.Background(), query, guildId, ticketId, rating)
+	_, err = r.Exec(ctx, query, guildId, ticketId, rating)
 	return
 }

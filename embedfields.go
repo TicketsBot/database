@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS embed_fields(
 `
 }
 
-func (s *EmbedFieldsTable) GetField(id int) (field EmbedField, err error) {
+func (s *EmbedFieldsTable) GetField(ctx context.Context, id int) (field EmbedField, err error) {
 	query := `
 SELECT 
 	"id",
@@ -49,7 +49,7 @@ FROM embed_fields
 WHERE "id" = $1;
 `
 
-	err = s.QueryRow(context.Background(), query, id).Scan(
+	err = s.QueryRow(ctx, query, id).Scan(
 		&field.FieldId,
 		&field.EmbedId,
 		&field.Name,
@@ -60,7 +60,7 @@ WHERE "id" = $1;
 	return
 }
 
-func (s *EmbedFieldsTable) GetFieldsForEmbed(embedId int) ([]EmbedField, error) {
+func (s *EmbedFieldsTable) GetFieldsForEmbed(ctx context.Context, embedId int) ([]EmbedField, error) {
 	query := `
 SELECT 
 	"id",
@@ -72,7 +72,7 @@ FROM embed_fields
 WHERE "embed_id" = $1;
 `
 
-	rows, err := s.Query(context.Background(), query, embedId)
+	rows, err := s.Query(ctx, query, embedId)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ WHERE "embed_id" = $1;
 }
 
 // GetAllFieldsForPanels Returns a map of [embed_id][]EmbedField
-func (s *EmbedFieldsTable) GetAllFieldsForPanels(guildId uint64) (map[int][]EmbedField, error) {
+func (s *EmbedFieldsTable) GetAllFieldsForPanels(ctx context.Context, guildId uint64) (map[int][]EmbedField, error) {
 	query := `
 SELECT 
 	embed_fields.id,
@@ -108,7 +108,7 @@ WHERE embeds.guild_id = $1
 ORDER BY embed_fields.embed_id, embed_fields.id;
 `
 
-	rows, err := s.Query(context.Background(), query, guildId)
+	rows, err := s.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}

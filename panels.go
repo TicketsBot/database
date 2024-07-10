@@ -86,7 +86,7 @@ CREATE INDEX IF NOT EXISTS panels_guild_id_form_id ON panels("guild_id", "form_i
 CREATE INDEX IF NOT EXISTS panels_custom_id ON panels("custom_id");`
 }
 
-func (p *PanelTable) Get(messageId uint64) (panel Panel, e error) {
+func (p *PanelTable) Get(ctx context.Context, messageId uint64) (panel Panel, e error) {
 	query := `
 SELECT
 	panel_id,
@@ -115,7 +115,7 @@ FROM panels
 WHERE "message_id" = $1;
 `
 
-	if err := p.QueryRow(context.Background(), query, messageId).
+	if err := p.QueryRow(ctx, query, messageId).
 		Scan(panel.fieldPtrs()...); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -123,7 +123,7 @@ WHERE "message_id" = $1;
 	return
 }
 
-func (p *PanelTable) GetById(panelId int) (panel Panel, e error) {
+func (p *PanelTable) GetById(ctx context.Context, panelId int) (panel Panel, e error) {
 	query := `
 SELECT
 	panel_id,
@@ -152,7 +152,7 @@ FROM panels
 WHERE "panel_id" = $1;
 `
 
-	if err := p.QueryRow(context.Background(), query, panelId).
+	if err := p.QueryRow(ctx, query, panelId).
 		Scan(panel.fieldPtrs()...); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -160,7 +160,7 @@ WHERE "panel_id" = $1;
 	return
 }
 
-func (p *PanelTable) GetByCustomId(guildId uint64, customId string) (panel Panel, ok bool, e error) {
+func (p *PanelTable) GetByCustomId(ctx context.Context, guildId uint64, customId string) (panel Panel, ok bool, e error) {
 	query := `
 SELECT
 	panel_id,
@@ -189,7 +189,7 @@ FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
 
-	switch err := p.QueryRow(context.Background(), query, guildId, customId).Scan(panel.fieldPtrs()...); err {
+	switch err := p.QueryRow(ctx, query, guildId, customId).Scan(panel.fieldPtrs()...); err {
 	case nil:
 		ok = true
 	case pgx.ErrNoRows:
@@ -200,7 +200,7 @@ WHERE "guild_id" = $1 AND "custom_id" = $2;
 	return
 }
 
-func (p *PanelTable) GetByFormId(guildId uint64, formId int) (panel Panel, ok bool, e error) {
+func (p *PanelTable) GetByFormId(ctx context.Context, guildId uint64, formId int) (panel Panel, ok bool, e error) {
 	query := `
 SELECT
 	panel_id,
@@ -229,7 +229,7 @@ FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
 
-	switch err := p.QueryRow(context.Background(), query, guildId, formId).Scan(panel.fieldPtrs()...); err {
+	switch err := p.QueryRow(ctx, query, guildId, formId).Scan(panel.fieldPtrs()...); err {
 	case nil:
 		ok = true
 	case pgx.ErrNoRows:
@@ -240,7 +240,7 @@ WHERE "guild_id" = $1 AND "form_id" = $2;
 	return
 }
 
-func (p *PanelTable) GetByFormCustomId(guildId uint64, customId string) (panel Panel, ok bool, e error) {
+func (p *PanelTable) GetByFormCustomId(ctx context.Context, guildId uint64, customId string) (panel Panel, ok bool, e error) {
 	query := `
 SELECT
 	panels.panel_id,
@@ -271,7 +271,7 @@ ON forms.form_id = panels.form_id
 WHERE forms.guild_id = $1 AND forms.form_id = $2;
 `
 
-	switch err := p.QueryRow(context.Background(), query, guildId, customId).Scan(panel.fieldPtrs()...); err {
+	switch err := p.QueryRow(ctx, query, guildId, customId).Scan(panel.fieldPtrs()...); err {
 	case nil:
 		ok = true
 	case pgx.ErrNoRows:
@@ -282,7 +282,7 @@ WHERE forms.guild_id = $1 AND forms.form_id = $2;
 	return
 }
 
-func (p *PanelTable) GetByGuild(guildId uint64) (panels []Panel, e error) {
+func (p *PanelTable) GetByGuild(ctx context.Context, guildId uint64) (panels []Panel, e error) {
 	query := `
 SELECT
 	panel_id,
@@ -311,7 +311,7 @@ FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
 
-	rows, err := p.Query(context.Background(), query, guildId)
+	rows, err := p.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -329,7 +329,7 @@ ORDER BY "panel_id" ASC;`
 	return
 }
 
-func (p *PanelTable) GetByGuildWithWelcomeMessage(guildId uint64) (panels []PanelWithWelcomeMessage, e error) {
+func (p *PanelTable) GetByGuildWithWelcomeMessage(ctx context.Context, guildId uint64) (panels []PanelWithWelcomeMessage, e error) {
 	query := `
 SELECT
 	panels.panel_id,
@@ -374,7 +374,7 @@ ON panels.welcome_message = embeds.id
 WHERE panels.guild_id = $1
 ORDER BY panels.panel_id ASC;`
 
-	rows, err := p.Query(context.Background(), query, guildId)
+	rows, err := p.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -428,25 +428,25 @@ ORDER BY panels.panel_id ASC;`
 	return
 }
 
-func (p *PanelTable) GetPanelCount(guildId uint64) (count int, err error) {
+func (p *PanelTable) GetPanelCount(ctx context.Context, guildId uint64) (count int, err error) {
 	query := `SELECT COUNT(*) FROM panels WHERE "guild_id" = $1;`
 
-	err = p.QueryRow(context.Background(), query, guildId).Scan(&count)
+	err = p.QueryRow(ctx, query, guildId).Scan(&count)
 	return
 }
 
-func (p *PanelTable) Create(panel Panel) (int, error) {
-	tx, err := p.Begin(context.Background())
+func (p *PanelTable) Create(ctx context.Context, panel Panel) (int, error) {
+	tx, err := p.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	return p.CreateWithTx(tx, panel)
+	return p.CreateWithTx(ctx, tx, panel)
 }
 
-func (p *PanelTable) CreateWithTx(tx pgx.Tx, panel Panel) (panelId int, err error) {
+func (p *PanelTable) CreateWithTx(ctx context.Context, tx pgx.Tx, panel Panel) (panelId int, err error) {
 	query := `
 INSERT INTO panels(
 	"message_id",
@@ -475,7 +475,7 @@ VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $1
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
-	err = tx.QueryRow(context.Background(), query,
+	err = tx.QueryRow(ctx, query,
 		panel.MessageId,
 		panel.ChannelId,
 		panel.GuildId,
@@ -502,22 +502,22 @@ RETURNING "panel_id";`
 	return
 }
 
-func (p *PanelTable) Update(panel Panel) (err error) {
-	tx, err := p.Begin(context.Background())
+func (p *PanelTable) Update(ctx context.Context, panel Panel) (err error) {
+	tx, err := p.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	if err := p.UpdateWithTx(tx, panel); err != nil {
+	if err := p.UpdateWithTx(ctx, tx, panel); err != nil {
 		return err
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }
 
-func (p *PanelTable) UpdateWithTx(tx pgx.Tx, panel Panel) error {
+func (p *PanelTable) UpdateWithTx(ctx context.Context, tx pgx.Tx, panel Panel) error {
 	query := `
 UPDATE panels
 	SET "message_id" = $2,
@@ -544,7 +544,7 @@ UPDATE panels
 		"panel_id" = $1
 ;`
 
-	_, err := tx.Exec(context.Background(), query,
+	_, err := tx.Exec(ctx, query,
 		panel.PanelId,
 		panel.MessageId,
 		panel.ChannelId,
@@ -571,36 +571,36 @@ UPDATE panels
 	return err
 }
 
-func (p *PanelTable) UpdateMessageId(panelId int, messageId uint64) (err error) {
+func (p *PanelTable) UpdateMessageId(ctx context.Context, panelId int, messageId uint64) (err error) {
 	query := `
 UPDATE panels
 SET "message_id" = $1
 WHERE "panel_id" = $2;
 `
 
-	_, err = p.Exec(context.Background(), query, messageId, panelId)
+	_, err = p.Exec(ctx, query, messageId, panelId)
 	return
 }
 
-func (p *PanelTable) EnableAll(guildId uint64) (err error) {
+func (p *PanelTable) EnableAll(ctx context.Context, guildId uint64) (err error) {
 	query := `
 UPDATE panels
 SET "force_disabled" = false
 WHERE "guild_id" = $1;
 `
 
-	_, err = p.Exec(context.Background(), query, guildId)
+	_, err = p.Exec(ctx, query, guildId)
 	return
 }
 
-func (p *PanelTable) DisableSome(guildId uint64, freeLimit int) error {
+func (p *PanelTable) DisableSome(ctx context.Context, guildId uint64, freeLimit int) error {
 	txOpts := pgx.TxOptions{
 		IsoLevel:       pgx.Serializable,
 		AccessMode:     pgx.ReadWrite,
 		DeferrableMode: pgx.NotDeferrable,
 	}
 
-	tx, err := p.BeginTx(context.Background(), txOpts)
+	tx, err := p.BeginTx(ctx, txOpts)
 	if err != nil {
 		return err
 	}
@@ -608,7 +608,7 @@ func (p *PanelTable) DisableSome(guildId uint64, freeLimit int) error {
 	var panelCount int
 	{
 		query := `SELECT COUNT(*) FROM panels WHERE guild_id = $1 and "force_disabled" = false;`
-		if err := tx.QueryRow(context.Background(), query, guildId).Scan(&panelCount); err != nil {
+		if err := tx.QueryRow(ctx, query, guildId).Scan(&panelCount); err != nil {
 			return err
 		}
 	}
@@ -616,7 +616,7 @@ func (p *PanelTable) DisableSome(guildId uint64, freeLimit int) error {
 	if panelCount > freeLimit {
 		// Find panels to disable
 		query := `SELECT "panel_id" FROM panels WHERE guild_id = $1 and "force_disabled" = false ORDER BY "panel_id" DESC LIMIT $2;`
-		rows, err := tx.Query(context.Background(), query, guildId, panelCount-freeLimit)
+		rows, err := tx.Query(ctx, query, guildId, panelCount-freeLimit)
 		if err != nil {
 			return err
 		}
@@ -640,18 +640,18 @@ func (p *PanelTable) DisableSome(guildId uint64, freeLimit int) error {
 				return err
 			}
 
-			if _, err := tx.Exec(context.Background(), query, idArray, guildId); err != nil {
+			if _, err := tx.Exec(ctx, query, idArray, guildId); err != nil {
 				return err
 			}
 		}
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }
 
-func (p *PanelTable) Delete(panelId int) (err error) {
+func (p *PanelTable) Delete(ctx context.Context, panelId int) (err error) {
 	query := `DELETE FROM panels WHERE "panel_id"=$1;`
-	_, err = p.Exec(context.Background(), query, panelId)
+	_, err = p.Exec(ctx, query, panelId)
 	return
 }
 

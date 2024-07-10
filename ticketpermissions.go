@@ -34,14 +34,14 @@ CREATE TABLE IF NOT EXISTS ticket_permissions(
 `
 }
 
-func (c *TicketPermissionsTable) Get(guildId uint64) (TicketPermissions, error) {
+func (c *TicketPermissionsTable) Get(ctx context.Context, guildId uint64) (TicketPermissions, error) {
 	query := `
 SELECT "attach_files", "embed_links", "add_reactions"
 FROM ticket_permissions
 WHERE "guild_id" = $1;`
 
 	var permissions TicketPermissions
-	err := c.QueryRow(context.Background(), query, guildId).Scan(
+	err := c.QueryRow(ctx, query, guildId).Scan(
 		&permissions.AttachFiles,
 		&permissions.EmbedLinks,
 		&permissions.AddReactions,
@@ -62,18 +62,18 @@ WHERE "guild_id" = $1;`
 	return permissions, nil
 }
 
-func (c *TicketPermissionsTable) Set(guildId uint64, permissions TicketPermissions) (err error) {
+func (c *TicketPermissionsTable) Set(ctx context.Context, guildId uint64, permissions TicketPermissions) (err error) {
 	query := `
 INSERT INTO ticket_permissions("guild_id", "attach_files", "embed_links", "add_reactions")
 VALUES($1, $2, $3, $4)
 ON CONFLICT("guild_id") DO UPDATE SET "attach_files" = $2, "embed_links" = $3, "add_reactions" = $4;`
 
-	_, err = c.Exec(context.Background(), query, guildId, permissions.AttachFiles, permissions.EmbedLinks, permissions.AddReactions)
+	_, err = c.Exec(ctx, query, guildId, permissions.AttachFiles, permissions.EmbedLinks, permissions.AddReactions)
 	return
 }
 
-func (c *TicketPermissionsTable) Delete(guildId uint64) error {
+func (c *TicketPermissionsTable) Delete(ctx context.Context, guildId uint64) error {
 	query := `DELETE FROM ticket_permissions WHERE "guild_id"=$1;`
-	_, err := c.Exec(context.Background(), query, guildId)
+	_, err := c.Exec(ctx, query, guildId)
 	return err
 }

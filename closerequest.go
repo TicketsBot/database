@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS close_request(
 `
 }
 
-func (c *CloseRequestTable) Get(guildId uint64, ticketId int) (CloseRequest, bool, error) {
+func (c *CloseRequestTable) Get(ctx context.Context, guildId uint64, ticketId int) (CloseRequest, bool, error) {
 	query := `
 SELECT "guild_id", "ticket_id", "user_id", "close_at", "close_reason"
 FROM close_request
@@ -47,7 +47,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 `
 
 	var request CloseRequest
-	err := c.QueryRow(context.Background(), query, guildId, ticketId).
+	err := c.QueryRow(ctx, query, guildId, ticketId).
 		Scan(&request.GuildId, &request.TicketId, &request.UserId, &request.CloseAt, &request.Reason)
 
 	if err == nil {
@@ -59,7 +59,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 	}
 }
 
-func (c *CloseRequestTable) GetCloseable() ([]CloseRequest, error) {
+func (c *CloseRequestTable) GetCloseable(ctx context.Context) ([]CloseRequest, error) {
 	query := `
 SELECT close_request.guild_id, close_request.ticket_id, close_request.user_id, close_request.close_at, close_request.close_reason
 FROM close_request
@@ -76,7 +76,7 @@ WHERE
 ;
 `
 
-	rows, err := c.Query(context.Background(), query)
+	rows, err := c.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -94,18 +94,18 @@ WHERE
 	return requests, nil
 }
 
-func (c *CloseRequestTable) Cleanup() (err error) {
+func (c *CloseRequestTable) Cleanup(ctx context.Context) (err error) {
 	query := `
 DELETE
 FROM close_request 
 USING tickets
 WHERE close_request.guild_id = tickets.guild_id AND close_request.ticket_id = tickets.id AND NOT tickets.open;
 `
-	_, err = c.Exec(context.Background(), query)
+	_, err = c.Exec(ctx, query)
 	return
 }
 
-func (c *CloseRequestTable) Set(request CloseRequest) (err error) {
+func (c *CloseRequestTable) Set(ctx context.Context, request CloseRequest) (err error) {
 	query := `
 INSERT INTO close_request("guild_id", "ticket_id", "user_id", "close_at", "close_reason")
 VALUES($1, $2, $3, $4, $5)
@@ -113,17 +113,17 @@ ON CONFLICT("guild_id", "ticket_id") DO UPDATE
 SET "user_id" = $3, "close_at" = $4, "close_reason" = $5;
 `
 
-	_, err = c.Exec(context.Background(), query, request.GuildId, request.TicketId, request.UserId, request.CloseAt, request.Reason)
+	_, err = c.Exec(ctx, query, request.GuildId, request.TicketId, request.UserId, request.CloseAt, request.Reason)
 	return
 }
 
-func (c *CloseRequestTable) Delete(guildId uint64, ticketId int) (err error) {
+func (c *CloseRequestTable) Delete(ctx context.Context, guildId uint64, ticketId int) (err error) {
 	query := `
 DELETE
 FROM close_request
 WHERE "guild_id" = $1 AND "ticket_id" = $2;
 `
 
-	_, err = c.Exec(context.Background(), query, guildId, ticketId)
+	_, err = c.Exec(ctx, query, guildId, ticketId)
 	return
 }

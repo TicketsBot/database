@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -44,7 +43,7 @@ func (v CustomIntegrationGuildCountsView) indexes(tableName string) []string {
 	}
 }
 
-func (v *CustomIntegrationGuildCountsView) Refresh() error {
+func (v *CustomIntegrationGuildCountsView) Refresh(ctx context.Context) error {
 	statements := slice(v.schema("custom_integration_guild_counts_new"))
 	statements = append(statements, v.indexes("custom_integration_guild_counts_new")...)
 	statements = append(statements,
@@ -53,31 +52,12 @@ func (v *CustomIntegrationGuildCountsView) Refresh() error {
 		"ALTER INDEX custom_integration_guild_counts_new_integration_id_key RENAME TO custom_integration_guild_counts_integration_id_key;",
 	)
 
-	tx, err := transact(v.Pool, statements...)
+	tx, err := transact(ctx, v.Pool, statements...)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	return tx.Commit(context.Background())
-}
-
-func (v *CustomIntegrationGuildCountsView) Get(guildId uint64) (TicketDurationData, error) {
-	query := `
-SELECT "guild_id", "all_time", "monthly", "weekly"
-FROM ticket_duration
-WHERE "guild_id" = $1;
-`
-
-	var data TicketDurationData
-	if err := v.QueryRow(context.Background(), query, guildId).Scan(&data.GuildId, &data.AllTime, &data.Monthly, &data.Weekly); err != nil {
-		if err == pgx.ErrNoRows {
-			return TicketDurationData{GuildId: guildId}, nil // Return durations of zero
-		} else {
-			return TicketDurationData{}, err
-		}
-	}
-
-	return data, nil
+	return tx.Commit(ctx)
 }

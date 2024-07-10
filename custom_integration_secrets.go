@@ -38,10 +38,10 @@ CREATE INDEX IF NOT EXISTS custom_integration_secrets_integration_id ON custom_i
 `
 }
 
-func (i *CustomIntegrationSecretsTable) GetByIntegration(integrationId int) ([]CustomIntegrationSecret, error) {
+func (i *CustomIntegrationSecretsTable) GetByIntegration(ctx context.Context, integrationId int) ([]CustomIntegrationSecret, error) {
 	query := `SELECT "id", "integration_id", "name", "description" FROM custom_integration_secrets WHERE "integration_id" = $1;`
 
-	rows, err := i.Query(context.Background(), query, integrationId)
+	rows, err := i.Query(ctx, query, integrationId)
 	if err != nil {
 		return nil, err
 	}
@@ -59,20 +59,20 @@ func (i *CustomIntegrationSecretsTable) GetByIntegration(integrationId int) ([]C
 	return secrets, nil
 }
 
-/// Assume that secrets[].Id is valid for the guild and integration
-func (i *CustomIntegrationSecretsTable) CreateOrUpdate(integrationId int, secrets []CustomIntegrationSecret) ([]CustomIntegrationSecret, error) {
+// / Assume that secrets[].Id is valid for the guild and integration
+func (i *CustomIntegrationSecretsTable) CreateOrUpdate(ctx context.Context, integrationId int, secrets []CustomIntegrationSecret) ([]CustomIntegrationSecret, error) {
 	if len(secrets) == 0 {
 		query := `DELETE FROM custom_integration_secrets WHERE "integration_id" = $1;`
-		_, err := i.Exec(context.Background(), query, integrationId)
+		_, err := i.Exec(ctx, query, integrationId)
 		return nil, err
 	}
 
-	tx, err := i.Begin(context.Background())
+	tx, err := i.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defer tx.Rollback(context.Background()) // Does not matter if commit succeeds
+	defer tx.Rollback(ctx) // Does not matter if commit succeeds
 
 	// Delete existing secrets that are not in the new list
 	query := `DELETE FROM custom_integration_secrets WHERE "integration_id" = $1 AND NOT("id" = ANY($2));`
@@ -89,7 +89,7 @@ func (i *CustomIntegrationSecretsTable) CreateOrUpdate(integrationId int, secret
 		return nil, err
 	}
 
-	if _, err := tx.Exec(context.Background(), query, integrationId, array); err != nil {
+	if _, err := tx.Exec(ctx, query, integrationId, array); err != nil {
 		return nil, err
 	}
 
@@ -104,14 +104,14 @@ VALUES ($1, $2, $3)
 RETURNING "id", "integration_id", "name", "description";
 ;`
 
-			err = tx.QueryRow(context.Background(), query, integrationId, secret.Name, secret.Description).Scan(&res.Id, &res.IntegrationId, &res.Name, &res.Description)
+			err = tx.QueryRow(ctx, query, integrationId, secret.Name, secret.Description).Scan(&res.Id, &res.IntegrationId, &res.Name, &res.Description)
 		} else { // Update
 			query := `
 UPDATE custom_integration_secrets
 SET "name" = $3, "description" = $4
 WHERE "id" = $1 AND "integration_id" = $2;`
 
-			_, err = tx.Exec(context.Background(), query, secret.Id, integrationId, secret.Name, secret.Description)
+			_, err = tx.Exec(ctx, query, secret.Id, integrationId, secret.Name, secret.Description)
 			res = CustomIntegrationSecret{
 				Id:            secret.Id,
 				IntegrationId: integrationId,
@@ -127,19 +127,19 @@ WHERE "id" = $1 AND "integration_id" = $2;`
 		newSecrets = append(newSecrets, res)
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 
 	return newSecrets, nil
 }
 
-func (i *CustomIntegrationSecretsTable) Delete(id int) (err error) {
+func (i *CustomIntegrationSecretsTable) Delete(ctx context.Context, id int) (err error) {
 	query := `
 DELETE FROM custom_integration_secrets
 WHERE "id" = $1;
 `
 
-	_, err = i.Exec(context.Background(), query, id)
+	_, err = i.Exec(ctx, query, id)
 	return
 }

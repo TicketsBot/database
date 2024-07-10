@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS multi_panel_targets_multi_panel_id ON multi_panel_tar
 `
 }
 
-func (p *MultiPanelTargets) GetPanels(multiPanelId int) (panels []Panel, e error) {
+func (p *MultiPanelTargets) GetPanels(ctx context.Context, multiPanelId int) (panels []Panel, e error) {
 	query := `
 SELECT
 	panels.panel_id,
@@ -58,7 +58,7 @@ INNER JOIN panels
 ON panels.panel_id = multi_panel_targets.panel_id
 WHERE "multi_panel_id" = $1;`
 
-	rows, err := p.Query(context.Background(), query, multiPanelId)
+	rows, err := p.Query(ctx, query, multiPanelId)
 	defer rows.Close()
 	if err != nil {
 		e = err
@@ -77,7 +77,7 @@ WHERE "multi_panel_id" = $1;`
 	return
 }
 
-func (p *MultiPanelTargets) GetMultiPanels(panelId int) ([]MultiPanel, error) {
+func (p *MultiPanelTargets) GetMultiPanels(ctx context.Context, panelId int) ([]MultiPanel, error) {
 	query := `
 SELECT
 	multi_panels.id,
@@ -96,7 +96,7 @@ ON multi_panels.id = multi_panel_targets.multi_panel_id
 WHERE multi_panel_targets.panel_id = $1;
 `
 
-	rows, err := p.Query(context.Background(), query, panelId)
+	rows, err := p.Query(ctx, query, panelId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -128,18 +128,18 @@ WHERE multi_panel_targets.panel_id = $1;
 	return multiPanels, nil
 }
 
-func (p *MultiPanelTargets) Insert(multiPanelId, panelId int) (err error) {
+func (p *MultiPanelTargets) Insert(ctx context.Context, multiPanelId, panelId int) (err error) {
 	query := `
 INSERT INTO multi_panel_targets("multi_panel_id", "panel_id")
 VALUES ($1, $2) 
 ON CONFLICT("multi_panel_id", "panel_id") DO NOTHING;
 `
 
-	_, err = p.Exec(context.Background(), query, multiPanelId, panelId)
+	_, err = p.Exec(ctx, query, multiPanelId, panelId)
 	return
 }
 
-func (p *MultiPanelTargets) DeleteAll(multiPanelId int) (err error) {
+func (p *MultiPanelTargets) DeleteAll(ctx context.Context, multiPanelId int) (err error) {
 	query := `
 DELETE FROM
 	multi_panel_targets
@@ -147,11 +147,11 @@ WHERE
 	"multi_panel_id"=$1
 ;`
 
-	_, err = p.Exec(context.Background(), query, multiPanelId)
+	_, err = p.Exec(ctx, query, multiPanelId)
 	return
 }
 
-func (p *MultiPanelTargets) Delete(multiPanelId, panelId int) (err error) {
+func (p *MultiPanelTargets) Delete(ctx context.Context, multiPanelId, panelId int) (err error) {
 	query := `
 DELETE FROM
 	multi_panel_targets
@@ -161,6 +161,6 @@ WHERE
 	"panel_id" = $2
 ;`
 
-	_, err = p.Exec(context.Background(), query, multiPanelId, panelId)
+	_, err = p.Exec(ctx, query, multiPanelId, panelId)
 	return
 }

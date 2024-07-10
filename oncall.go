@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS on_call(
 );`
 }
 
-func (b *OnCall) IsOnCall(guildId, userId uint64) (bool, error) {
+func (b *OnCall) IsOnCall(ctx context.Context, guildId, userId uint64) (bool, error) {
 	query := `SELECT "is_on_call" FROM on_call WHERE "guild_id" = $1 AND "user_id" = $2;`
 
 	var onCall bool
-	if err := b.QueryRow(context.Background(), query, guildId, userId).Scan(&onCall); err != nil {
+	if err := b.QueryRow(ctx, query, guildId, userId).Scan(&onCall); err != nil {
 		if err == pgx.ErrNoRows {
 			return false, nil
 		} else {
@@ -41,10 +41,10 @@ func (b *OnCall) IsOnCall(guildId, userId uint64) (bool, error) {
 	return onCall, nil
 }
 
-func (b *OnCall) GetUsersOnCall(guildId uint64) ([]uint64, error) {
+func (b *OnCall) GetUsersOnCall(ctx context.Context, guildId uint64) ([]uint64, error) {
 	query := `SELECT "user_id" FROM on_call WHERE "guild_id" = $1 AND "is_on_call" = true;`
 
-	rows, err := b.Query(context.Background(), query, guildId)
+	rows, err := b.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -63,14 +63,14 @@ func (b *OnCall) GetUsersOnCall(guildId uint64) ([]uint64, error) {
 	return users, nil
 }
 
-func (b *OnCall) GetOnCallCount(guildId uint64) (count int, err error) {
+func (b *OnCall) GetOnCallCount(ctx context.Context, guildId uint64) (count int, err error) {
 	query := `SELECT COUNT(1) FROM on_call WHERE "guild_id" = $1;`
 
-	err = b.QueryRow(context.Background(), query, guildId).Scan(&count)
+	err = b.QueryRow(ctx, query, guildId).Scan(&count)
 	return
 }
 
-func (b *OnCall) Toggle(guildId, userId uint64) (onCall bool, err error) {
+func (b *OnCall) Toggle(ctx context.Context, guildId, userId uint64) (onCall bool, err error) {
 	query := `
 INSERT INTO on_call("guild_id", "user_id", "is_on_call") 
 VALUES($1, $2, true)
@@ -78,12 +78,12 @@ ON CONFLICT ("guild_id", "user_id")
 DO UPDATE SET "is_on_call" = NOT on_call.is_on_call
 RETURNING "is_on_call";`
 
-	err = b.QueryRow(context.Background(), query, guildId, userId).Scan(&onCall)
+	err = b.QueryRow(ctx, query, guildId, userId).Scan(&onCall)
 	return
 }
 
-func (b *OnCall) Remove(guildId, userId uint64) (err error) {
+func (b *OnCall) Remove(ctx context.Context, guildId, userId uint64) (err error) {
 	query := `DELETE FROM on_call WHERE "guild_id" = $1 AND "user_id" = $2;`
-	_, err = b.Exec(context.Background(), query, guildId, userId)
+	_, err = b.Exec(ctx, query, guildId, userId)
 	return
 }

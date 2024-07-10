@@ -27,17 +27,17 @@ CREATE TABLE IF NOT EXISTS votes(
 );`
 }
 
-func (v *Votes) Get(userId uint64) (voteTime time.Time, e error) {
+func (v *Votes) Get(ctx context.Context, userId uint64) (voteTime time.Time, e error) {
 	query := `SELECT "vote_time" from votes WHERE "user_id" = $1`
 
-	if err := v.QueryRow(context.Background(), query, userId).Scan(&voteTime); err != nil && err != pgx.ErrNoRows {
+	if err := v.QueryRow(ctx, query, userId).Scan(&voteTime); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (v *Votes) Any(userIds ...uint64) (bool, error) {
+func (v *Votes) Any(ctx context.Context, userIds ...uint64) (bool, error) {
 	query := `
 SELECT EXISTS(
 	SELECT 1
@@ -52,15 +52,15 @@ SELECT EXISTS(
 	}
 
 	var res bool
-	if err := v.QueryRow(context.Background(), query, userIdArray).Scan(&res); err != nil {
+	if err := v.QueryRow(ctx, query, userIdArray).Scan(&res); err != nil {
 		return false, err
 	}
 
 	return res, nil
 }
 
-func (v *Votes) Set(userId uint64) (err error) {
+func (v *Votes) Set(ctx context.Context, userId uint64) (err error) {
 	query := `INSERT INTO votes("user_id", "vote_time") VALUES($1, NOW()) ON CONFLICT("user_id") DO UPDATE SET "vote_time" = NOW();`
-	_, err = v.Exec(context.Background(), query, userId)
+	_, err = v.Exec(ctx, query, userId)
 	return
 }

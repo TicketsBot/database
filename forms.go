@@ -36,14 +36,14 @@ CREATE INDEX IF NOT EXISTS forms_guild_id ON forms("guild_id");
 `
 }
 
-func (f *FormsTable) Get(formId int) (form Form, ok bool, e error) {
+func (f *FormsTable) Get(ctx context.Context, formId int) (form Form, ok bool, e error) {
 	query := `SELECT "form_id", "guild_id", "title", "custom_id" FROM forms WHERE "form_id" = $1;`
 
-	err := f.QueryRow(context.Background(), query, formId).Scan(&form.Id, &form.GuildId, &form.Title, &form.CustomId)
+	err := f.QueryRow(ctx, query, formId).Scan(&form.Id, &form.GuildId, &form.Title, &form.CustomId)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-            return Form{}, false, nil
-        } else {
+			return Form{}, false, nil
+		} else {
 			return Form{}, false, err
 		}
 	}
@@ -51,10 +51,10 @@ func (f *FormsTable) Get(formId int) (form Form, ok bool, e error) {
 	return form, true, nil
 }
 
-func (f *FormsTable) GetForms(guildId uint64) (forms []Form, e error) {
+func (f *FormsTable) GetForms(ctx context.Context, guildId uint64) (forms []Form, e error) {
 	query := `SELECT "form_id", "guild_id", "title", "custom_id" FROM forms WHERE "guild_id" = $1;`
 
-	rows, err := f.Query(context.Background(), query, guildId)
+	rows, err := f.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (f *FormsTable) GetForms(guildId uint64) (forms []Form, e error) {
 	return
 }
 
-func (f *FormsTable) Create(guildId uint64, title, customId string) (int, error) {
+func (f *FormsTable) Create(ctx context.Context, guildId uint64, title, customId string) (int, error) {
 	query := `
 INSERT INTO forms("guild_id", "title", "custom_id")
 VALUES($1, $2, $3)
@@ -79,21 +79,21 @@ RETURNING "form_id";
 `
 
 	var id int
-	if err := f.QueryRow(context.Background(), query, guildId, title, customId).Scan(&id); err != nil {
-        return 0, err
-    }
+	if err := f.QueryRow(ctx, query, guildId, title, customId).Scan(&id); err != nil {
+		return 0, err
+	}
 
 	return id, nil
 }
 
-func (f *FormsTable) UpdateTitle(formId int, title string) (err error) {
+func (f *FormsTable) UpdateTitle(ctx context.Context, formId int, title string) (err error) {
 	query := `UPDATE forms SET "title" = $1 WHERE "form_id" = $2;`
-	_, err = f.Exec(context.Background(), query, title, formId)
+	_, err = f.Exec(ctx, query, title, formId)
 	return
 }
 
-func (f *FormsTable) Delete(formId int) (err error) {
+func (f *FormsTable) Delete(ctx context.Context, formId int) (err error) {
 	query := `DELETE FROM forms WHERE "form_id" = $1;`
-	_, err = f.Exec(context.Background(), query, formId)
+	_, err = f.Exec(ctx, query, formId)
 	return
 }

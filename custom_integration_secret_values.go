@@ -38,14 +38,14 @@ CREATE INDEX IF NOT EXISTS custom_integration_secret_values_guild_id_idx ON cust
 `
 }
 
-func (i *CustomIntegrationSecretValuesTable) Get(integrationId int, guildId uint64) (map[CustomIntegrationSecret]string, error) {
+func (i *CustomIntegrationSecretValuesTable) Get(ctx context.Context, integrationId int, guildId uint64) (map[CustomIntegrationSecret]string, error) {
 	query := `
 SELECT values.secret_id, values.integration_id, secrets.name, values.value
 FROM custom_integration_secret_values AS values 
 INNER JOIN custom_integration_secrets AS secrets ON secrets.id = values.secret_id
 WHERE values.integration_id = $1 AND values.guild_id = $2;`
 
-	rows, err := i.Query(context.Background(), query, integrationId, guildId)
+	rows, err := i.Query(ctx, query, integrationId, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ WHERE values.integration_id = $1 AND values.guild_id = $2;`
 }
 
 // GetAll integration_id -> SecretWithValue
-func (i *CustomIntegrationSecretValuesTable) GetAll(guildId uint64, integrationIds []int) (map[int][]SecretWithValue, error) {
+func (i *CustomIntegrationSecretValuesTable) GetAll(ctx context.Context, guildId uint64, integrationIds []int) (map[int][]SecretWithValue, error) {
 	query := `
 SELECT values.secret_id, values.integration_id, secrets.name, values.value
 FROM custom_integration_secret_values AS values 
@@ -77,7 +77,7 @@ WHERE values.integration_id = ANY($1) AND values.guild_id = $2;`
 		return nil, err
 	}
 
-	rows, err := i.Query(context.Background(), query, idArray, guildId)
+	rows, err := i.Query(ctx, query, idArray, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +103,13 @@ WHERE values.integration_id = ANY($1) AND values.guild_id = $2;`
 	return data, nil
 }
 
-func (i *CustomIntegrationSecretValuesTable) UpdateAll(guildId uint64, integrationId int, secrets map[int]string) error {
-	tx, err := i.Begin(context.Background())
+func (i *CustomIntegrationSecretValuesTable) UpdateAll(ctx context.Context, guildId uint64, integrationId int, secrets map[int]string) error {
+	tx, err := i.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
 	for secretId, secretValue := range secrets {
 		// Must upsert, in case the secret was created after the integration was activated
@@ -118,11 +118,11 @@ INSERT INTO custom_integration_secret_values(secret_id, integration_id, guild_id
 VALUES ($1, $2, $3, $4)
 ON CONFLICT(secret_id, guild_id) DO UPDATE SET value = $4;`
 
-		_, err := tx.Exec(context.Background(), query, secretId, integrationId, guildId, secretValue)
+		_, err := tx.Exec(ctx, query, secretId, integrationId, guildId, secretValue)
 		if err != nil {
 			return err
 		}
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }

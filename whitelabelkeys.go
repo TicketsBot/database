@@ -27,23 +27,23 @@ CREATE TABLE IF NOT EXISTS whitelabel_keys(
 `
 }
 
-func (w *WhitelabelKeys) Get(botId uint64) (status string, e error) {
+func (w *WhitelabelKeys) Get(ctx context.Context, botId uint64) (status string, e error) {
 	query := `SELECT "key" FROM whitelabel_keys WHERE "bot_id" = $1;`
-	if err := w.QueryRow(context.Background(), query, botId).Scan(&status); err != nil && err != pgx.ErrNoRows {
+	if err := w.QueryRow(ctx, query, botId).Scan(&status); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (w *WhitelabelKeys) Set(botId uint64, key string) (err error) {
+func (w *WhitelabelKeys) Set(ctx context.Context, botId uint64, key string) (err error) {
 	query := `INSERT INTO whitelabel_keys("bot_id", "key") VALUES($1, $2) ON CONFLICT("bot_id") DO UPDATE SET "key" = $2;`
-	_, err = w.Exec(context.Background(), query, botId, key)
+	_, err = w.Exec(ctx, query, botId, key)
 	return
 }
 
-func (w *WhitelabelKeys) Delete(botId uint64) (err error) {
+func (w *WhitelabelKeys) Delete(ctx context.Context, botId uint64) (err error) {
 	query := `DELETE FROM whitelabel_keys WHERE "bot_id" = $1;`
-	_, err = w.Exec(context.Background(), query, botId)
+	_, err = w.Exec(ctx, query, botId)
 	return
 }

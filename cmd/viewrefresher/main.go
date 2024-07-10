@@ -11,7 +11,7 @@ import (
 
 func main() {
 	logrus.Info("Connecting to database...")
-	pool := must(pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URI")))
+	pool := must(pgxpool.Connect(ctx, os.Getenv("DATABASE_URI")))
 	db := database.NewDatabase(pool)
 	logrus.Info("Connected!")
 

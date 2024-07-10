@@ -30,12 +30,12 @@ CREATE TABLE IF NOT EXISTS whitelabel_statuses(
 }
 
 // Get Returns (status, status_type, exists, error)
-func (w *WhitelabelStatuses) Get(botId uint64) (string, int16, bool, error) {
+func (w *WhitelabelStatuses) Get(ctx context.Context, botId uint64) (string, int16, bool, error) {
 	query := `SELECT "status", "status_type" FROM whitelabel_statuses WHERE "bot_id" = $1;`
 
 	var status string
 	var statusType int16
-	if err := w.QueryRow(context.Background(), query, botId).Scan(&status, &statusType); err != nil {
+	if err := w.QueryRow(ctx, query, botId).Scan(&status, &statusType); err != nil {
 		if err == pgx.ErrNoRows {
 			return "", 0, false, nil
 		} else {
@@ -46,19 +46,19 @@ func (w *WhitelabelStatuses) Get(botId uint64) (string, int16, bool, error) {
 	return status, statusType, true, nil
 }
 
-func (w *WhitelabelStatuses) Set(botId uint64, status string, statusType int16) (err error) {
+func (w *WhitelabelStatuses) Set(ctx context.Context, botId uint64, status string, statusType int16) (err error) {
 	query := `
 INSERT INTO whitelabel_statuses("bot_id", "status", "status_type")
 VALUES($1, $2, $3)
 ON CONFLICT("bot_id") DO UPDATE SET "status" = $2, "status_type" = $3;`
 
-	_, err = w.Exec(context.Background(), query, botId, status, statusType)
+	_, err = w.Exec(ctx, query, botId, status, statusType)
 	return
 }
 
-func (w *WhitelabelStatuses) Delete(botId uint64) (err error) {
+func (w *WhitelabelStatuses) Delete(ctx context.Context, botId uint64) (err error) {
 	query := `DELETE FROM whitelabel_statuses WHERE "bot_id"=$1;`
-	_, err = w.Exec(context.Background(), query, botId)
+	_, err = w.Exec(ctx, query, botId)
 	fmt.Println()
 	return
 }

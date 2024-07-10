@@ -25,9 +25,9 @@ CREATE TABLE IF NOT EXISTS ticket_limit(
 );`
 }
 
-func (t *TicketLimit) Get(guildId uint64) (limit uint8, e error) {
+func (t *TicketLimit) Get(ctx context.Context, guildId uint64) (limit uint8, e error) {
 	query := `SELECT "limit" from ticket_limit WHERE "guild_id" = $1;`
-	if err := t.QueryRow(context.Background(), query, guildId).Scan(&limit); err != nil {
+	if err := t.QueryRow(ctx, query, guildId).Scan(&limit); err != nil {
 		if err == pgx.ErrNoRows {
 			limit = 5
 		} else {
@@ -38,8 +38,8 @@ func (t *TicketLimit) Get(guildId uint64) (limit uint8, e error) {
 	return
 }
 
-func (t *TicketLimit) Set(guildId uint64, limit uint8) (err error) {
+func (t *TicketLimit) Set(ctx context.Context, guildId uint64, limit uint8) (err error) {
 	query := `INSERT INTO ticket_limit("guild_id", "limit") VALUES($1, $2) ON CONFLICT("guild_id") DO UPDATE SET "limit" = $2;`
-	_, err = t.Exec(context.Background(), query, guildId, limit)
+	_, err = t.Exec(ctx, query, guildId, limit)
 	return
 }

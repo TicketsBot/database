@@ -49,8 +49,8 @@ func (e *ExitSurveyResponses) Schema() string {
 	return exitSurveyResponsesSchema
 }
 
-func (e *ExitSurveyResponses) AddResponses(guildId uint64, ticketId int, formId int, responses map[int]string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTransactionTimeout)
+func (e *ExitSurveyResponses) AddResponses(ctx context.Context, guildId uint64, ticketId int, formId int, responses map[int]string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTransactionTimeout)
 	defer cancel()
 
 	tx, err := e.Begin(ctx)
@@ -68,8 +68,8 @@ func (e *ExitSurveyResponses) AddResponses(guildId uint64, ticketId int, formId 
 	return tx.Commit(ctx)
 }
 
-func (e *ExitSurveyResponses) GetResponses(guildId uint64, ticketId int) (ExitSurveyResponse, error) {
-	rows, err := e.Query(context.Background(), exitSurveyResponsesGetSingle, guildId, ticketId)
+func (e *ExitSurveyResponses) GetResponses(ctx context.Context, guildId uint64, ticketId int) (ExitSurveyResponse, error) {
+	rows, err := e.Query(ctx, exitSurveyResponsesGetSingle, guildId, ticketId)
 	if err != nil {
 		return ExitSurveyResponse{}, err
 	}
@@ -92,14 +92,14 @@ func (e *ExitSurveyResponses) GetResponses(guildId uint64, ticketId int) (ExitSu
 	}, nil
 }
 
-func (e *ExitSurveyResponses) IsFormInUse(guildId uint64, formId int) (bool, error) {
+func (e *ExitSurveyResponses) IsFormInUse(ctx context.Context, guildId uint64, formId int) (bool, error) {
 	var inUse bool
-	err := e.QueryRow(context.Background(), exitSurveyResponsesIsInUse, guildId, formId).Scan(&inUse)
+	err := e.QueryRow(ctx, exitSurveyResponsesIsInUse, guildId, formId).Scan(&inUse)
 	return inUse, err
 }
 
-func (e *ExitSurveyResponses) HasResponse(guildId uint64, formId int) (bool, error) {
+func (e *ExitSurveyResponses) HasResponse(ctx context.Context, guildId uint64, formId int) (bool, error) {
 	var hasResponse bool
-	err := e.QueryRow(context.Background(), exitSurveyHasResponse, guildId, formId).Scan(&hasResponse)
+	err := e.QueryRow(ctx, exitSurveyHasResponse, guildId, formId).Scan(&hasResponse)
 	return hasResponse, err
 }

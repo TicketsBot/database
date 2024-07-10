@@ -45,13 +45,13 @@ CREATE TABLE IF NOT EXISTS support_team(
 );`
 }
 
-func (s *SupportTeamTable) Exists(teamId int, guildId uint64) (exists bool, err error) {
+func (s *SupportTeamTable) Exists(ctx context.Context, teamId int, guildId uint64) (exists bool, err error) {
 	query := `SELECT EXISTS(SELECT 1 FROM support_team WHERE "id" = $1 and "guild_id" = $2);`
-	err = s.QueryRow(context.Background(), query, teamId, guildId).Scan(&exists)
+	err = s.QueryRow(ctx, query, teamId, guildId).Scan(&exists)
 	return
 }
 
-func (s *SupportTeamTable) AllTeamsMatchGuild(guildId uint64, teams []int) (valid bool, err error) {
+func (s *SupportTeamTable) AllTeamsMatchGuild(ctx context.Context, guildId uint64, teams []int) (valid bool, err error) {
 	query := `SELECT NOT EXISTS(SELECT 1 FROM support_team WHERE "id" = ANY($1) and "guild_id" != $2);`
 
 	array := &pgtype.Int4Array{}
@@ -59,11 +59,11 @@ func (s *SupportTeamTable) AllTeamsMatchGuild(guildId uint64, teams []int) (vali
 		return false, err
 	}
 
-	err = s.QueryRow(context.Background(), query, array, guildId).Scan(&valid)
+	err = s.QueryRow(ctx, query, array, guildId).Scan(&valid)
 	return
 }
 
-func (s *SupportTeamTable) AllTeamsExistForGuild(guildId uint64, teams []int) (valid bool, err error) {
+func (s *SupportTeamTable) AllTeamsExistForGuild(ctx context.Context, guildId uint64, teams []int) (valid bool, err error) {
 	query := `
 SELECT EXISTS(
 	SELECT 1
@@ -79,12 +79,12 @@ SELECT EXISTS(
 		return false, err
 	}
 
-	err = s.QueryRow(context.Background(), query, guildId, array).Scan(&valid)
+	err = s.QueryRow(ctx, query, guildId, array).Scan(&valid)
 	return
 }
 
-func (s *SupportTeamTable) Get(guildId uint64) (teams []SupportTeam, e error) {
-	rows, err := s.Query(context.Background(), `SELECT "id", "name", "on_call_role_id" from support_team WHERE "guild_id" = $1;`, guildId)
+func (s *SupportTeamTable) Get(ctx context.Context, guildId uint64) (teams []SupportTeam, e error) {
+	rows, err := s.Query(ctx, `SELECT "id", "name", "on_call_role_id" from support_team WHERE "guild_id" = $1;`, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (s *SupportTeamTable) Get(guildId uint64) (teams []SupportTeam, e error) {
 	return
 }
 
-func (s *SupportTeamTable) GetById(guildId uint64, id int) (SupportTeam, bool, error) {
+func (s *SupportTeamTable) GetById(ctx context.Context, guildId uint64, id int) (SupportTeam, bool, error) {
 	query := `SELECT "name", "on_call_role_id" from support_team WHERE "guild_id" = $1 AND "id" = $2;`
 
 	team := SupportTeam{
@@ -112,7 +112,7 @@ func (s *SupportTeamTable) GetById(guildId uint64, id int) (SupportTeam, bool, e
 		GuildId: guildId,
 	}
 
-	if err := s.QueryRow(context.Background(), query, guildId, id).Scan(&team.Name, &team.OnCallRole); err != nil {
+	if err := s.QueryRow(ctx, query, guildId, id).Scan(&team.Name, &team.OnCallRole); err != nil {
 		if err == pgx.ErrNoRows {
 			return SupportTeam{}, false, nil
 		} else {
@@ -123,7 +123,7 @@ func (s *SupportTeamTable) GetById(guildId uint64, id int) (SupportTeam, bool, e
 	return team, true, nil
 }
 
-func (s *SupportTeamTable) GetMulti(guildId uint64, teamIds []int) (map[int]SupportTeam, error) {
+func (s *SupportTeamTable) GetMulti(ctx context.Context, guildId uint64, teamIds []int) (map[int]SupportTeam, error) {
 	query := `
 SELECT "id", "name", "on_call_role_id"
 FROM support_team
@@ -134,7 +134,7 @@ WHERE "guild_id" = $1 AND "id" = ANY($2);`
 		return nil, err
 	}
 
-	rows, err := s.Query(context.Background(), query, guildId, array)
+	rows, err := s.Query(ctx, query, guildId, array)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ WHERE "guild_id" = $1 AND "id" = ANY($2);`
 	return teams, nil
 }
 
-func (s *SupportTeamTable) GetWithMembers(guildId uint64) (teams map[SupportTeam][]uint64, e error) {
+func (s *SupportTeamTable) GetWithMembers(ctx context.Context, guildId uint64) (teams map[SupportTeam][]uint64, e error) {
 	query := `
 SELECT support_team.id, support_team.name, support_team.on_call_role_id, support_team_members.user_id
 FROM support_team
@@ -165,7 +165,7 @@ INNER JOIN support_team_members ON support_team.id = support_team_members.team_i
 WHERE support_team.guild_id = $1;
 `
 
-	rows, err := s.Query(context.Background(), query, guildId)
+	rows, err := s.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -208,17 +208,17 @@ WHERE support_team.guild_id = $1;
 	return
 }
 
-func (s *SupportTeamTable) Create(guildId uint64, name string) (id int, err error) {
-	err = s.QueryRow(context.Background(), `INSERT INTO support_team("guild_id", "name") VALUES($1, $2) RETURNING "id";`, guildId, name).Scan(&id)
+func (s *SupportTeamTable) Create(ctx context.Context, guildId uint64, name string) (id int, err error) {
+	err = s.QueryRow(ctx, `INSERT INTO support_team("guild_id", "name") VALUES($1, $2) RETURNING "id";`, guildId, name).Scan(&id)
 	return
 }
 
-func (s *SupportTeamTable) SetOnCallRole(teamId int, roleId *uint64) (err error) {
-	_, err = s.Exec(context.Background(), `UPDATE support_team SET "on_call_role_id" = $2 WHERE "id" = $1;`, teamId, roleId)
+func (s *SupportTeamTable) SetOnCallRole(ctx context.Context, teamId int, roleId *uint64) (err error) {
+	_, err = s.Exec(ctx, `UPDATE support_team SET "on_call_role_id" = $2 WHERE "id" = $1;`, teamId, roleId)
 	return
 }
 
-func (s *SupportTeamTable) Delete(id int) (err error) {
-	_, err = s.Exec(context.Background(), `DELETE FROM support_team WHERE "id"=$1;`, id)
+func (s *SupportTeamTable) Delete(ctx context.Context, id int) (err error) {
+	_, err = s.Exec(ctx, `DELETE FROM support_team WHERE "id"=$1;`, id)
 	return
 }

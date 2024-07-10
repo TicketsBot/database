@@ -89,7 +89,7 @@ CREATE INDEX IF NOT EXISTS tickets_panel_id ON tickets("panel_id");
 `
 }
 
-func (t *TicketTable) Create(guildId, userId uint64, isThread bool, panelId *int) (id int, err error) {
+func (t *TicketTable) Create(ctx context.Context, guildId, userId uint64, isThread bool, panelId *int) (id int, err error) {
 	query := `
 INSERT INTO tickets("id", "guild_id", "user_id", "open", "open_time", "is_thread", "panel_id")
 VALUES(
@@ -98,37 +98,37 @@ VALUES(
 )
 RETURNING "id";`
 
-	err = t.QueryRow(context.Background(), query, guildId, userId, isThread, panelId).Scan(&id)
+	err = t.QueryRow(ctx, query, guildId, userId, isThread, panelId).Scan(&id)
 	return
 }
 
-func (t *TicketTable) SetChannelId(guildId uint64, ticketId int, channelId uint64) (err error) {
+func (t *TicketTable) SetChannelId(ctx context.Context, guildId uint64, ticketId int, channelId uint64) (err error) {
 	query := `
 UPDATE tickets
 SET "channel_id" = $1
 WHERE "guild_id" = $2 AND "id" = $3;`
 
-	_, err = t.Exec(context.Background(), query, channelId, guildId, ticketId)
+	_, err = t.Exec(ctx, query, channelId, guildId, ticketId)
 	return
 }
 
-func (t *TicketTable) SetMessageIds(guildId uint64, ticketId int, welcomeMessageId uint64, joinMessageId *uint64) (err error) {
+func (t *TicketTable) SetMessageIds(ctx context.Context, guildId uint64, ticketId int, welcomeMessageId uint64, joinMessageId *uint64) (err error) {
 	query := `
 UPDATE tickets
 SET "welcome_message_id" = $1, "join_message_id" = $2
 WHERE "guild_id" = $3 AND "id" = $4;`
 
-	_, err = t.Exec(context.Background(), query, welcomeMessageId, joinMessageId, guildId, ticketId)
+	_, err = t.Exec(ctx, query, welcomeMessageId, joinMessageId, guildId, ticketId)
 	return
 }
 
-func (t *TicketTable) Get(ticketId int, guildId uint64) (ticket Ticket, e error) {
+func (t *TicketTable) Get(ctx context.Context, ticketId int, guildId uint64) (ticket Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "id" = $1 AND "guild_id" = $2;`
 
-	if err := t.QueryRow(context.Background(), query, ticketId, guildId).Scan(
+	if err := t.QueryRow(ctx, query, ticketId, guildId).Scan(
 		&ticket.Id,
 		&ticket.GuildId,
 		&ticket.ChannelId,
@@ -148,13 +148,13 @@ WHERE "id" = $1 AND "guild_id" = $2;`
 	return
 }
 
-func (t *TicketTable) GetByOptions(options TicketQueryOptions) (tickets []Ticket, e error) {
+func (t *TicketTable) GetByOptions(ctx context.Context, options TicketQueryOptions) (tickets []Ticket, e error) {
 	query, args, err := options.BuildQuery()
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := t.Query(context.Background(), query, args...)
+	rows, err := t.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -352,13 +352,13 @@ WHERE "channel_id" = $1 AND "guild_id" = $2;`
 	return
 }
 
-func (t *TicketTable) GetAllByUser(guildId, userId uint64) (tickets []Ticket, e error) {
+func (t *TicketTable) GetAllByUser(ctx context.Context, guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = $2;`
 
-	rows, err := t.Query(context.Background(), query, guildId, userId)
+	rows, err := t.Query(ctx, query, guildId, userId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -392,27 +392,27 @@ WHERE "guild_id" = $1 AND "user_id" = $2;`
 	return
 }
 
-func (t *TicketTable) GetTotalCountByUser(guildId, userId uint64) (int, error) {
+func (t *TicketTable) GetTotalCountByUser(ctx context.Context, guildId, userId uint64) (int, error) {
 	query := `
 SELECT COUNT(id)
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = $2;`
 
 	var count int
-	if err := t.QueryRow(context.Background(), query, guildId, userId).Scan(&count); err != nil {
+	if err := t.QueryRow(ctx, query, guildId, userId).Scan(&count); err != nil {
 		return 0, err
 	}
 
 	return count, nil
 }
 
-func (t *TicketTable) GetOpenByUser(guildId, userId uint64) (tickets []Ticket, e error) {
+func (t *TicketTable) GetOpenByUser(ctx context.Context, guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
-	rows, err := t.Query(context.Background(), query, userId, guildId)
+	rows, err := t.Query(ctx, query, userId, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -445,21 +445,21 @@ WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 	return
 }
 
-func (t *TicketTable) GetOpenCountByUser(guildId, userId uint64) (int, error) {
+func (t *TicketTable) GetOpenCountByUser(ctx context.Context, guildId, userId uint64) (int, error) {
 	query := `
 SELECT COUNT(id)
 FROM tickets
 WHERE "user_id" = $1 AND "open" = true AND "guild_id" = $2;`
 
 	var count int
-	if err := t.QueryRow(context.Background(), query, userId, guildId).Scan(&count); err != nil {
+	if err := t.QueryRow(ctx, query, userId, guildId).Scan(&count); err != nil {
 		return 0, err
 	}
 
 	return count, nil
 }
 
-func (t *TicketTable) GetClosedByUserPrefixed(guildId, userId uint64, prefix string, limit int) (tickets []Ticket, e error) {
+func (t *TicketTable) GetClosedByUserPrefixed(ctx context.Context, guildId, userId uint64, prefix string, limit int) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
@@ -467,7 +467,7 @@ WHERE "user_id" = $1 AND "open" = false AND "guild_id" = $2 AND id::TEXT LIKE $3
 ORDER BY "id" DESC
 LIMIT $4;`
 
-	rows, err := t.Query(context.Background(), query, userId, guildId, prefix, limit)
+	rows, err := t.Query(ctx, query, userId, guildId, prefix, limit)
 	if err != nil && err != pgx.ErrNoRows {
 		return nil, err
 	}
@@ -499,7 +499,7 @@ LIMIT $4;`
 	return
 }
 
-func (t *TicketTable) GetClosedByAnyBefore(guildId uint64, userIds []uint64, before, limit int) (tickets []Ticket, e error) {
+func (t *TicketTable) GetClosedByAnyBefore(ctx context.Context, guildId uint64, userIds []uint64, before, limit int) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
@@ -512,7 +512,7 @@ LIMIT $4;`
 		return nil, err
 	}
 
-	rows, err := t.Query(context.Background(), query, guildId, userIdArray, before, limit)
+	rows, err := t.Query(ctx, query, guildId, userIdArray, before, limit)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -550,7 +550,7 @@ type TicketWithCloseReason struct {
 	CloseReason *string `json:"close_reason"`
 }
 
-func (t *TicketTable) GetClosedByAnyBeforeWithCloseReason(guildId uint64, userIds []uint64, before, limit int) (tickets []TicketWithCloseReason, e error) {
+func (t *TicketTable) GetClosedByAnyBeforeWithCloseReason(ctx context.Context, guildId uint64, userIds []uint64, before, limit int) (tickets []TicketWithCloseReason, e error) {
 	query := `
 SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, tickets.close_time, tickets.is_thread, tickets.join_message_id, tickets.notes_thread_id, close_reason.close_reason
 FROM tickets
@@ -569,7 +569,7 @@ LIMIT $4;`
 		before = math.MaxInt32
 	}
 
-	rows, err := t.Query(context.Background(), query, guildId, userIdArray, before, limit)
+	rows, err := t.Query(ctx, query, guildId, userIdArray, before, limit)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -604,7 +604,7 @@ LIMIT $4;`
 	return
 }
 
-func (t *TicketTable) GetClosedByAnyAfterWithCloseReason(guildId uint64, userIds []uint64, after, limit int) (tickets []TicketWithCloseReason, e error) {
+func (t *TicketTable) GetClosedByAnyAfterWithCloseReason(ctx context.Context, guildId uint64, userIds []uint64, after, limit int) (tickets []TicketWithCloseReason, e error) {
 	query := `
 SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, tickets.close_time, tickets.is_thread, tickets.join_message_id, tickets.notes_thread_id, close_reason.close_reason
 FROM tickets
@@ -619,7 +619,7 @@ LIMIT $4;`
 		return nil, err
 	}
 
-	rows, err := t.Query(context.Background(), query, guildId, userIdArray, after, limit)
+	rows, err := t.Query(ctx, query, guildId, userIdArray, after, limit)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -654,14 +654,14 @@ LIMIT $4;`
 	return
 }
 
-func (t *TicketTable) GetGuildOpenTickets(guildId uint64) (tickets []Ticket, e error) {
+func (t *TicketTable) GetGuildOpenTickets(ctx context.Context, guildId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = true
 ORDER BY id DESC;`
 
-	rows, err := t.Query(context.Background(), query, guildId)
+	rows, err := t.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -694,14 +694,14 @@ ORDER BY id DESC;`
 	return
 }
 
-func (t *TicketTable) GetGuildOpenTicketsExcludeThreads(guildId uint64) (tickets []Ticket, e error) {
+func (t *TicketTable) GetGuildOpenTicketsExcludeThreads(ctx context.Context, guildId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
 WHERE "guild_id" = $1 AND "open" = true AND "is_thread" = false
 ORDER BY id DESC;`
 
-	rows, err := t.Query(context.Background(), query, guildId)
+	rows, err := t.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -734,7 +734,7 @@ ORDER BY id DESC;`
 	return
 }
 
-func (t *TicketTable) GetGuildClosedTickets(guildId uint64, limit, before int) (tickets []Ticket, e error) {
+func (t *TicketTable) GetGuildClosedTickets(ctx context.Context, guildId uint64, limit, before int) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
 FROM tickets
@@ -745,7 +745,7 @@ ORDER BY "id" DESC LIMIT $2;`
 		before = math.MaxInt32
 	}
 
-	rows, err := t.Query(context.Background(), query, guildId, limit, before)
+	rows, err := t.Query(ctx, query, guildId, limit, before)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -778,7 +778,7 @@ ORDER BY "id" DESC LIMIT $2;`
 	return
 }
 
-func (t *TicketTable) GetGuildClosedTicketsBeforeWithCloseReason(guildId uint64, limit, before int) (tickets []TicketWithCloseReason, e error) {
+func (t *TicketTable) GetGuildClosedTicketsBeforeWithCloseReason(ctx context.Context, guildId uint64, limit, before int) (tickets []TicketWithCloseReason, e error) {
 	query := `
 SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, tickets.close_time, tickets.is_thread, tickets.join_message_id, tickets.notes_thread_id, close_reason.close_reason
 FROM tickets
@@ -791,7 +791,7 @@ ORDER BY tickets.id DESC LIMIT $2;`
 		before = math.MaxInt32
 	}
 
-	rows, err := t.Query(context.Background(), query, guildId, limit, before)
+	rows, err := t.Query(ctx, query, guildId, limit, before)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -826,7 +826,7 @@ ORDER BY tickets.id DESC LIMIT $2;`
 	return
 }
 
-func (t *TicketTable) GetGuildClosedTicketsAfterWithCloseReason(guildId uint64, limit, after int) (tickets []TicketWithCloseReason, e error) {
+func (t *TicketTable) GetGuildClosedTicketsAfterWithCloseReason(ctx context.Context, guildId uint64, limit, after int) (tickets []TicketWithCloseReason, e error) {
 	query := `
 SELECT tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, tickets.close_time, tickets.is_thread, tickets.join_message_id, tickets.notes_thread_id, close_reason.close_reason
 FROM tickets
@@ -835,7 +835,7 @@ ON tickets.id = close_reason.ticket_id AND tickets.guild_id = close_reason.guild
 WHERE tickets.guild_id = $1 AND tickets.open = false AND tickets.id > $3
 ORDER BY tickets.id ASC LIMIT $2;`
 
-	rows, err := t.Query(context.Background(), query, guildId, limit, after)
+	rows, err := t.Query(ctx, query, guildId, limit, after)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -869,7 +869,7 @@ ORDER BY tickets.id ASC LIMIT $2;`
 	return
 }
 
-func (t *TicketTable) GetMemberClosedTickets(guildId uint64, userIds []uint64, limit, before int) ([]Ticket, error) {
+func (t *TicketTable) GetMemberClosedTickets(ctx context.Context, guildId uint64, userIds []uint64, limit, before int) ([]Ticket, error) {
 	// create array of user IDs
 	array := &pgtype.Int8Array{}
 	if err := array.Set(userIds); err != nil {
@@ -887,7 +887,7 @@ ORDER BY "id" DESC LIMIT $3;
 		before = math.MaxInt32
 	}
 
-	rows, err := t.Query(context.Background(), query, guildId, userIds, limit, before)
+	rows, err := t.Query(ctx, query, guildId, userIds, limit, before)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		return nil, err
@@ -920,66 +920,66 @@ ORDER BY "id" DESC LIMIT $3;
 	return tickets, nil
 }
 
-func (t *TicketTable) GetTotalTicketCountInterval(guildId uint64, interval time.Duration) (count int, e error) {
+func (t *TicketTable) GetTotalTicketCountInterval(ctx context.Context, guildId uint64, interval time.Duration) (count int, e error) {
 	parsed, err := toInterval(interval)
 	if err != nil {
 		return 0, err
 	}
 
 	query := `SELECT COUNT(*) FROM tickets WHERE "guild_id" = $1 AND tickets.open_time > NOW() - $2::interval;`
-	if err := t.QueryRow(context.Background(), query, guildId, parsed).Scan(&count); err != nil {
+	if err := t.QueryRow(ctx, query, guildId, parsed).Scan(&count); err != nil {
 		e = err
 	}
 	return
 }
 
-func (t *TicketTable) GetTotalTicketCount(guildId uint64) (count int, e error) {
+func (t *TicketTable) GetTotalTicketCount(ctx context.Context, guildId uint64) (count int, e error) {
 	query := `SELECT COUNT(*) FROM tickets WHERE "guild_id" = $1;`
-	if err := t.QueryRow(context.Background(), query, guildId).Scan(&count); err != nil {
+	if err := t.QueryRow(ctx, query, guildId).Scan(&count); err != nil {
 		e = err
 	}
 	return
 }
 
-func (t *TicketTable) Close(ticketId int, guildId uint64) (err error) {
+func (t *TicketTable) Close(ctx context.Context, ticketId int, guildId uint64) (err error) {
 	query := `UPDATE tickets SET "open"=false, "close_time"=NOW() WHERE "id"=$1 AND "guild_id"=$2;`
-	_, err = t.Exec(context.Background(), query, ticketId, guildId)
+	_, err = t.Exec(ctx, query, ticketId, guildId)
 	return
 }
 
-func (t *TicketTable) CloseByChannel(channelId uint64) (err error) {
+func (t *TicketTable) CloseByChannel(ctx context.Context, channelId uint64) (err error) {
 	query := `UPDATE tickets SET "open" = false, "close_time" = NOW() WHERE "channel_id" = $1;`
-	_, err = t.Exec(context.Background(), query, channelId)
+	_, err = t.Exec(ctx, query, channelId)
 	return
 }
 
-func (t *TicketTable) SetHasTranscript(guildId uint64, ticketId int, hasTranscript bool) (err error) {
+func (t *TicketTable) SetHasTranscript(ctx context.Context, guildId uint64, ticketId int, hasTranscript bool) (err error) {
 	query := `UPDATE tickets SET "has_transcript" = $3 WHERE "guild_id" = $1 AND "id" = $2;`
-	_, err = t.Exec(context.Background(), query, guildId, ticketId, hasTranscript)
+	_, err = t.Exec(ctx, query, guildId, ticketId, hasTranscript)
 	return
 }
 
-func (t *TicketTable) SetPanelId(guildId uint64, ticketId, panelId int) (err error) {
+func (t *TicketTable) SetPanelId(ctx context.Context, guildId uint64, ticketId, panelId int) (err error) {
 	query := `UPDATE tickets SET "panel_id" = $3 WHERE "guild_id" = $1 AND "id" = $2;`
-	_, err = t.Exec(context.Background(), query, guildId, ticketId, panelId)
+	_, err = t.Exec(ctx, query, guildId, ticketId, panelId)
 	return
 }
 
-func (t *TicketTable) SetOpen(guildId uint64, ticketId int) (err error) {
+func (t *TicketTable) SetOpen(ctx context.Context, guildId uint64, ticketId int) (err error) {
 	query := `UPDATE tickets SET "open" = TRUE, "close_time" = NULL WHERE "guild_id" = $1 AND "id" = $2;`
-	_, err = t.Exec(context.Background(), query, guildId, ticketId)
+	_, err = t.Exec(ctx, query, guildId, ticketId)
 	return
 }
 
-func (t *TicketTable) SetJoinMessageId(guildId uint64, ticketId int, joinMessageId *uint64) (err error) {
+func (t *TicketTable) SetJoinMessageId(ctx context.Context, guildId uint64, ticketId int, joinMessageId *uint64) (err error) {
 	query := `UPDATE tickets SET "join_message_id" = $3 WHERE "guild_id" = $1 AND "id" = $2;`
-	_, err = t.Exec(context.Background(), query, guildId, ticketId, joinMessageId)
+	_, err = t.Exec(ctx, query, guildId, ticketId, joinMessageId)
 	return
 }
 
-func (t *TicketTable) SetNotesThreadId(guildId uint64, ticketId int, notesThreadId uint64) error {
+func (t *TicketTable) SetNotesThreadId(ctx context.Context, guildId uint64, ticketId int, notesThreadId uint64) error {
 	query := `UPDATE tickets SET "notes_thread_id" = $3 WHERE "guild_id" = $1 AND "id" = $2;`
 
-	_, err := t.Exec(context.Background(), query, guildId, ticketId, notesThreadId)
+	_, err := t.Exec(ctx, query, guildId, ticketId, notesThreadId)
 	return err
 }

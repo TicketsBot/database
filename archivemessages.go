@@ -37,14 +37,14 @@ func (a *ArchiveMessages) Schema() string {
 	return archiveMessagesSchema
 }
 
-func (a *ArchiveMessages) Set(guildId uint64, ticketId int, channelId, messageId uint64) error {
-	_, err := a.Exec(context.Background(), archiveMessagesInsert, guildId, ticketId, channelId, messageId)
+func (a *ArchiveMessages) Set(ctx context.Context, guildId uint64, ticketId int, channelId, messageId uint64) error {
+	_, err := a.Exec(ctx, archiveMessagesInsert, guildId, ticketId, channelId, messageId)
 	return err
 }
 
-func (a *ArchiveMessages) Get(guildId uint64, ticketId int) (ArchiveMessage, bool, error) {
+func (a *ArchiveMessages) Get(ctx context.Context, guildId uint64, ticketId int) (ArchiveMessage, bool, error) {
 	var data ArchiveMessage
-	err := a.QueryRow(context.Background(), archiveMessagesGet, guildId, ticketId).Scan(&data.ChannelId, &data.MessageId)
+	err := a.QueryRow(ctx, archiveMessagesGet, guildId, ticketId).Scan(&data.ChannelId, &data.MessageId)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return ArchiveMessage{}, false, nil

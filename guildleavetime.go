@@ -26,14 +26,14 @@ CREATE TABLE IF NOT EXISTS guild_leave_time(
 );`
 }
 
-func (c *GuildLeaveTime) GetBefore(before time.Duration) (ids []uint64, e error) {
+func (c *GuildLeaveTime) GetBefore(ctx context.Context, before time.Duration) (ids []uint64, e error) {
 	query := `
 SELECT "guild_id"
 FROM guild_leave_time
 WHERE "leave_time" < NOW() - $1::interval;
 `
 
-	rows, err := c.Query(context.Background(), query, before)
+	rows, err := c.Query(ctx, query, before)
 	if err != nil {
 		return nil, err
 	}
@@ -50,22 +50,22 @@ WHERE "leave_time" < NOW() - $1::interval;
 	return
 }
 
-func (c *GuildLeaveTime) Set(guildId uint64) (err error) {
-	_, err = c.Exec(context.Background(), `INSERT INTO guild_leave_time("guild_id", "leave_time") VALUES($1, NOW()) ON CONFLICT("guild_id") DO UPDATE SET "leave_time" = NOW();`, guildId)
+func (c *GuildLeaveTime) Set(ctx context.Context, guildId uint64) (err error) {
+	_, err = c.Exec(ctx, `INSERT INTO guild_leave_time("guild_id", "leave_time") VALUES($1, NOW()) ON CONFLICT("guild_id") DO UPDATE SET "leave_time" = NOW();`, guildId)
 	return
 }
 
-func (c *GuildLeaveTime) Delete(guildId uint64) (err error) {
-	_, err = c.Exec(context.Background(), `DELETE FROM guild_leave_time WHERE "guild_id" = $1;`, guildId)
+func (c *GuildLeaveTime) Delete(ctx context.Context, guildId uint64) (err error) {
+	_, err = c.Exec(ctx, `DELETE FROM guild_leave_time WHERE "guild_id" = $1;`, guildId)
 	return
 }
 
-func (c *GuildLeaveTime) DeleteAll(guildIds []uint64) (err error) {
+func (c *GuildLeaveTime) DeleteAll(ctx context.Context, guildIds []uint64) (err error) {
 	array := &pgtype.Int8Array{}
 	if err = array.Set(guildIds); err != nil {
 		return
 	}
 
-	_, err = c.Exec(context.Background(), `DELETE FROM guild_leave_time WHERE "guild_id" = ANY($1);`, array)
+	_, err = c.Exec(ctx, `DELETE FROM guild_leave_time WHERE "guild_id" = ANY($1);`, array)
 	return
 }

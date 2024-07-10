@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS premium_guilds(
 );`
 }
 
-func (p *PremiumGuilds) IsPremium(guildId uint64) (bool, error) {
-	expiry, err := p.GetExpiry(guildId)
+func (p *PremiumGuilds) IsPremium(ctx context.Context, guildId uint64) (bool, error) {
+	expiry, err := p.GetExpiry(ctx, guildId)
 	if err != nil {
 		return false, err
 	}
@@ -35,15 +35,15 @@ func (p *PremiumGuilds) IsPremium(guildId uint64) (bool, error) {
 	return expiry.After(time.Now()), nil
 }
 
-func (p *PremiumGuilds) GetExpiry(guildId uint64) (expiry time.Time, e error) {
-	if err := p.QueryRow(context.Background(), `SELECT "expiry" from premium_guilds WHERE "guild_id" = $1;`, guildId).Scan(&expiry); err != nil && err != pgx.ErrNoRows {
+func (p *PremiumGuilds) GetExpiry(ctx context.Context, guildId uint64) (expiry time.Time, e error) {
+	if err := p.QueryRow(ctx, `SELECT "expiry" from premium_guilds WHERE "guild_id" = $1;`, guildId).Scan(&expiry); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (p *PremiumGuilds) Add(guildId uint64, interval time.Duration) (err error) {
+func (p *PremiumGuilds) Add(ctx context.Context, guildId uint64, interval time.Duration) (err error) {
 	query := `
 INSERT INTO premium_guilds("guild_id", "expiry")
 VALUES($1, NOW() + $2)
@@ -53,6 +53,6 @@ DO UPDATE SET "expiry" = CASE WHEN premium_guilds.expiry < NOW()
 	ELSE premium_guilds.expiry + $2
 END;`
 
-	_, err = p.Exec(context.Background(), query, guildId, interval)
+	_, err = p.Exec(ctx, query, guildId, interval)
 	return
 }

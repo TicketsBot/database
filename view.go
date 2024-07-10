@@ -1,5 +1,7 @@
 package database
 
+import "context"
+
 type View interface {
-	Refresh() error
+	Refresh(ctx context.Context) error
 }

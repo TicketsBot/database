@@ -39,13 +39,13 @@ CREATE INDEX IF NOT EXISTS tags_guild_id_idx ON tags("guild_id");
 `
 }
 
-func (t *TagsTable) Exists(guildId uint64, tagId string) (exists bool, err error) {
+func (t *TagsTable) Exists(ctx context.Context, guildId uint64, tagId string) (exists bool, err error) {
 	query := `SELECT EXISTS(SELECT 1 FROM tags WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2));`
-	err = t.QueryRow(context.Background(), query, guildId, tagId).Scan(&exists)
+	err = t.QueryRow(ctx, query, guildId, tagId).Scan(&exists)
 	return
 }
 
-func (t *TagsTable) Get(guildId uint64, tagId string) (Tag, bool, error) {
+func (t *TagsTable) Get(ctx context.Context, guildId uint64, tagId string) (Tag, bool, error) {
 	query := `
 SELECT LOWER(tag_id), "guild_id", "use_guild_command", "content", "embed"
 FROM tags
@@ -54,7 +54,7 @@ WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2);
 
 	var tag Tag
 	var embedRaw *string
-	err := t.QueryRow(context.Background(), query, guildId, tagId).Scan(
+	err := t.QueryRow(ctx, query, guildId, tagId).Scan(
 		&tag.Id,
 		&tag.GuildId,
 		&tag.UseGuildCommand,
@@ -79,9 +79,9 @@ WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2);
 	return tag, true, nil
 }
 
-func (t *TagsTable) GetTagIds(guildId uint64) (ids []string, e error) {
+func (t *TagsTable) GetTagIds(ctx context.Context, guildId uint64) (ids []string, e error) {
 	query := `SELECT LOWER("tag_id") from tags WHERE "guild_id"=$1;`
-	rows, err := t.Query(context.Background(), query, guildId)
+	rows, err := t.Query(ctx, query, guildId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -101,13 +101,13 @@ func (t *TagsTable) GetTagIds(guildId uint64) (ids []string, e error) {
 	return
 }
 
-func (t *TagsTable) GetByGuild(guildId uint64) (map[string]Tag, error) {
+func (t *TagsTable) GetByGuild(ctx context.Context, guildId uint64) (map[string]Tag, error) {
 	query := `
 SELECT LOWER(tags.tag_id), tags.guild_id, tags.use_guild_command, tags.content, tags.embed
 FROM tags
 WHERE "guild_id" = $1;`
 
-	rows, err := t.Query(context.Background(), query, guildId)
+	rows, err := t.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -134,15 +134,15 @@ WHERE "guild_id" = $1;`
 	return tags, nil
 }
 
-func (t *TagsTable) GetTagCount(guildId uint64) (count int, err error) {
+func (t *TagsTable) GetTagCount(ctx context.Context, guildId uint64) (count int, err error) {
 	query := `SELECT COUNT(*) FROM tags WHERE "guild_id" = $1;`
-	err = t.QueryRow(context.Background(), query, guildId).Scan(&count)
+	err = t.QueryRow(ctx, query, guildId).Scan(&count)
 	return
 }
 
-func (t *TagsTable) GetStartingWith(guildId uint64, prefix string, limit int) (tagIds []string, e error) {
+func (t *TagsTable) GetStartingWith(ctx context.Context, guildId uint64, prefix string, limit int) (tagIds []string, e error) {
 	query := `SELECT LOWER("tag_id") FROM tags WHERE "guild_id"=$1 AND "tag_id" LIKE $2 || '%' LIMIT $3;`
-	rows, err := t.Query(context.Background(), query, guildId, prefix, limit)
+	rows, err := t.Query(ctx, query, guildId, prefix, limit)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -161,7 +161,7 @@ func (t *TagsTable) GetStartingWith(guildId uint64, prefix string, limit int) (t
 	return
 }
 
-func (t *TagsTable) Set(tag Tag) error {
+func (t *TagsTable) Set(ctx context.Context, tag Tag) error {
 	query := `
 INSERT INTO tags("tag_id", "guild_id", "use_guild_command", "content", "embed")
 VALUES(LOWER($1), $2, $3, $4, $5)
@@ -178,15 +178,15 @@ UPDATE SET "use_guild_command" = $3, "content" = $4, "embed" = $5;`
 		embedRaw = &tmp
 	}
 
-	_, err := t.Exec(context.Background(), query, tag.Id, tag.GuildId, tag.UseGuildCommand, tag.Content, embedRaw)
+	_, err := t.Exec(ctx, query, tag.Id, tag.GuildId, tag.UseGuildCommand, tag.Content, embedRaw)
 	return err
 }
 
-func (t *TagsTable) Delete(guildId uint64, tagId string) (err error) {
+func (t *TagsTable) Delete(ctx context.Context, guildId uint64, tagId string) (err error) {
 	query := `
 DELETE FROM tags 
 WHERE "guild_id" = $1 AND "tag_id" = LOWER($2);`
 
-	_, err = t.Exec(context.Background(), query, guildId, tagId)
+	_, err = t.Exec(ctx, query, guildId, tagId)
 	return
 }

@@ -39,10 +39,10 @@ CREATE TABLE IF NOT EXISTS user_guilds(
 );`
 }
 
-func (u *UserGuildsTable) Get(userId uint64) (guilds []UserGuild, e error) {
+func (u *UserGuildsTable) Get(ctx context.Context, userId uint64) (guilds []UserGuild, e error) {
 	query := `SELECT "guild_id", "name", "owner", "permissions", "icon" FROM user_guilds WHERE "user_id" = $1;`
 
-	rows, err := u.Query(context.Background(), query, userId)
+	rows, err := u.Query(ctx, query, userId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -62,7 +62,7 @@ func (u *UserGuildsTable) Get(userId uint64) (guilds []UserGuild, e error) {
 	return
 }
 
-func (u *UserGuildsTable) Set(userId uint64, guilds []UserGuild) (err error) {
+func (u *UserGuildsTable) Set(ctx context.Context, userId uint64, guilds []UserGuild) (err error) {
 	// create slice of guild ids
 	var guildIds []uint64
 	for _, guild := range guilds {
@@ -83,7 +83,7 @@ func (u *UserGuildsTable) Set(userId uint64, guilds []UserGuild) (err error) {
 		batch.Queue(query, userId, guild.GuildId, guild.Name, guild.Owner, guild.UserPermissions, guild.Icon)
 	}
 
-	br := u.SendBatch(context.Background(), batch)
+	br := u.SendBatch(ctx, batch)
 	defer br.Close()
 	_, err = br.Exec()
 

@@ -29,13 +29,13 @@ CREATE TABLE IF NOT EXISTS premium_keys(
 );`
 }
 
-func (k *PremiumKeys) Create(key uuid.UUID, length time.Duration, premiumType int) (err error) {
-	_, err = k.Exec(context.Background(), `INSERT INTO premium_keys("key", "length", "premium_type") VALUES($1, $2, $3);`, key, length, premiumType)
+func (k *PremiumKeys) Create(ctx context.Context, key uuid.UUID, length time.Duration, premiumType int) (err error) {
+	_, err = k.Exec(ctx, `INSERT INTO premium_keys("key", "length", "premium_type") VALUES($1, $2, $3);`, key, length, premiumType)
 	return
 }
 
-func (k *PremiumKeys) Delete(key uuid.UUID) (length time.Duration, premiumType int, e error) {
-	if err := k.QueryRow(context.Background(), `DELETE from premium_keys WHERE "key" = $1 RETURNING "length", "premium_type";`, key).Scan(&length, &premiumType); err != nil && err != pgx.ErrNoRows {
+func (k *PremiumKeys) Delete(ctx context.Context, key uuid.UUID) (length time.Duration, premiumType int, e error) {
+	if err := k.QueryRow(ctx, `DELETE from premium_keys WHERE "key" = $1 RETURNING "length", "premium_type";`, key).Scan(&length, &premiumType); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 

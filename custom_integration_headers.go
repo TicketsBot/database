@@ -38,10 +38,10 @@ CREATE INDEX IF NOT EXISTS custom_integration_headers_integration_id ON custom_i
 `
 }
 
-func (i *CustomIntegrationHeadersTable) GetByIntegration(integrationId int) ([]CustomIntegrationHeader, error) {
+func (i *CustomIntegrationHeadersTable) GetByIntegration(ctx context.Context, integrationId int) ([]CustomIntegrationHeader, error) {
 	query := `SELECT "id", "integration_id", "name", "value" FROM custom_integration_headers WHERE "integration_id" = $1;`
 
-	rows, err := i.Query(context.Background(), query, integrationId)
+	rows, err := i.Query(ctx, query, integrationId)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (i *CustomIntegrationHeadersTable) GetByIntegration(integrationId int) ([]C
 }
 
 // GetAll integration_id -> []CustomIntegrationHeader
-func (i *CustomIntegrationHeadersTable) GetAll(integrationIds []int) (map[int][]CustomIntegrationHeader, error) {
+func (i *CustomIntegrationHeadersTable) GetAll(ctx context.Context, integrationIds []int) (map[int][]CustomIntegrationHeader, error) {
 	query := `SELECT "id", "integration_id", "name", "value" FROM custom_integration_headers WHERE "integration_id" = ANY($1);`
 
 	idArray := &pgtype.Int4Array{}
@@ -67,7 +67,7 @@ func (i *CustomIntegrationHeadersTable) GetAll(integrationIds []int) (map[int][]
 		return nil, err
 	}
 
-	rows, err := i.Query(context.Background(), query, idArray)
+	rows, err := i.Query(ctx, query, idArray)
 	if err != nil {
 		return nil, err
 	}
@@ -90,20 +90,20 @@ func (i *CustomIntegrationHeadersTable) GetAll(integrationIds []int) (map[int][]
 }
 
 // Assumes that all header IDs are valid for the integration
-func (i *CustomIntegrationHeadersTable) CreateOrUpdate(integrationId int, headers []CustomIntegrationHeader) ([]CustomIntegrationHeader, error) {
+func (i *CustomIntegrationHeadersTable) CreateOrUpdate(ctx context.Context, integrationId int, headers []CustomIntegrationHeader) ([]CustomIntegrationHeader, error) {
 	// The array check is weird if headers is empty
 	if len(headers) == 0 {
 		query := `DELETE FROM custom_integration_headers WHERE "integration_id" = $1;`
-		_, err := i.Exec(context.Background(), query, integrationId)
+		_, err := i.Exec(ctx, query, integrationId)
 		return nil, err
 	}
 
-	tx, err := i.Begin(context.Background())
+	tx, err := i.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defer tx.Rollback(context.Background()) // Does not matter if commit succeeds
+	defer tx.Rollback(ctx) // Does not matter if commit succeeds
 
 	query := `DELETE FROM custom_integration_headers WHERE "integration_id" = $1 AND NOT ("id" = ANY($2));`
 
@@ -119,7 +119,7 @@ func (i *CustomIntegrationHeadersTable) CreateOrUpdate(integrationId int, header
 		return nil, err
 	}
 
-	if _, err := tx.Exec(context.Background(), query, integrationId, array); err != nil {
+	if _, err := tx.Exec(ctx, query, integrationId, array); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ VALUES ($1, $2, $3)
 RETURNING "id", "integration_id", "name", "value";
 ;`
 
-			err = tx.QueryRow(context.Background(), query, integrationId, header.Name, header.Value).Scan(
+			err = tx.QueryRow(ctx, query, integrationId, header.Name, header.Value).Scan(
 				&res.Id,
 				&res.IntegrationId,
 				&res.Name,
@@ -146,7 +146,7 @@ UPDATE custom_integration_headers
 SET "name" = $3, "value" = $4
 WHERE "id" = $1 AND "integration_id" = $2;`
 
-			_, err = tx.Exec(context.Background(), query, header.Id, integrationId, header.Name, header.Value)
+			_, err = tx.Exec(ctx, query, header.Id, integrationId, header.Name, header.Value)
 			res = CustomIntegrationHeader{
 				Id:            header.Id,
 				IntegrationId: integrationId,
@@ -162,19 +162,19 @@ WHERE "id" = $1 AND "integration_id" = $2;`
 		newHeaders = append(newHeaders, res)
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 
 	return newHeaders, nil
 }
 
-func (i *CustomIntegrationHeadersTable) Delete(id int) (err error) {
+func (i *CustomIntegrationHeadersTable) Delete(ctx context.Context, id int) (err error) {
 	query := `
 DELETE FROM custom_integration_headers
 WHERE "id" = $1;
 `
 
-	_, err = i.Exec(context.Background(), query, id)
+	_, err = i.Exec(ctx, query, id)
 	return
 }

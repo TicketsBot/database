@@ -27,33 +27,33 @@ CREATE TABLE IF NOT EXISTS panel_user_mentions(
 `
 }
 
-func (p *PanelUserMention) ShouldMentionUser(panelId int) (shouldMention bool, e error) {
+func (p *PanelUserMention) ShouldMentionUser(ctx context.Context, panelId int) (shouldMention bool, e error) {
 	query := `SELECT "should_mention_user" from panel_user_mentions WHERE "panel_id"=$1;`
 
-	if err := p.QueryRow(context.Background(), query, panelId).Scan(&shouldMention); err != nil && err != pgx.ErrNoRows {
+	if err := p.QueryRow(ctx, query, panelId).Scan(&shouldMention); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (p *PanelUserMention) Set(panelId int, shouldMentionUser bool) error {
-	tx, err := p.Begin(context.Background())
+func (p *PanelUserMention) Set(ctx context.Context, panelId int, shouldMentionUser bool) error {
+	tx, err := p.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	if err := p.SetWithTx(tx, panelId, shouldMentionUser); err != nil {
+	if err := p.SetWithTx(ctx, tx, panelId, shouldMentionUser); err != nil {
 		return err
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }
 
-func (p *PanelUserMention) SetWithTx(tx pgx.Tx, panelId int, shouldMentionUser bool) (err error) {
+func (p *PanelUserMention) SetWithTx(ctx context.Context, tx pgx.Tx, panelId int, shouldMentionUser bool) (err error) {
 	query := `INSERT INTO panel_user_mentions("panel_id", "should_mention_user") VALUES($1, $2) ON CONFLICT("panel_id") DO UPDATE SET "should_mention_user" = $2;`
-	_, err = tx.Exec(context.Background(), query, panelId, shouldMentionUser)
+	_, err = tx.Exec(ctx, query, panelId, shouldMentionUser)
 	return
 }

@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS panel_teams_panel_id ON panel_teams("panel_id");
 `
 }
 
-func (p *PanelTeamsTable) GetTeams(panelId int) (teams []SupportTeam, e error) {
+func (p *PanelTeamsTable) GetTeams(ctx context.Context, panelId int) (teams []SupportTeam, e error) {
 	query := `
 SELECT support_team.id, support_team.guild_id, support_team.name, support_team.on_call_role_id
 FROM panel_teams
@@ -38,7 +38,7 @@ ON panel_teams.team_id = support_team.id
 WHERE panel_teams.panel_id = $1;
 `
 
-	rows, err := p.Query(context.Background(), query, panelId)
+	rows, err := p.Query(ctx, query, panelId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -56,10 +56,10 @@ WHERE panel_teams.panel_id = $1;
 	return
 }
 
-func (p *PanelTeamsTable) GetTeamIds(panelId int) (teamIds []int, e error) {
+func (p *PanelTeamsTable) GetTeamIds(ctx context.Context, panelId int) (teamIds []int, e error) {
 	query := `SELECT "team_id" FROM panel_teams WHERE "panel_id" = $1;`
 
-	rows, err := p.Query(context.Background(), query, panelId)
+	rows, err := p.Query(ctx, query, panelId)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -77,49 +77,49 @@ func (p *PanelTeamsTable) GetTeamIds(panelId int) (teamIds []int, e error) {
 	return
 }
 
-func (p *PanelTeamsTable) Add(panelId, teamId int) (err error) {
+func (p *PanelTeamsTable) Add(ctx context.Context, panelId, teamId int) (err error) {
 	query := `INSERT INTO panel_teams("panel_id", "team_id") VALUES($1, $2) ON CONFLICT("panel_id", "team_id") DO NOTHING;`
-	_, err = p.Exec(context.Background(), query, panelId, teamId)
+	_, err = p.Exec(ctx, query, panelId, teamId)
 	return
 }
 
-func (p *PanelTeamsTable) DeleteAll(panelId int) (err error) {
+func (p *PanelTeamsTable) DeleteAll(ctx context.Context, panelId int) (err error) {
 	query := `DELETE FROM panel_teams WHERE "panel_id"=$1;`
-	_, err = p.Exec(context.Background(), query, panelId)
+	_, err = p.Exec(ctx, query, panelId)
 	return
 }
 
-func (p *PanelTeamsTable) Delete(panelId, teamId int) (err error) {
+func (p *PanelTeamsTable) Delete(ctx context.Context, panelId, teamId int) (err error) {
 	query := `DELETE FROM panel_teams WHERE "panel_id"=$1 AND "team_id"=$2;`
-	_, err = p.Exec(context.Background(), query, panelId, teamId)
+	_, err = p.Exec(ctx, query, panelId, teamId)
 	return
 }
 
-func (p *PanelTeamsTable) Replace(panelId int, teamIds []int) error {
-	tx, err := p.Begin(context.Background())
+func (p *PanelTeamsTable) Replace(ctx context.Context, panelId int, teamIds []int) error {
+	tx, err := p.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	if err := p.ReplaceWithTx(tx, panelId, teamIds); err != nil {
+	if err := p.ReplaceWithTx(ctx, tx, panelId, teamIds); err != nil {
 		return err
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }
 
-func (p *PanelTeamsTable) ReplaceWithTx(tx pgx.Tx, panelId int, teamIds []int) error {
+func (p *PanelTeamsTable) ReplaceWithTx(ctx context.Context, tx pgx.Tx, panelId int, teamIds []int) error {
 	// Remove existing teams from panel
-	if _, err := tx.Exec(context.Background(), `DELETE FROM panel_teams WHERE "panel_id"=$1;`, panelId); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM panel_teams WHERE "panel_id"=$1;`, panelId); err != nil {
 		return err
 	}
 
 	// Add each provided team to panel
 	for _, teamId := range teamIds {
 		query := `INSERT INTO panel_teams("panel_id", "team_id") VALUES($1, $2) ON CONFLICT("panel_id", "team_id") DO NOTHING;`
-		if _, err := tx.Exec(context.Background(), query, panelId, teamId); err != nil {
+		if _, err := tx.Exec(ctx, query, panelId, teamId); err != nil {
 			return err
 		}
 	}

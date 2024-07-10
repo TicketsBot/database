@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS guild_metadata(
 `
 }
 
-func (s *GuildMetadataTable) Get(guildId uint64) (GuildMetadata, error) {
+func (s *GuildMetadataTable) Get(ctx context.Context, guildId uint64) (GuildMetadata, error) {
 	query := `
 SELECT
 	"on_call_role"
@@ -45,7 +45,7 @@ WHERE "guild_id" = $1;
 `
 
 	var metadata GuildMetadata
-	err := s.QueryRow(context.Background(), query, guildId).Scan(&metadata.OnCallRole)
+	err := s.QueryRow(ctx, query, guildId).Scan(&metadata.OnCallRole)
 
 	if err == nil {
 		return metadata, nil
@@ -56,7 +56,7 @@ WHERE "guild_id" = $1;
 	}
 }
 
-func (s *GuildMetadataTable) Set(guildId uint64, metadata GuildMetadata) (err error) {
+func (s *GuildMetadataTable) Set(ctx context.Context, guildId uint64, metadata GuildMetadata) (err error) {
 	query := `
 INSERT INTO guild_metadata(
 	"guild_id",
@@ -68,7 +68,7 @@ DO UPDATE SET
     "on_call_role" = $2;
 `
 
-	_, err = s.Exec(context.Background(), query,
+	_, err = s.Exec(ctx, query,
 		guildId,
 		metadata.OnCallRole,
 	)
@@ -76,7 +76,7 @@ DO UPDATE SET
 	return
 }
 
-func (s *GuildMetadataTable) SetOnCallRole(guildId uint64, roleId *uint64) (err error) {
+func (s *GuildMetadataTable) SetOnCallRole(ctx context.Context, guildId uint64, roleId *uint64) (err error) {
 	query := `
 INSERT INTO guild_metadata("guild_id", "on_call_role")
 VALUES($1, $2)
@@ -84,6 +84,6 @@ ON CONFLICT("guild_id")
 DO UPDATE SET "on_call_role" = $2;
 `
 
-	_, err = s.Exec(context.Background(), query, guildId, roleId)
+	_, err = s.Exec(ctx, query, guildId, roleId)
 	return
 }

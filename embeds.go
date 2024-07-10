@@ -62,7 +62,7 @@ CREATE INDEX IF NOT EXISTS embeds_guild_id ON embeds("guild_id");
 `
 }
 
-func (s *EmbedsTable) GetEmbed(id int) (embed CustomEmbed, err error) {
+func (s *EmbedsTable) GetEmbed(ctx context.Context, id int) (embed CustomEmbed, err error) {
 	query := `
 SELECT 
 	"id",
@@ -83,7 +83,7 @@ FROM embeds
 WHERE "id" = $1;
 `
 
-	err = s.QueryRow(context.Background(), query, id).Scan(
+	err = s.QueryRow(ctx, query, id).Scan(
 		&embed.Id,
 		&embed.GuildId,
 		&embed.Title,
@@ -103,7 +103,7 @@ WHERE "id" = $1;
 	return
 }
 
-func (s *EmbedsTable) Create(embed *CustomEmbed) (id int, err error) {
+func (s *EmbedsTable) Create(ctx context.Context, embed *CustomEmbed) (id int, err error) {
 	query := `
 INSERT INTO embeds(
 	"guild_id",
@@ -125,7 +125,7 @@ RETURNING "id";
 `
 
 	err = s.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		embed.GuildId,
 		embed.Title,
@@ -144,27 +144,27 @@ RETURNING "id";
 	return
 }
 
-func (s *EmbedsTable) CreateWithFields(embed *CustomEmbed, fields []EmbedField) (int, error) {
-	tx, err := s.Begin(context.Background())
+func (s *EmbedsTable) CreateWithFields(ctx context.Context, embed *CustomEmbed, fields []EmbedField) (int, error) {
+	tx, err := s.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	id, err := s.CreateWithFieldsTx(tx, embed, fields)
+	id, err := s.CreateWithFieldsTx(ctx, tx, embed, fields)
 	if err != nil {
 		return 0, err
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return 0, err
 	}
 
 	return id, nil
 }
 
-func (s *EmbedsTable) CreateWithFieldsTx(tx pgx.Tx, embed *CustomEmbed, fields []EmbedField) (int, error) {
+func (s *EmbedsTable) CreateWithFieldsTx(ctx context.Context, tx pgx.Tx, embed *CustomEmbed, fields []EmbedField) (int, error) {
 	query := `
 INSERT INTO embeds(
 	"guild_id",
@@ -188,7 +188,7 @@ RETURNING "id";
 	// Create actual embed
 	var embedId int
 	err := tx.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		embed.GuildId,
 		embed.Title,
@@ -219,7 +219,7 @@ INSERT INTO embed_fields(
 )
 VALUES($1, $2, $3, $4);
 `
-		_, err = tx.Exec(context.Background(), query, embedId, field.Name, field.Value, field.Inline)
+		_, err = tx.Exec(ctx, query, embedId, field.Name, field.Value, field.Inline)
 		if err != nil {
 			return 0, err
 		}
@@ -228,7 +228,7 @@ VALUES($1, $2, $3, $4);
 	return embedId, nil
 }
 
-func (s *EmbedsTable) Update(embed *CustomEmbed) error {
+func (s *EmbedsTable) Update(ctx context.Context, embed *CustomEmbed) error {
 	query := `
 UPDATE embeds
 SET
@@ -248,7 +248,7 @@ WHERE "id" = $1;
 `
 
 	_, err := s.Exec(
-		context.Background(),
+		ctx,
 		query,
 		embed.Id,
 		embed.Title,
@@ -268,22 +268,22 @@ WHERE "id" = $1;
 	return err
 }
 
-func (s *EmbedsTable) UpdateWithFields(embed *CustomEmbed, fields []EmbedField) error {
-	tx, err := s.Begin(context.Background())
+func (s *EmbedsTable) UpdateWithFields(ctx context.Context, embed *CustomEmbed, fields []EmbedField) error {
+	tx, err := s.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	if err := s.UpdateWithFieldsTx(tx, embed, fields); err != nil {
+	if err := s.UpdateWithFieldsTx(ctx, tx, embed, fields); err != nil {
 		return err
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }
 
-func (s *EmbedsTable) UpdateWithFieldsTx(tx pgx.Tx, embed *CustomEmbed, fields []EmbedField) error {
+func (s *EmbedsTable) UpdateWithFieldsTx(ctx context.Context, tx pgx.Tx, embed *CustomEmbed, fields []EmbedField) error {
 	query := `
 UPDATE embeds
 SET
@@ -304,7 +304,7 @@ WHERE "id" = $1;
 
 	// Update actual embed
 	_, err := tx.Exec(
-		context.Background(),
+		ctx,
 		query,
 		embed.Id,
 		embed.Title,
@@ -322,7 +322,7 @@ WHERE "id" = $1;
 	)
 
 	// Delete and recreate fields
-	if _, err := tx.Exec(context.Background(), `DELETE FROM embed_fields WHERE embed_id = $1;`, embed.Id); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM embed_fields WHERE embed_id = $1;`, embed.Id); err != nil {
 		return err
 	}
 
@@ -336,7 +336,7 @@ INSERT INTO embed_fields(
 )
 VALUES($1, $2, $3, $4);
 `
-		_, err = tx.Exec(context.Background(), query, embed.Id, field.Name, field.Value, field.Inline)
+		_, err = tx.Exec(ctx, query, embed.Id, field.Name, field.Value, field.Inline)
 		if err != nil {
 			return err
 		}
@@ -345,20 +345,20 @@ VALUES($1, $2, $3, $4);
 	return nil
 }
 
-func (s *EmbedsTable) Delete(id int) (err error) {
+func (s *EmbedsTable) Delete(ctx context.Context, id int) (err error) {
 	query := `
 DELETE FROM embeds
 WHERE "id" = $1;`
 
-	_, err = s.Exec(context.Background(), query, id)
+	_, err = s.Exec(ctx, query, id)
 	return
 }
 
-func (s *EmbedsTable) DeleteTx(tx pgx.Tx, id int) (err error) {
+func (s *EmbedsTable) DeleteTx(ctx context.Context, tx pgx.Tx, id int) (err error) {
 	query := `
 DELETE FROM embeds
 WHERE "id" = $1;`
 
-	_, err = tx.Exec(context.Background(), query, id)
+	_, err = tx.Exec(ctx, query, id)
 	return
 }

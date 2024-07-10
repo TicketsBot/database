@@ -13,14 +13,14 @@ func toInterval(duration time.Duration) (interval pgtype.Interval, err error) {
 	return
 }
 
-func transact(pool *pgxpool.Pool, statements ...string) (pgx.Tx, error) {
-	tx, err := pool.BeginTx(context.Background(), pgx.TxOptions{})
+func transact(ctx context.Context, pool *pgxpool.Pool, statements ...string) (pgx.Tx, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return tx, err
 	}
 
 	for _, statement := range statements {
-		if _, err := tx.Exec(context.Background(), statement); err != nil {
+		if _, err := tx.Exec(ctx, statement); err != nil {
 			return tx, err
 		}
 	}

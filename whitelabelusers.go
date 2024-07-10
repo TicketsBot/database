@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS whitelabel_users(
 );`
 }
 
-func (p *WhitelabelUsers) IsPremium(userId uint64) (bool, error) {
-	expiry, err := p.GetExpiry(userId)
+func (p *WhitelabelUsers) IsPremium(ctx context.Context, userId uint64) (bool, error) {
+	expiry, err := p.GetExpiry(ctx, userId)
 	if err != nil {
 		return false, err
 	}
@@ -36,7 +36,7 @@ func (p *WhitelabelUsers) IsPremium(userId uint64) (bool, error) {
 	return expiry.After(time.Now()), nil
 }
 
-func (p *WhitelabelUsers) AnyPremium(userIds []uint64) (bool, error) {
+func (p *WhitelabelUsers) AnyPremium(ctx context.Context, userIds []uint64) (bool, error) {
 	query := `
 SELECT EXISTS(
 	SELECT 1
@@ -51,22 +51,22 @@ SELECT EXISTS(
 	}
 
 	var res bool
-	if err := p.QueryRow(context.Background(), query, userIdArray).Scan(&res); err != nil {
+	if err := p.QueryRow(ctx, query, userIdArray).Scan(&res); err != nil {
 		return false, err
 	}
 
 	return res, nil
 }
 
-func (p *WhitelabelUsers) GetExpiry(userId uint64) (expiry time.Time, e error) {
-	if err := p.QueryRow(context.Background(), `SELECT "expiry" from whitelabel_users WHERE "user_id" = $1;`, userId).Scan(&expiry); err != nil && err != pgx.ErrNoRows {
+func (p *WhitelabelUsers) GetExpiry(ctx context.Context, userId uint64) (expiry time.Time, e error) {
+	if err := p.QueryRow(ctx, `SELECT "expiry" from whitelabel_users WHERE "user_id" = $1;`, userId).Scan(&expiry); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
 
 	return
 }
 
-func (p *WhitelabelUsers) Add(userId uint64, interval time.Duration) (err error) {
+func (p *WhitelabelUsers) Add(ctx context.Context, userId uint64, interval time.Duration) (err error) {
 	query := `
 INSERT INTO whitelabel_users("user_id", "expiry")
 VALUES($1, NOW() + $2)
@@ -76,6 +76,6 @@ DO UPDATE SET "expiry" = CASE WHEN whitelabel_users.expiry < NOW()
 	ELSE whitelabel_users.expiry + $2
 END;`
 
-	_, err = p.Exec(context.Background(), query, userId, interval)
+	_, err = p.Exec(ctx, query, userId, interval)
 	return
 }

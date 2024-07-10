@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS bot_staff(
 );`
 }
 
-func (s *BotStaff) IsStaff(userId uint64) (isStaff bool, err error) {
+func (s *BotStaff) IsStaff(ctx context.Context, userId uint64) (isStaff bool, err error) {
 	query := `
 SELECT EXISTS (
 	SELECT 1
@@ -32,14 +32,14 @@ SELECT EXISTS (
 );
 `
 
-	err = s.QueryRow(context.Background(), query, userId).Scan(&isStaff)
+	err = s.QueryRow(ctx, query, userId).Scan(&isStaff)
 	return
 }
 
-func (s *BotStaff) GetAll() ([]uint64, error) {
+func (s *BotStaff) GetAll(ctx context.Context) ([]uint64, error) {
 	query := `SELECT "user_id" FROM bot_staff;`
 
-	rows, err := s.Query(context.Background(), query)
+	rows, err := s.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -59,22 +59,22 @@ func (s *BotStaff) GetAll() ([]uint64, error) {
 	return userIds, nil
 }
 
-func (s *BotStaff) Add(userId uint64) (err error) {
+func (s *BotStaff) Add(ctx context.Context, userId uint64) (err error) {
 	query := `
 INSERT INTO bot_staff("user_id")
 VALUES($1)
 ON CONFLICT("user_id") DO NOTHING;
 `
 
-	_, err = s.Exec(context.Background(), query, userId)
+	_, err = s.Exec(ctx, query, userId)
 	return
 }
 
-func (s *BotStaff) Delete(userId uint64) (err error) {
+func (s *BotStaff) Delete(ctx context.Context, userId uint64) (err error) {
 	query := `
 DELETE FROM bot_staff
 WHERE "user_id" = $1;`
 
-	_, err = s.Exec(context.Background(), query, userId)
+	_, err = s.Exec(ctx, query, userId)
 	return
 }

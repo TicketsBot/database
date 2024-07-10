@@ -24,23 +24,23 @@ CREATE TABLE IF NOT EXISTS global_blacklist(
 `
 }
 
-func (b *GlobalBlacklist) IsBlacklisted(userId uint64) (blacklisted bool, err error) {
+func (b *GlobalBlacklist) IsBlacklisted(ctx context.Context, userId uint64) (blacklisted bool, err error) {
 	query := `
 SELECT EXISTS(
 	SELECT 1 FROM global_blacklist WHERE "user_id" = $1
 );
 `
 
-	err = b.QueryRow(context.Background(), query, userId).Scan(&blacklisted)
+	err = b.QueryRow(ctx, query, userId).Scan(&blacklisted)
 	return
 }
 
-func (b *GlobalBlacklist) Add(userId uint64) (err error) {
-	_, err = b.Exec(context.Background(), `INSERT INTO global_blacklist("user_id") VALUES($1) ON CONFLICT("user_id") DO NOTHING;`, userId)
+func (b *GlobalBlacklist) Add(ctx context.Context, userId uint64) (err error) {
+	_, err = b.Exec(ctx, `INSERT INTO global_blacklist("user_id") VALUES($1) ON CONFLICT("user_id") DO NOTHING;`, userId)
 	return
 }
 
-func (b *GlobalBlacklist) Delete(userId uint64) (err error) {
-	_, err = b.Exec(context.Background(), `DELETE FROM global_blacklist WHERE "user_id" = $1;`, userId)
+func (b *GlobalBlacklist) Delete(ctx context.Context, userId uint64) (err error) {
+	_, err = b.Exec(ctx, `DELETE FROM global_blacklist WHERE "user_id" = $1;`, userId)
 	return
 }

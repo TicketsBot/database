@@ -32,13 +32,11 @@ type Database struct {
 	CustomIntegrationSecrets      *CustomIntegrationSecretsTable
 	CustomColours                 *CustomColours
 	DashboardUsers                *DashboardUsersTable
-	DmOnOpen                      *DmOnOpen
 	EmbedFields                   *EmbedFieldsTable
 	Embeds                        *EmbedsTable
 	ExitSurveyResponses           *ExitSurveyResponses
 	FeedbackEnabled               *FeedbackEnabled
 	FirstResponseTime             *FirstResponseTime
-	FirstResponseTimeGuildView    *FirstResponseTimeGuildView
 	FormInput                     *FormInputTable
 	Forms                         *FormsTable
 	GlobalBlacklist               *GlobalBlacklist
@@ -68,13 +66,11 @@ type Database struct {
 	SupportTeamRoles              *SupportTeamRolesTable
 	Tag                           *TagsTable
 	TicketClaims                  *TicketClaims
-	TicketDurationView            *TicketDurationView
 	TicketLastMessage             *TicketLastMessageTable
 	TicketLimit                   *TicketLimit
 	TicketMembers                 *TicketMembers
 	TicketPermissions             *TicketPermissionsTable
 	Tickets                       *TicketTable
-	TopCloseReasonsView           *TopCloseReasonsView
 	UsedKeys                      *UsedKeys
 	UsersCanClose                 *UsersCanClose
 	UserGuilds                    *UserGuildsTable
@@ -112,14 +108,12 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		CustomIntegrationSecretValues: newCustomIntegrationSecretValuesTable(pool),
 		CustomIntegrationSecrets:      newCustomIntegrationSecretsTable(pool),
 		CustomColours:                 newCustomColours(pool),
-		DmOnOpen:                      newDmOnOpen(pool),
 		DashboardUsers:                newDashboardUsersTable(pool),
 		EmbedFields:                   newEmbedFieldsTable(pool),
 		Embeds:                        newEmbedsTable(pool),
 		ExitSurveyResponses:           newExitSurveyResponses(pool),
 		FeedbackEnabled:               newFeedbackEnabled(pool),
 		FirstResponseTime:             newFirstResponseTime(pool),
-		FirstResponseTimeGuildView:    newFirstResponseTimeGuildView(pool),
 		FormInput:                     newFormInputTable(pool),
 		Forms:                         newFormsTable(pool),
 		GlobalBlacklist:               newGlobalBlacklist(pool),
@@ -149,13 +143,11 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		SupportTeamRoles:              newSupportTeamRolesTable(pool),
 		Tag:                           newTag(pool),
 		TicketClaims:                  newTicketClaims(pool),
-		TicketDurationView:            newTicketDurationView(pool),
 		TicketLastMessage:             newTicketLastMessageTable(pool),
 		TicketLimit:                   newTicketLimit(pool),
 		TicketMembers:                 newTicketMembers(pool),
 		TicketPermissions:             newTicketPermissionsTable(pool),
 		Tickets:                       newTicketTable(pool),
-		TopCloseReasonsView:           newTopCloseReasonsView(pool),
 		UsedKeys:                      newUsedKeys(pool),
 		UsersCanClose:                 newUsersCanClose(pool),
 		UserGuilds:                    newUserGuildsTable(pool),
@@ -173,12 +165,12 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 	return db
 }
 
-func (d *Database) BeginTx() (pgx.Tx, error) {
-	return d.pool.Begin(context.Background())
+func (d *Database) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	return d.pool.Begin(ctx)
 }
 
-func (d *Database) CreateTables(pool *pgxpool.Pool) {
-	mustCreate(pool,
+func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
+	mustCreate(ctx, pool,
 		d.ActiveLanguage,
 		d.ArchiveChannel,
 		d.AutoClose,
@@ -196,7 +188,6 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.CustomIntegrationSecretValues,
 		d.CustomColours,
 		d.DashboardUsers,
-		d.DmOnOpen,
 		d.Embeds,
 		d.EmbedFields, // depends on embeds
 		d.FeedbackEnabled,
@@ -230,7 +221,6 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.TicketPermissions,
 		d.Tickets,             // Must be created before members table
 		d.TicketLastMessage,   // Must be created after Tickets table
-		d.TicketDurationView,  // Must be created after Tickets table
 		d.Participants,        // Must be created after Tickets table
 		d.AutoCloseExclude,    // Must be created after Tickets table
 		d.CloseReason,         // Must be created after Tickets table
@@ -239,10 +229,8 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 		d.ExitSurveyResponses, // Must be created after Tickets table
 		d.ArchiveMessages,     // Must be created after Tickets table
 		d.FirstResponseTime,
-		d.FirstResponseTimeGuildView,
 		d.TicketMembers,
 		d.TicketClaims,
-		d.TopCloseReasonsView,
 		d.UsedKeys,
 		d.UsersCanClose,
 		d.UserGuilds,
@@ -260,16 +248,13 @@ func (d *Database) CreateTables(pool *pgxpool.Pool) {
 
 func (d *Database) Views() []View {
 	return []View{
-		d.TicketDurationView,
-		d.FirstResponseTimeGuildView,
-		d.TopCloseReasonsView,
 		d.CustomIntegrationGuildCounts,
 	}
 }
 
-func mustCreate(pool *pgxpool.Pool, tables ...Table) {
+func mustCreate(ctx context.Context, pool *pgxpool.Pool, tables ...Table) {
 	for _, table := range tables {
-		if _, err := pool.Exec(context.Background(), table.Schema()); err != nil {
+		if _, err := pool.Exec(ctx, table.Schema()); err != nil {
 			panic(err)
 		}
 	}

@@ -37,16 +37,16 @@ CREATE TABLE IF NOT EXISTS auto_close(
 `
 }
 
-func (a *AutoCloseTable) Get(guildId uint64) (settings AutoCloseSettings, e error) {
+func (a *AutoCloseTable) Get(ctx context.Context, guildId uint64) (settings AutoCloseSettings, e error) {
 	query := `SELECT "enabled", "since_open_with_no_response", "since_last_message", "on_user_leave" FROM auto_close WHERE "guild_id" = $1;`
-	if err := a.QueryRow(context.Background(), query, guildId).Scan(&settings.Enabled, &settings.SinceOpenWithNoResponse, &settings.SinceLastMessage, &settings.OnUserLeave); err != nil && err != pgx.ErrNoRows { // defaults to nil if no rows
+	if err := a.QueryRow(ctx, query, guildId).Scan(&settings.Enabled, &settings.SinceOpenWithNoResponse, &settings.SinceLastMessage, &settings.OnUserLeave); err != nil && err != pgx.ErrNoRows { // defaults to nil if no rows
 		e = err
 	}
 
 	return
 }
 
-func (a *AutoCloseTable) Set(guildId uint64, settings AutoCloseSettings) (err error) {
+func (a *AutoCloseTable) Set(ctx context.Context, guildId uint64, settings AutoCloseSettings) (err error) {
 	query := `
 INSERT INTO
 	auto_close("guild_id", "enabled", "since_open_with_no_response", "since_last_message", "on_user_leave")
@@ -60,27 +60,27 @@ ON CONFLICT("guild_id") DO
 		"on_user_leave" = $5
 ;`
 
-	_, err = a.Exec(context.Background(), query, guildId, settings.Enabled, settings.SinceOpenWithNoResponse, settings.SinceLastMessage, settings.OnUserLeave)
+	_, err = a.Exec(ctx, query, guildId, settings.Enabled, settings.SinceOpenWithNoResponse, settings.SinceLastMessage, settings.OnUserLeave)
 	return
 }
 
-func (a *AutoCloseTable) Reset(guildId uint64) (err error) {
+func (a *AutoCloseTable) Reset(ctx context.Context, guildId uint64) (err error) {
 	query := `
 UPDATE auto_close
 SET since_open_with_no_response = NULL, since_last_message = NULL
 WHERE "guild_id" = $1;
 `
 
-	_, err = a.Exec(context.Background(), query, guildId)
+	_, err = a.Exec(ctx, query, guildId)
 	return
 }
 
-func (a *AutoCloseTable) Delete(guildId uint64) (err error) {
+func (a *AutoCloseTable) Delete(ctx context.Context, guildId uint64) (err error) {
 	query := `
 DELETE FROM auto_close
 WHERE "guild_id" = $1;
 `
 
-	_, err = a.Exec(context.Background(), query, guildId)
+	_, err = a.Exec(ctx, query, guildId)
 	return
 }

@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS whitelabel_errors(
 `
 }
 
-func (w *WhitelabelErrors) GetRecent(userId uint64, limit int) (errors []WhitelabelError, e error) {
+func (w *WhitelabelErrors) GetRecent(ctx context.Context, userId uint64, limit int) (errors []WhitelabelError, e error) {
 	query := `SELECT "error", "error_time" FROM whitelabel_errors WHERE "user_id" = $1 ORDER BY "error_id" DESC LIMIT $2;`
 
-	rows, err := w.Query(context.Background(), query, userId, limit)
+	rows, err := w.Query(ctx, query, userId, limit)
 	defer rows.Close()
 	if err != nil {
 		e = err
@@ -55,8 +55,8 @@ func (w *WhitelabelErrors) GetRecent(userId uint64, limit int) (errors []Whitela
 	return
 }
 
-func (w *WhitelabelErrors) Append(userId uint64, error string) (err error) {
+func (w *WhitelabelErrors) Append(ctx context.Context, userId uint64, error string) (err error) {
 	query := `INSERT INTO whitelabel_errors("user_id", "error", "error_time") VALUES($1, $2, NOW());`
-	_, err = w.Exec(context.Background(), query, userId, error)
+	_, err = w.Exec(ctx, query, userId, error)
 	return
 }

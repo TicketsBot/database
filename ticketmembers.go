@@ -30,9 +30,9 @@ CREATE INDEX IF NOT EXISTS ticket_members_guild_ticket ON ticket_members("guild_
 `
 }
 
-func (m *TicketMembers) Get(guildId uint64, ticketId int) (members []uint64, e error) {
+func (m *TicketMembers) Get(ctx context.Context, guildId uint64, ticketId int) (members []uint64, e error) {
 	query := `SELECT "user_id" FROM ticket_members WHERE "guild_id" = $1 AND "ticket_id" = $2;`
-	rows, err := m.Query(context.Background(), query, guildId, ticketId)
+	rows, err := m.Query(ctx, query, guildId, ticketId)
 	defer rows.Close()
 	if err != nil && err != pgx.ErrNoRows {
 		e = err
@@ -52,14 +52,14 @@ func (m *TicketMembers) Get(guildId uint64, ticketId int) (members []uint64, e e
 	return
 }
 
-func (m *TicketMembers) Add(guildId uint64, ticketId int, userId uint64) (err error) {
+func (m *TicketMembers) Add(ctx context.Context, guildId uint64, ticketId int, userId uint64) (err error) {
 	query := `INSERT INTO ticket_members("guild_id", "ticket_id", "user_id") VALUES($1, $2, $3) ON CONFLICT("guild_id", "ticket_id", "user_id") DO NOTHING;`
-	_, err = m.Exec(context.Background(), query, guildId, ticketId, userId)
+	_, err = m.Exec(ctx, query, guildId, ticketId, userId)
 	return
 }
 
-func (m *TicketMembers) Delete(guildId uint64, ticketId int, userId uint64) (err error) {
+func (m *TicketMembers) Delete(ctx context.Context, guildId uint64, ticketId int, userId uint64) (err error) {
 	query := `DELETE FROM ticket_members WHERE "guild_id"=$1 AND "ticket_id"=$2 AND "user_id"=$3;`
-	_, err = m.Exec(context.Background(), query, guildId, ticketId, userId)
+	_, err = m.Exec(ctx, query, guildId, ticketId, userId)
 	return
 }

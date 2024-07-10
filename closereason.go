@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS close_reason(
 `
 }
 
-func (c *CloseMetadataTable) Get(guildId uint64, ticketId int) (CloseMetadata, bool, error) {
+func (c *CloseMetadataTable) Get(ctx context.Context, guildId uint64, ticketId int) (CloseMetadata, bool, error) {
 	query := `
 SELECT "close_reason", "closed_by"
 FROM close_reason
@@ -43,7 +43,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 `
 
 	var data CloseMetadata
-	if err := c.QueryRow(context.Background(), query, guildId, ticketId).Scan(&data.Reason, &data.ClosedBy); err != nil {
+	if err := c.QueryRow(ctx, query, guildId, ticketId).Scan(&data.Reason, &data.ClosedBy); err != nil {
 		if err == pgx.ErrNoRows {
 			return CloseMetadata{}, false, nil
 		} else {
@@ -54,7 +54,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = $2;
 	return data, true, nil
 }
 
-func (c *CloseMetadataTable) GetMulti(guildId uint64, ticketIds []int) (map[int]CloseMetadata, error) {
+func (c *CloseMetadataTable) GetMulti(ctx context.Context, guildId uint64, ticketIds []int) (map[int]CloseMetadata, error) {
 	query := `
 SELECT "ticket_id", "close_reason", "closed_by"
 FROM close_reason
@@ -66,7 +66,7 @@ WHERE "guild_id" = $1 AND "ticket_id" = ANY($2);
 		return nil, err
 	}
 
-	rows, err := c.Query(context.Background(), query, guildId, ticketIds)
+	rows, err := c.Query(ctx, query, guildId, ticketIds)
 	if err != nil {
 		return nil, err
 	}
@@ -85,19 +85,19 @@ WHERE "guild_id" = $1 AND "ticket_id" = ANY($2);
 	return ticketMetadata, nil
 }
 
-func (c *CloseMetadataTable) Set(guildId uint64, ticketId int, data CloseMetadata) (err error) {
+func (c *CloseMetadataTable) Set(ctx context.Context, guildId uint64, ticketId int, data CloseMetadata) (err error) {
 	query := `
 INSERT INTO close_reason("guild_id", "ticket_id", "close_reason", "closed_by")
 VALUES($1, $2, $3, $4)
 ON CONFLICT("guild_id", "ticket_id") DO UPDATE SET "close_reason" = $3, "closed_by" = $4;
 `
 
-	_, err = c.Exec(context.Background(), query, guildId, ticketId, data.Reason, data.ClosedBy)
+	_, err = c.Exec(ctx, query, guildId, ticketId, data.Reason, data.ClosedBy)
 	return
 }
 
-func (c *CloseMetadataTable) Delete(guildId uint64, ticketId int) (err error) {
+func (c *CloseMetadataTable) Delete(ctx context.Context, guildId uint64, ticketId int) (err error) {
 	query := `DELETE FROM close_reason WHERE "guild_id"=$1 AND "ticket_id"=$2;`
-	_, err = c.Exec(context.Background(), query, guildId, ticketId)
+	_, err = c.Exec(ctx, query, guildId, ticketId)
 	return
 }

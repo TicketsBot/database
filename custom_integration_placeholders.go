@@ -37,10 +37,10 @@ CREATE INDEX IF NOT EXISTS custom_integration_placeholders_integration_id ON cus
 `
 }
 
-func (i *CustomIntegrationPlaceholdersTable) GetByIntegration(integrationId int) ([]CustomIntegrationPlaceholder, error) {
+func (i *CustomIntegrationPlaceholdersTable) GetByIntegration(ctx context.Context, integrationId int) ([]CustomIntegrationPlaceholder, error) {
 	query := `SELECT "id", "integration_id", "name", "json_path" FROM custom_integration_placeholders WHERE "integration_id" = $1;`
 
-	rows, err := i.Query(context.Background(), query, integrationId)
+	rows, err := i.Query(ctx, query, integrationId)
 	if err != nil {
 		return nil, err
 	}
@@ -57,14 +57,14 @@ func (i *CustomIntegrationPlaceholdersTable) GetByIntegration(integrationId int)
 	return placeholders, nil
 }
 
-func (i *CustomIntegrationPlaceholdersTable) GetAllForOwnedIntegrations(ownerId uint64) (map[int][]CustomIntegrationPlaceholder, error) {
+func (i *CustomIntegrationPlaceholdersTable) GetAllForOwnedIntegrations(ctx context.Context, ownerId uint64) (map[int][]CustomIntegrationPlaceholder, error) {
 	query := `
 SELECT placeholders.id, placeholders.integration_id, placeholders.name, placeholders.json_path
 FROM custom_integration_placeholders AS placeholders 
 INNER JOIN custom_integrations ON placeholders.integration_id = custom_integrations.id
 WHERE custom_integrations.owner_id = $1;`
 
-	rows, err := i.Query(context.Background(), query, ownerId)
+	rows, err := i.Query(ctx, query, ownerId)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ WHERE custom_integrations.owner_id = $1;`
 	return placeholders, nil
 }
 
-func (i *CustomIntegrationPlaceholdersTable) GetAllActivatedInGuild(guildId uint64) ([]CustomIntegrationPlaceholder, error) {
+func (i *CustomIntegrationPlaceholdersTable) GetAllActivatedInGuild(ctx context.Context, guildId uint64) ([]CustomIntegrationPlaceholder, error) {
 	query := `
 SELECT placeholders.id, placeholders.integration_id, placeholders.name, placeholders.json_path
 FROM custom_integration_placeholders AS placeholders
@@ -96,7 +96,7 @@ INNER JOIN custom_integration_guilds guilds ON integrations.id = guilds.integrat
 WHERE guilds.guild_id = $1;
 `
 
-	rows, err := i.Query(context.Background(), query, guildId)
+	rows, err := i.Query(ctx, query, guildId)
 	if err != nil {
 		return nil, err
 	}
@@ -114,18 +114,18 @@ WHERE guilds.guild_id = $1;
 	return placeholders, nil
 }
 
-/// Only Name and JsonPath are used
-func (i *CustomIntegrationPlaceholdersTable) Set(integrationId int, placeholders []CustomIntegrationPlaceholder) ([]CustomIntegrationPlaceholder, error) {
-	tx, err := i.Begin(context.Background())
+// / Only Name and JsonPath are used
+func (i *CustomIntegrationPlaceholdersTable) Set(ctx context.Context, integrationId int, placeholders []CustomIntegrationPlaceholder) ([]CustomIntegrationPlaceholder, error) {
+	tx, err := i.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	defer tx.Rollback(context.Background()) // Does not matter if commit succeeds
+	defer tx.Rollback(ctx) // Does not matter if commit succeeds
 
 	// Delete existing placeholders
 	query := `DELETE FROM custom_integration_placeholders WHERE "integration_id" = $1;`
-	if _, err := tx.Exec(context.Background(), query, integrationId); err != nil {
+	if _, err := tx.Exec(ctx, query, integrationId); err != nil {
 		return nil, err
 	}
 
@@ -138,7 +138,7 @@ RETURNING "id", "integration_id", "name", "json_path";
 ;`
 
 		var res CustomIntegrationPlaceholder
-		err := tx.QueryRow(context.Background(), query, integrationId, placeholder.Name, placeholder.JsonPath).Scan(
+		err := tx.QueryRow(ctx, query, integrationId, placeholder.Name, placeholder.JsonPath).Scan(
 			&placeholder.Id,
 			&placeholder.IntegrationId,
 			&placeholder.Name,
@@ -152,19 +152,19 @@ RETURNING "id", "integration_id", "name", "json_path";
 		newPlaceholders = append(newPlaceholders, res)
 	}
 
-	if err := tx.Commit(context.Background()); err != nil {
+	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 
 	return newPlaceholders, nil
 }
 
-func (i *CustomIntegrationPlaceholdersTable) Delete(id int) (err error) {
+func (i *CustomIntegrationPlaceholdersTable) Delete(ctx context.Context, id int) (err error) {
 	query := `
 DELETE FROM custom_integration_placeholders
 WHERE "id" = $1;
 `
 
-	_, err = i.Exec(context.Background(), query, id)
+	_, err = i.Exec(ctx, query, id)
 	return
 }

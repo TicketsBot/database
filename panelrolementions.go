@@ -28,10 +28,10 @@ CREATE INDEX IF NOT EXISTS panel_role_mentions_panel_id ON panel_role_mentions("
 `
 }
 
-func (p *PanelRoleMentions) GetRoles(panelId int) (roles []uint64, e error) {
+func (p *PanelRoleMentions) GetRoles(ctx context.Context, panelId int) (roles []uint64, e error) {
 	query := `SELECT "role_id" from panel_role_mentions WHERE "panel_id"=$1;`
 
-	rows, err := p.Query(context.Background(), query, panelId)
+	rows, err := p.Query(ctx, query, panelId)
 	defer rows.Close()
 	if err != nil {
 		e = err
@@ -50,55 +50,55 @@ func (p *PanelRoleMentions) GetRoles(panelId int) (roles []uint64, e error) {
 	return
 }
 
-func (p *PanelRoleMentions) Add(panelId int, roleId uint64) (err error) {
+func (p *PanelRoleMentions) Add(ctx context.Context, panelId int, roleId uint64) (err error) {
 	query := `INSERT INTO panel_role_mentions("panel_id", "role_id") VALUES($1, $2) ON CONFLICT("panel_id", "role_id") DO NOTHING;`
-	_, err = p.Exec(context.Background(), query, panelId, roleId)
+	_, err = p.Exec(ctx, query, panelId, roleId)
 	return
 }
 
-func (p *PanelRoleMentions) DeleteAll(panelId int) (err error) {
+func (p *PanelRoleMentions) DeleteAll(ctx context.Context, panelId int) (err error) {
 	query := `DELETE FROM panel_role_mentions WHERE "panel_id"=$1;`
-	_, err = p.Exec(context.Background(), query, panelId)
+	_, err = p.Exec(ctx, query, panelId)
 	return
 }
 
-func (p *PanelRoleMentions) DeleteAllRole(roleId uint64) (err error) {
+func (p *PanelRoleMentions) DeleteAllRole(ctx context.Context, roleId uint64) (err error) {
 	query := `DELETE FROM panel_role_mentions WHERE "role_id"=$1;`
-	_, err = p.Exec(context.Background(), query, roleId)
+	_, err = p.Exec(ctx, query, roleId)
 	return
 }
 
-func (p *PanelRoleMentions) Delete(panelId int, roleId uint64) (err error) {
+func (p *PanelRoleMentions) Delete(ctx context.Context, panelId int, roleId uint64) (err error) {
 	query := `DELETE FROM panel_role_mentions WHERE "panel_id"=$1 AND "role_id"=$2;`
-	_, err = p.Exec(context.Background(), query, panelId, roleId)
+	_, err = p.Exec(ctx, query, panelId, roleId)
 	return
 }
 
-func (p *PanelRoleMentions) Replace(panelId int, roleIds []uint64) error {
-	tx, err := p.Begin(context.Background())
+func (p *PanelRoleMentions) Replace(ctx context.Context, panelId int, roleIds []uint64) error {
+	tx, err := p.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	if err := p.ReplaceWithTx(tx, panelId, roleIds); err != nil {
+	if err := p.ReplaceWithTx(ctx, tx, panelId, roleIds); err != nil {
 		return err
 	}
 
-	return tx.Commit(context.Background())
+	return tx.Commit(ctx)
 }
 
-func (p *PanelRoleMentions) ReplaceWithTx(tx pgx.Tx, panelId int, roleIds []uint64) error {
+func (p *PanelRoleMentions) ReplaceWithTx(ctx context.Context, tx pgx.Tx, panelId int, roleIds []uint64) error {
 	// Remove existing mentions from panel
-	if _, err := tx.Exec(context.Background(), `DELETE FROM panel_role_mentions WHERE "panel_id" = $1;`, panelId); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM panel_role_mentions WHERE "panel_id" = $1;`, panelId); err != nil {
 		return err
 	}
 
 	// Add each provided mention to panel
 	for _, roleId := range roleIds {
 		query := `INSERT INTO panel_role_mentions("panel_id", "role_id") VALUES($1, $2) ON CONFLICT("panel_id", "role_id") DO NOTHING;`
-		if _, err := tx.Exec(context.Background(), query, panelId, roleId); err != nil {
+		if _, err := tx.Exec(ctx, query, panelId, roleId); err != nil {
 			return err
 		}
 	}
