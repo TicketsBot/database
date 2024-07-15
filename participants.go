@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
 )
@@ -108,6 +109,25 @@ DO NOTHING;`
 
 	_, err = p.Exec(ctx, query, guildId, ticketId, userId)
 	return
+}
+
+func (p *ParticipantTable) SetBulk(ctx context.Context, guildId uint64, ticketId int, userId []uint64) error {
+	query := `
+INSERT INTO participant("guild_id", "ticket_id", "user_id")
+VALUES($1, $2, $3)
+ON CONFLICT("guild_id", "ticket_id", "user_id")
+DO NOTHING;`
+
+	batch := new(pgx.Batch)
+	for _, id := range userId {
+		batch.Queue(query, guildId, ticketId, id)
+	}
+
+	res := p.SendBatch(ctx, batch)
+	defer res.Close()
+
+	_, err := res.Exec()
+	return err
 }
 
 func (p *ParticipantTable) Delete(ctx context.Context, guildId uint64, ticketId int, userId uint64) (err error) {
