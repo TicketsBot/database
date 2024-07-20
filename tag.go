@@ -2,16 +2,17 @@ package database
 
 import (
 	"context"
+	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Tag struct {
-	Id              string
-	GuildId         uint64
-	UseGuildCommand bool
-	Content         *string
-	Embed           *CustomEmbedWithFields
+	Id                   string
+	GuildId              uint64
+	Content              *string
+	Embed                *CustomEmbedWithFields
+	ApplicationCommandId *uint64
 }
 
 type TagsTable struct {
@@ -30,9 +31,9 @@ func (t TagsTable) Schema() string {
 CREATE TABLE IF NOT EXISTS tags(
 	"tag_id" varchar(16) NOT NULL,
 	"guild_id" int8 NOT NULL,
-	"use_guild_command" bool NOT NULL DEFAULT false,
 	"content" text DEFAULT NULL CONSTRAINT content_length CHECK (length(content) <= 4096),
 	"embed" JSONB DEFAULT NULL,
+	"application_command_id" int8 DEFAULT NULL,
 	PRIMARY KEY("guild_id", "tag_id")
 );
 CREATE INDEX IF NOT EXISTS tags_guild_id_idx ON tags("guild_id");
@@ -47,7 +48,7 @@ func (t *TagsTable) Exists(ctx context.Context, guildId uint64, tagId string) (e
 
 func (t *TagsTable) Get(ctx context.Context, guildId uint64, tagId string) (Tag, bool, error) {
 	query := `
-SELECT LOWER(tag_id), "guild_id", "use_guild_command", "content", "embed"
+SELECT LOWER(tag_id), "guild_id", "content", "embed", "application_command_id"
 FROM tags
 WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2);
 `
@@ -57,9 +58,9 @@ WHERE "guild_id" = $1 AND LOWER("tag_id") = LOWER($2);
 	err := t.QueryRow(ctx, query, guildId, tagId).Scan(
 		&tag.Id,
 		&tag.GuildId,
-		&tag.UseGuildCommand,
 		&tag.Content,
 		&embedRaw,
+		&tag.ApplicationCommandId,
 	)
 
 	if err != nil {
@@ -101,9 +102,35 @@ func (t *TagsTable) GetTagIds(ctx context.Context, guildId uint64) (ids []string
 	return
 }
 
+func (t *TagsTable) GetByApplicationCommandId(ctx context.Context, guildId, applicationCommandId uint64) (Tag, bool, error) {
+	query := `
+SELECT LOWER(tags.tag_id), tags.guild_id, tags.content, tags.embed, tags.application_command_id
+FROM tags
+WHERE "guild_id" = $1 AND "application_command_id" = $2;
+`
+
+	var tag Tag
+	var embedRaw *string
+	if err := t.QueryRow(ctx, query, guildId, applicationCommandId).Scan(&tag.Id, &tag.GuildId, &tag.Content, &embedRaw, &tag.ApplicationCommandId); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Tag{}, false, nil
+		}
+
+		return Tag{}, false, err
+	}
+
+	if embedRaw != nil {
+		if err := json.UnmarshalFromString(*embedRaw, &tag.Embed); err != nil {
+			return Tag{}, false, err
+		}
+	}
+
+	return tag, true, nil
+}
+
 func (t *TagsTable) GetByGuild(ctx context.Context, guildId uint64) (map[string]Tag, error) {
 	query := `
-SELECT LOWER(tags.tag_id), tags.guild_id, tags.use_guild_command, tags.content, tags.embed
+SELECT LOWER(tags.tag_id), tags.guild_id, tags.content, tags.embed, tags.application_command_id
 FROM tags
 WHERE "guild_id" = $1;`
 
@@ -118,7 +145,7 @@ WHERE "guild_id" = $1;`
 	for rows.Next() {
 		var tag Tag
 		var embedRaw *string
-		if err := rows.Scan(&tag.Id, &tag.GuildId, &tag.UseGuildCommand, &tag.Content, &embedRaw); err != nil {
+		if err := rows.Scan(&tag.Id, &tag.GuildId, &tag.Content, &embedRaw, &tag.ApplicationCommandId); err != nil {
 			return nil, err
 		}
 
@@ -163,10 +190,10 @@ func (t *TagsTable) GetStartingWith(ctx context.Context, guildId uint64, prefix 
 
 func (t *TagsTable) Set(ctx context.Context, tag Tag) error {
 	query := `
-INSERT INTO tags("tag_id", "guild_id", "use_guild_command", "content", "embed")
+INSERT INTO tags("tag_id", "guild_id", "content", "embed", "application_command_id")
 VALUES(LOWER($1), $2, $3, $4, $5)
 ON CONFLICT("tag_id", "guild_id") DO
-UPDATE SET "use_guild_command" = $3, "content" = $4, "embed" = $5;`
+UPDATE SET "content" = $3, "embed" = $4, "application_command_id" = $5;`
 
 	var embedRaw *string
 	if tag.Embed != nil {
@@ -178,7 +205,7 @@ UPDATE SET "use_guild_command" = $3, "content" = $4, "embed" = $5;`
 		embedRaw = &tmp
 	}
 
-	_, err := t.Exec(ctx, query, tag.Id, tag.GuildId, tag.UseGuildCommand, tag.Content, embedRaw)
+	_, err := t.Exec(ctx, query, tag.Id, tag.GuildId, tag.Content, embedRaw, tag.ApplicationCommandId)
 	return err
 }
 
