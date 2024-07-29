@@ -31,3 +31,7 @@ func transact(ctx context.Context, pool *pgxpool.Pool, statements ...string) (pg
 func slice[T any](v ...T) []T {
 	return v
 }
+
+func ptr[T any](v T) *T {
+	return &v
+}

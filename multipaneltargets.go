@@ -84,12 +84,9 @@ SELECT
 	multi_panels.message_id,
 	multi_panels.channel_id,
 	multi_panels.guild_id,
-	multi_panels.title,
-	multi_panels.content,
-	multi_panels.colour,
 	multi_panels.select_menu,
-	multi_panels.image_url,
-	multi_panels.thumbnail_url
+	multi_panels.select_menu_placeholder,
+	multi_panels.embed
 FROM multi_panel_targets
 INNER JOIN multi_panels
 ON multi_panels.id = multi_panel_targets.multi_panel_id
@@ -105,21 +102,25 @@ WHERE multi_panel_targets.panel_id = $1;
 	var multiPanels []MultiPanel
 	for rows.Next() {
 		var multiPanel MultiPanel
+		var embedRaw *string
 		err := rows.Scan(
 			&multiPanel.Id,
 			&multiPanel.MessageId,
 			&multiPanel.ChannelId,
 			&multiPanel.GuildId,
-			&multiPanel.Title,
-			&multiPanel.Content,
-			&multiPanel.Colour,
 			&multiPanel.SelectMenu,
-			&multiPanel.ImageUrl,
-			&multiPanel.ThumbnailUrl,
+			&multiPanel.SelectMenuPlaceholder,
+			&embedRaw,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if embedRaw != nil {
+			if err := json.Unmarshal([]byte(*embedRaw), &multiPanel.Embed); err != nil {
+				return nil, err
+			}
 		}
 
 		multiPanels = append(multiPanels, multiPanel)

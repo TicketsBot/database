@@ -2,22 +2,19 @@ package database
 
 import (
 	"context"
+	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type MultiPanel struct {
-	Id             int     `json:"id"`
-	MessageId      uint64  `json:"message_id,string"`
-	ChannelId      uint64  `json:"channel_id,string"`
-	GuildId        uint64  `json:"guild_id,string"`
-	Title          string  `json:"title"`
-	Content        string  `json:"content"`
-	Colour         int     `json:"colour"`
-	SelectMenu     bool    `json:"select_menu"`
-	SelectMenuText *string `json:"select_menu_text"`
-	ImageUrl       *string `json:"image_url,omitempty"`
-	ThumbnailUrl   *string `json:"thumbnail_url,omitempty"`
+	Id                    int                    `json:"id"`
+	MessageId             uint64                 `json:"message_id,string"`
+	ChannelId             uint64                 `json:"channel_id,string"`
+	GuildId               uint64                 `json:"guild_id,string"`
+	SelectMenu            bool                   `json:"select_menu"`
+	SelectMenuPlaceholder *string                `json:"select_menu_placeholder"`
+	Embed                 *CustomEmbedWithFields `json:"embed"`
 }
 
 type MultiPanelTable struct {
@@ -37,12 +34,9 @@ CREATE TABLE IF NOT EXISTS multi_panels(
 	"message_id" int8 NOT NULL,
 	"channel_id" int8 NOT NULL,
 	"guild_id" int8 NOT NULL,
-	"title" varchar(255) NOT NULL,
-	"content" text NOT NULL,
-	"colour" int4 NOT NULL,
 	"select_menu" bool DEFAULT 'f',
-	"image_url" varchar(255) DEFAULT NULL,
-	"thumbnail_url" varchar(255) DEFAULT NULL,
+	"select_menu_placeholder" VARCHAR(150) DEFAULT NULL,
+	"embed" JSONB DEFAULT NULL,
 	PRIMARY KEY("id")
 );
 CREATE INDEX IF NOT EXISTS multi_panels_guild_id ON multi_panels("guild_id");
@@ -52,7 +46,7 @@ CREATE INDEX IF NOT EXISTS multi_panels_message_id ON multi_panels("message_id")
 func (p *MultiPanelTable) Get(ctx context.Context, id int) (MultiPanel, bool, error) {
 	query := `
 SELECT
-	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
+	"id", "message_id", "channel_id", "guild_id", "select_menu", "select_menu_placeholder", "embed"
 FROM
 	multi_panels
 WHERE
@@ -60,14 +54,21 @@ WHERE
 ;`
 
 	var panel MultiPanel
+	var embedRaw *string
 	err := p.QueryRow(ctx, query, id).Scan(
-		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
+		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.SelectMenu, &panel.SelectMenuPlaceholder, &embedRaw,
 	)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return MultiPanel{}, false, nil
 		} else {
+			return MultiPanel{}, false, err
+		}
+	}
+
+	if embedRaw != nil {
+		if err := json.Unmarshal([]byte(*embedRaw), &panel.Embed); err != nil {
 			return MultiPanel{}, false, err
 		}
 	}
@@ -78,7 +79,7 @@ WHERE
 func (p *MultiPanelTable) GetByMessageId(ctx context.Context, messageId uint64) (MultiPanel, bool, error) {
 	query := `
 SELECT
-	"id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
+	"id", "message_id", "channel_id", "guild_id", "select_menu", "select_menu_placeholder", "embed"
 FROM
 	multi_panels
 WHERE
@@ -86,14 +87,21 @@ WHERE
 ;`
 
 	var panel MultiPanel
+	var embedRaw *string
 	err := p.QueryRow(ctx, query, messageId).Scan(
-		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
+		&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.SelectMenu, &panel.SelectMenuPlaceholder, &embedRaw,
 	)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return MultiPanel{}, false, nil
 		} else {
+			return MultiPanel{}, false, err
+		}
+	}
+
+	if embedRaw != nil {
+		if err := json.Unmarshal([]byte(*embedRaw), &panel.Embed); err != nil {
 			return MultiPanel{}, false, err
 		}
 	}
@@ -103,7 +111,7 @@ WHERE
 
 func (p *MultiPanelTable) GetByGuild(ctx context.Context, guildId uint64) ([]MultiPanel, error) {
 	query := `
-SELECT "id", "message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url"
+SELECT "id", "message_id", "channel_id", "guild_id", "select_menu", "select_menu_placeholder", "embed"
 FROM multi_panels
 WHERE "guild_id" = $1;
 `
@@ -117,12 +125,19 @@ WHERE "guild_id" = $1;
 	var panels []MultiPanel
 	for rows.Next() {
 		var panel MultiPanel
+		var embedRaw *string
 		err := rows.Scan(
-			&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.Title, &panel.Content, &panel.Colour, &panel.SelectMenu, &panel.ImageUrl, &panel.ThumbnailUrl,
+			&panel.Id, &panel.MessageId, &panel.ChannelId, &panel.GuildId, &panel.SelectMenu, &panel.SelectMenuPlaceholder, &embedRaw,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if embedRaw != nil {
+			if err := json.Unmarshal([]byte(*embedRaw), &panel.Embed); err != nil {
+				return nil, err
+			}
 		}
 
 		panels = append(panels, panel)
@@ -131,22 +146,35 @@ WHERE "guild_id" = $1;
 	return panels, nil
 }
 
-func (p *MultiPanelTable) Create(ctx context.Context, panel MultiPanel) (multiPanelId int, err error) {
+func (p *MultiPanelTable) Create(ctx context.Context, panel MultiPanel) (int, error) {
 	query := `
 INSERT INTO
-	multi_panels("message_id", "channel_id", "guild_id", "title", "content", "colour", "select_menu", "image_url", "thumbnail_url")
+	multi_panels("message_id", "channel_id", "guild_id", "select_menu", "select_menu_placeholder", "embed")
 VALUES
-	($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	($1, $2, $3, $4, $5, $6)
 RETURNING
 	"id"
 ;
 `
 
-	err = p.QueryRow(ctx, query,
-		panel.MessageId, panel.ChannelId, panel.GuildId, panel.Title, panel.Content, panel.Colour, panel.SelectMenu, panel.ImageUrl, panel.ThumbnailUrl,
-	).Scan(&multiPanelId)
+	var embedRaw *string
+	if panel.Embed != nil {
+		embedRawBytes, err := json.Marshal(panel.Embed)
+		if err != nil {
+			return 0, err
+		}
 
-	return
+		embedRaw = ptr(string(embedRawBytes))
+	}
+
+	var multiPanelId int
+	if err := p.QueryRow(ctx, query,
+		panel.MessageId, panel.ChannelId, panel.GuildId, panel.SelectMenu, panel.SelectMenuPlaceholder, embedRaw,
+	).Scan(&multiPanelId); err != nil {
+		return 0, err
+	}
+
+	return multiPanelId, nil
 }
 
 func (p *MultiPanelTable) Update(ctx context.Context, multiPanelId int, multiPanel MultiPanel) (err error) {
@@ -154,17 +182,25 @@ func (p *MultiPanelTable) Update(ctx context.Context, multiPanelId int, multiPan
 UPDATE multi_panels
 	SET "message_id" = $2,
 		"channel_id" = $3,
-		"title" = $4,
-		"content" = $5,
-		"colour" = $6,
-		"select_menu" = $7,
-        "image_url" = $8,
-        "thumbnail_url" = $9
+		"select_menu" = $4,
+		"select_menu_placeholder" = $5,
+		"embed" = $6
 	WHERE
 		"id" = $1
 ;`
+
+	var embedRaw *string
+	if multiPanel.Embed != nil {
+		embedRawBytes, err := json.Marshal(multiPanel.Embed)
+		if err != nil {
+			return err
+		}
+
+		embedRaw = ptr(string(embedRawBytes))
+	}
+
 	_, err = p.Exec(ctx, query,
-		multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.Title, multiPanel.Content, multiPanel.Colour, multiPanel.SelectMenu, multiPanel.ImageUrl, multiPanel.ThumbnailUrl,
+		multiPanelId, multiPanel.MessageId, multiPanel.ChannelId, multiPanel.SelectMenu, multiPanel.SelectMenuPlaceholder, embedRaw,
 	)
 
 	return
