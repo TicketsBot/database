@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
@@ -31,6 +32,9 @@ var (
 
 	//go:embed sql/legacy_premium_entitlements/list_expired.sql
 	legacyPremiumEntitlementsListAll string
+
+	//go:embed sql/legacy_premium_entitlements/get_guild_tier.sql
+	legacyPremiumEntitlementsGetGuildTier string
 
 	//go:embed sql/legacy_premium_entitlements/set_entitlement.sql
 	legacyPremiumEntitlementsSet string
@@ -67,6 +71,19 @@ func (e *LegacyPremiumEntitlements) ListAll(ctx context.Context, tx pgx.Tx) ([]L
 	}
 
 	return entitlements, nil
+}
+
+func (e *LegacyPremiumEntitlements) GetGuildTier(ctx context.Context, guildId, ownerId uint64) (int32, bool, error) {
+	var tier int32
+	if err := e.QueryRow(ctx, legacyPremiumEntitlementsGetGuildTier, guildId, ownerId).Scan(&tier); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return -1, false, nil
+		}
+
+		return -1, false, err
+	}
+
+	return tier, true, nil
 }
 
 func (e *LegacyPremiumEntitlements) SetEntitlement(ctx context.Context, tx pgx.Tx, entitlement LegacyPremiumEntitlement) error {
