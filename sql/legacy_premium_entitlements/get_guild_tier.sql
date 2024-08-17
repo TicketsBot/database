@@ -9,4 +9,5 @@ WHERE
         OR
         (ent.user_id = permissions.user_id AND permissions.admin = 't' AND permissions.guild_id = $1)
     )
+GROUP BY ent.user_id
 ;
