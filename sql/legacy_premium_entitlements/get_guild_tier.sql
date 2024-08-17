@@ -1,6 +1,6 @@
 SELECT max(ent.tier)
 FROM legacy_premium_entitlements as ent
-INNER JOIN permissions ON permissions.user_id = ent.user_id
+LEFT OUTER JOIN permissions ON permissions.user_id = ent.user_id AND permissions.guild_id = $1
 WHERE
     ent.expires_at > (NOW() - $3::interval)
     AND
