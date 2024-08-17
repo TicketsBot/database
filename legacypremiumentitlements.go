@@ -36,6 +36,9 @@ var (
 	//go:embed sql/legacy_premium_entitlements/get_guild_tier.sql
 	legacyPremiumEntitlementsGetGuildTier string
 
+	//go:embed sql/legacy_premium_entitlements/get_user_entitlement.sql
+	legacyPremiumEntitlementGetUserEntitlement string
+
 	//go:embed sql/legacy_premium_entitlements/set_entitlement.sql
 	legacyPremiumEntitlementsSet string
 
@@ -88,7 +91,7 @@ func (e *LegacyPremiumEntitlements) GetGuildTier(ctx context.Context, guildId, o
 
 func (e *LegacyPremiumEntitlements) GetUserTier(ctx context.Context, userId uint64, gracePeriod time.Duration) (*LegacyPremiumEntitlement, error) {
 	var entitlement LegacyPremiumEntitlement
-	if err := e.QueryRow(ctx, legacyPremiumEntitlementsGetGuildTier, userId, gracePeriod).Scan(
+	if err := e.QueryRow(ctx, legacyPremiumEntitlementGetUserEntitlement, userId, gracePeriod).Scan(
 		&entitlement.UserId,
 		&entitlement.TierId,
 		&entitlement.SkuLabel,
