@@ -73,9 +73,9 @@ func (e *LegacyPremiumEntitlements) ListAll(ctx context.Context, tx pgx.Tx) ([]L
 	return entitlements, nil
 }
 
-func (e *LegacyPremiumEntitlements) GetGuildTier(ctx context.Context, guildId, ownerId uint64) (int32, bool, error) {
+func (e *LegacyPremiumEntitlements) GetGuildTier(ctx context.Context, guildId, ownerId uint64, gracePeriod time.Duration) (int32, bool, error) {
 	var tier int32
-	if err := e.QueryRow(ctx, legacyPremiumEntitlementsGetGuildTier, guildId, ownerId).Scan(&tier); err != nil {
+	if err := e.QueryRow(ctx, legacyPremiumEntitlementsGetGuildTier, guildId, ownerId, gracePeriod).Scan(&tier); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return -1, false, nil
 		}
