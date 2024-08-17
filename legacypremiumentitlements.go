@@ -86,6 +86,24 @@ func (e *LegacyPremiumEntitlements) GetGuildTier(ctx context.Context, guildId, o
 	return tier, true, nil
 }
 
+func (e *LegacyPremiumEntitlements) GetUserTier(ctx context.Context, userId uint64, gracePeriod time.Duration) (*LegacyPremiumEntitlement, error) {
+	var entitlement LegacyPremiumEntitlement
+	if err := e.QueryRow(ctx, legacyPremiumEntitlementsGetGuildTier, userId, gracePeriod).Scan(
+		&entitlement.UserId,
+		&entitlement.TierId,
+		&entitlement.SkuLabel,
+		&entitlement.ExpiresAt,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return &entitlement, nil
+}
+
 func (e *LegacyPremiumEntitlements) SetEntitlement(ctx context.Context, tx pgx.Tx, entitlement LegacyPremiumEntitlement) error {
 	_, err := tx.Exec(ctx, legacyPremiumEntitlementsSet,
 		entitlement.UserId,
