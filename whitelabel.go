@@ -35,7 +35,7 @@ CREATE INDEX IF NOT EXISTS whitelabel_bot_id ON whitelabel("bot_id");
 }
 
 func (w *WhitelabelBotTable) GetByUserId(ctx context.Context, userId uint64) (res WhitelabelBot, e error) {
-	query := `SELECT * FROM whitelabel WHERE "user_id" = $1;`
+	query := `SELECT "user_id", "bot_id", "token" FROM whitelabel WHERE "user_id" = $1;`
 	if err := w.QueryRow(ctx, query, userId).Scan(&res.UserId, &res.BotId, &res.Token); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
@@ -44,7 +44,7 @@ func (w *WhitelabelBotTable) GetByUserId(ctx context.Context, userId uint64) (re
 }
 
 func (w *WhitelabelBotTable) GetByBotId(ctx context.Context, botId uint64) (res WhitelabelBot, e error) {
-	query := `SELECT * FROM whitelabel WHERE "bot_id" = $1;`
+	query := `SELECT "user_id", "bot_id", "token" FROM whitelabel WHERE "bot_id" = $1;`
 	if err := w.QueryRow(ctx, query, botId).Scan(&res.UserId, &res.BotId, &res.Token); err != nil && err != pgx.ErrNoRows {
 		e = err
 	}
