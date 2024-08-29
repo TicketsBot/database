@@ -20,7 +20,7 @@ WHERE (
         entitlements.expires_at > (NOW() - $3::interval)
     ) AND
     entitlements.guild_id IS NULL AND
-    skus.is_global = true AND
+    subscription_skus.is_global = true AND
     (
         entitlements.user_id = $2
             OR
