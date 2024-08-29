@@ -35,6 +35,9 @@ var (
 
 	//go:embed sql/entitlements/list_user_subscriptions.sql
 	entitlementsListUserSubscriptions string
+
+	//go:embed sql/entitlements/increase_expiry.sql
+	entitlementsIncreaseExpiry string
 )
 
 func newEntitlementsTable(db *pgxpool.Pool) *Entitlements {
@@ -189,4 +192,9 @@ func (e *Entitlements) ListUserSubscriptions(ctx context.Context, userId uint64,
 	}
 
 	return entries, nil
+}
+
+func (e *Entitlements) IncreaseExpiry(ctx context.Context, tx pgx.Tx, guildId, userId *uint64, skuId uuid.UUID, source model.EntitlementSource, duration time.Duration) error {
+	_, err := tx.Exec(ctx, entitlementsIncreaseExpiry, guildId, userId, skuId, source, duration)
+	return err
 }

@@ -1,4 +1,4 @@
-SELECT COALESCE(credits, 0)
+SELECT credits
 FROM vote_credits
 WHERE user_id = $1
 FOR UPDATE;

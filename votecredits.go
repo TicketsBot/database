@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -38,7 +39,10 @@ func (VoteCredits) Schema() string {
 func (v *VoteCredits) Get(ctx context.Context, tx pgx.Tx, userId uint64) (int, error) {
 	var credits int
 	if err := tx.QueryRow(ctx, voteCreditsGet, userId).Scan(&credits); err != nil {
-		// pgx.ErrNoRows is impossible, as we use coalesce in the query
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, nil
+		}
+
 		return 0, err
 	}
 
