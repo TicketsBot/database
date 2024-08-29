@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/TicketsBot/common v0.0.0-20240829130437-b3cc78b7d099 // indirect
+	github.com/TicketsBot/common v0.0.0-20240829163706-02537ffffe45 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.5.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
