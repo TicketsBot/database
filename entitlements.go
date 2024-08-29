@@ -164,7 +164,7 @@ func (e *Entitlements) ListGuildSubscriptions(ctx context.Context, guildId, owne
 }
 
 func (e *Entitlements) ListUserSubscriptions(ctx context.Context, userId uint64, gracePeriod time.Duration) ([]model.GuildEntitlementEntry, error) {
-	rows, err := e.Query(ctx, entitlementsListGuildSubscriptions, userId, gracePeriod)
+	rows, err := e.Query(ctx, entitlementsListUserSubscriptions, userId, gracePeriod)
 	if err != nil {
 		return nil, err
 	}
