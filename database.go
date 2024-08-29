@@ -80,6 +80,7 @@ type Database struct {
 	UsedKeys                      *UsedKeys
 	UsersCanClose                 *UsersCanClose
 	UserGuilds                    *UserGuildsTable
+	VoteCredits                   *VoteCredits
 	Votes                         *Votes
 	Webhooks                      *WebhookTable
 	WelcomeMessages               *WelcomeMessages
@@ -163,6 +164,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		UsedKeys:                      newUsedKeys(pool),
 		UsersCanClose:                 newUsersCanClose(pool),
 		UserGuilds:                    newUserGuildsTable(pool),
+		VoteCredits:                   newVoteCreditsTable(pool),
 		Votes:                         newVotes(pool),
 		Webhooks:                      newWebhookTable(pool),
 		WelcomeMessages:               newWelcomeMessages(pool),
@@ -179,6 +181,26 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 
 func (d *Database) BeginTx(ctx context.Context) (pgx.Tx, error) {
 	return d.pool.Begin(ctx)
+}
+
+func (d *Database) WithTx(ctx context.Context, f func(tx pgx.Tx) error) error {
+	tx, err := d.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultTransactionTimeout)
+		defer cancel()
+
+		tx.Rollback(ctx)
+	}()
+
+	if err := f(tx); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
@@ -252,6 +274,7 @@ func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
 		d.UsedKeys,
 		d.UsersCanClose,
 		d.UserGuilds,
+		d.VoteCredits,
 		d.Votes,
 		d.Webhooks,
 		d.WelcomeMessages,
