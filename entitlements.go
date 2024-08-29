@@ -32,6 +32,9 @@ var (
 
 	//go:embed sql/entitlements/list_guild_subscriptions.sql
 	entitlementsListGuildSubscriptions string
+
+	//go:embed sql/entitlements/list_user_subscriptions.sql
+	entitlementsListUserSubscriptions string
 )
 
 func newEntitlementsTable(db *pgxpool.Pool) *Entitlements {
@@ -134,6 +137,34 @@ func (e *Entitlements) GetGuildMaxTier(ctx context.Context, guildId, ownerId uin
 
 func (e *Entitlements) ListGuildSubscriptions(ctx context.Context, guildId, ownerId uint64, gracePeriod time.Duration) ([]model.GuildEntitlementEntry, error) {
 	rows, err := e.Query(ctx, entitlementsListGuildSubscriptions, guildId, ownerId, gracePeriod)
+	if err != nil {
+		return nil, err
+	}
+
+	var entries []model.GuildEntitlementEntry
+	for rows.Next() {
+		var entry model.GuildEntitlementEntry
+		if err := rows.Scan(
+			&entry.Id,
+			&entry.UserId,
+			&entry.Source,
+			&entry.ExpiresAt,
+			&entry.SkuId,
+			&entry.SkuLabel,
+			&entry.Tier,
+			&entry.SkuPriority,
+		); err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func (e *Entitlements) ListUserSubscriptions(ctx context.Context, userId uint64, gracePeriod time.Duration) ([]model.GuildEntitlementEntry, error) {
+	rows, err := e.Query(ctx, entitlementsListGuildSubscriptions, userId, gracePeriod)
 	if err != nil {
 		return nil, err
 	}
