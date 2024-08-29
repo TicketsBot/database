@@ -66,6 +66,7 @@ type Database struct {
 	ServiceRatings                *ServiceRatings
 	Settings                      *SettingsTable
 	StaffOverride                 *StaffOverride
+	SubscriptionSkus              *SubscriptionSkus
 	SupportTeam                   *SupportTeamTable
 	SupportTeamMembers            *SupportTeamMembersTable
 	SupportTeamRoles              *SupportTeamRolesTable
@@ -148,6 +149,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		ServiceRatings:                newServiceRatings(pool),
 		Settings:                      newSettingsTable(pool),
 		StaffOverride:                 newStaffOverride(pool),
+		SubscriptionSkus:              newSubscriptionSkusTable(pool),
 		SupportTeam:                   newSupportTeamTable(pool),
 		SupportTeamMembers:            newSupportTeamMembersTable(pool),
 		SupportTeamRoles:              newSupportTeamRolesTable(pool),
@@ -203,6 +205,7 @@ func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
 		d.Entitlements,
 		d.DiscordEntitlements, // depends on entitlements
 		d.DiscordStoreSkus,    // depends on skus
+		d.SubscriptionSkus,    // depends on skus
 		d.FeedbackEnabled,
 		d.Forms,
 		d.FormInput,

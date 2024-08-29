@@ -1,5 +1,7 @@
 github.com/TicketsBot/common v0.0.0-20240829094755-81a97811f613 h1:+KA++XTpySMsB6gZlJhrSBHAo8fGzg5y1t4igM9YVp8=
 github.com/TicketsBot/common v0.0.0-20240829094755-81a97811f613/go.mod h1:ygpxAa7348g+tuhDP/SoibZk/iym1DKMgieM+ZiD1c8=
+github.com/TicketsBot/common v0.0.0-20240829130437-b3cc78b7d099 h1:/gB3JhwP24F+PMX/JefDZitOWQ+BC2LlvzWI9l0wpmc=
+github.com/TicketsBot/common v0.0.0-20240829130437-b3cc78b7d099/go.mod h1:B1vHUs4teJ9kU9HXMHh/t21Rj/yenzitJdbxqAaymus=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
