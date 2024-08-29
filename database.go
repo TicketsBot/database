@@ -32,8 +32,11 @@ type Database struct {
 	CustomIntegrationSecrets      *CustomIntegrationSecretsTable
 	CustomColours                 *CustomColours
 	DashboardUsers                *DashboardUsersTable
+	DiscordEntitlements           *DiscordEntitlements
+	DiscordStoreSkus              *DiscordStoreSkus
 	EmbedFields                   *EmbedFieldsTable
 	Embeds                        *EmbedsTable
+	Entitlements                  *Entitlements
 	ExitSurveyResponses           *ExitSurveyResponses
 	FeedbackEnabled               *FeedbackEnabled
 	FirstResponseTime             *FirstResponseTime
@@ -53,6 +56,7 @@ type Database struct {
 	PanelTeams                    *PanelTeamsTable
 	PanelUserMention              *PanelUserMention
 	Participants                  *ParticipantTable
+	PatreonEntitlements           *PatreonEntitlements
 	Permissions                   *Permissions
 	PremiumGuilds                 *PremiumGuilds
 	PremiumKeys                   *PremiumKeys
@@ -110,8 +114,11 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		CustomIntegrationSecrets:      newCustomIntegrationSecretsTable(pool),
 		CustomColours:                 newCustomColours(pool),
 		DashboardUsers:                newDashboardUsersTable(pool),
+		DiscordEntitlements:           newDiscordEntitlementsTable(pool),
+		DiscordStoreSkus:              newDiscordStoreSkusTable(pool),
 		EmbedFields:                   newEmbedFieldsTable(pool),
 		Embeds:                        newEmbedsTable(pool),
+		Entitlements:                  newEntitlementsTable(pool),
 		ExitSurveyResponses:           newExitSurveyResponses(pool),
 		FeedbackEnabled:               newFeedbackEnabled(pool),
 		FirstResponseTime:             newFirstResponseTime(pool),
@@ -131,6 +138,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		PanelTeams:                    newPanelTeamsTable(pool),
 		PanelUserMention:              newPanelUserMention(pool),
 		Participants:                  newParticipantTable(pool),
+		PatreonEntitlements:           newPatreonEntitlements(pool),
 		Permissions:                   newPermissions(pool),
 		PremiumGuilds:                 newPremiumGuilds(pool),
 		PremiumKeys:                   newPremiumKeys(pool),
@@ -192,6 +200,9 @@ func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
 		d.DashboardUsers,
 		d.Embeds,
 		d.EmbedFields, // depends on embeds
+		d.Entitlements,
+		d.DiscordEntitlements, // depends on entitlements
+		d.DiscordStoreSkus,    // depends on skus
 		d.FeedbackEnabled,
 		d.Forms,
 		d.FormInput,
@@ -207,6 +218,7 @@ func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
 		d.MultiPanelTargets,       // must be created after panels table
 		d.PanelRoleMentions,
 		d.PanelUserMention,
+		d.PatreonEntitlements,
 		d.Permissions,
 		d.PremiumGuilds,
 		d.PremiumKeys,

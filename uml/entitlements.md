@@ -9,7 +9,6 @@ erDiagram
         bigint bot_id
         string token
         string public_key
-        bool unrestricted_guild_limit
     }
 
     wlguilds[whitelabel_guilds] {
@@ -19,41 +18,32 @@ erDiagram
 
     wlguilds }o--|| wl: associated
 
-    uent[user_entitlements] {
-        uuid entitlement_id
-        bigint user_id
-        uuid sku_id
-        string source
-        datetime expires_at
-    }
+    wl }o--o| ent : has
+    ent ||--|| skus : associated
 
-    wl }o--|| uent : has
-    uent ||--|| skus : associated
-    gent ||--|| skus : associated
-    uent ||--|| source : from
-    gent ||--|| source : from
-
-    gent[guild_entitlements] {
+    ent[entitlements] {
         uuid entitlement_id
         bigint guild_id
         bigint user_id
         uuid sku_id
-        string source
+        enum_source source
         datetime expires_at
-    }
-
-    tiers {
-        string label
-        int priority
     }
 
     skus {
         uuid id
-        string name
-        string tier_label
+        string label
+        string sku_type
     }
 
-    tiers }o--|| skus : has
+    skus |o--|| subscription_skus : associates
+
+    subscription_skus {
+        uuid sku_id
+        string tier_label
+        int priority
+        bool is_global
+    }
 
     wlskus[whitelabel_skus] {
         uuid sku_id
@@ -63,18 +53,13 @@ erDiagram
 
     wlskus |o--|| skus : links
 
-    source[premium_sources] {
-        string name
-    }
-
     patreon[patreon_subscriptions] {
         bigint user_id
         uuid sku_id
         datetime expires_at
     }
 
-    patreon ||--o{ tiers : has
-    patreon ||--|| uent : links
+    patreon ||--|| ent : links
 
     discord_store_skus {
         bigint discord_id

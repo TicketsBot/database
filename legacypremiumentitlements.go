@@ -13,6 +13,7 @@ type LegacyPremiumEntitlement struct {
 	UserId    uint64    `json:"user_id"`
 	TierId    int32     `json:"tier_id"`
 	SkuLabel  string    `json:"sku_label"`
+	IsLegacy  bool      `json:"is_legacy"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
@@ -65,6 +66,7 @@ func (e *LegacyPremiumEntitlements) ListAll(ctx context.Context, tx pgx.Tx) ([]L
 			&entitlement.UserId,
 			&entitlement.TierId,
 			&entitlement.SkuLabel,
+			&entitlement.IsLegacy,
 			&entitlement.ExpiresAt,
 		); err != nil {
 			return nil, err
@@ -95,6 +97,7 @@ func (e *LegacyPremiumEntitlements) GetUserTier(ctx context.Context, userId uint
 		&entitlement.UserId,
 		&entitlement.TierId,
 		&entitlement.SkuLabel,
+		&entitlement.IsLegacy,
 		&entitlement.ExpiresAt,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -112,6 +115,7 @@ func (e *LegacyPremiumEntitlements) SetEntitlement(ctx context.Context, tx pgx.T
 		entitlement.UserId,
 		entitlement.TierId,
 		entitlement.SkuLabel,
+		entitlement.IsLegacy,
 		entitlement.ExpiresAt,
 	)
 
