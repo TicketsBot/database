@@ -53,13 +53,34 @@ erDiagram
 
     wlskus |o--|| skus : links
 
-    patreon[patreon_subscriptions] {
+    patreon[legacy_premium_entitlements] {
         bigint user_id
+        int tier
+        string sku_label
+        bool is_legacy
         uuid sku_id
         datetime expires_at
     }
 
-    patreon ||--|| ent : links
+    patreon ||--o| ent : links
+    patreon ||--o| skus : references
+
+    patreon_guilds[legacy_premium_entitlement_guilds] {
+        bigint user_id
+        bigint guild_id
+        uuid entitlement_id
+    }
+
+    patreon_guilds ||--o| ent : "references guild"
+    patreon_guilds }o--o| patreon : "references user"
+
+    patreon_entitlements {
+        uuid entitlement_id
+        bigint user_id
+    }
+
+    patreon_entitlements ||--o| ent : links
+    patreon_entitlements ||--o| patreon : links
 
     discord_store_skus {
         bigint discord_id
@@ -67,4 +88,11 @@ erDiagram
     }
 
     discord_store_skus ||--o{ skus : links
+
+    patreon_premium_skus {
+        uuid sku_id
+        int servers_permitted
+    }
+
+    skus |o--|| patreon_premium_skus : links
 ```

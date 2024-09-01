@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"github.com/TicketsBot/common/model"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -23,6 +24,9 @@ var (
 
 	//go:embed sql/entitlements/create.sql
 	entitlementsCreate string
+
+	//go:embed sql/entitlements/get_by_id.sql
+	entitlementsGetById string
 
 	//go:embed sql/entitlements/delete_by_id.sql
 	entitlementsDeleteById string
@@ -98,6 +102,26 @@ func (e *Entitlements) Create(
 		Source:    source,
 		ExpiresAt: expiresAt,
 	}, nil
+}
+
+func (e *Entitlements) GetById(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*model.Entitlement, error) {
+	var entitlement model.Entitlement
+	if err := tx.QueryRow(ctx, entitlementsGetById, id).Scan(
+		&entitlement.Id,
+		&entitlement.GuildId,
+		&entitlement.UserId,
+		&entitlement.SkuId,
+		&entitlement.Source,
+		&entitlement.ExpiresAt,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return &entitlement, nil
 }
 
 func (e *Entitlements) DeleteById(ctx context.Context, tx pgx.Tx, id uuid.UUID) error {

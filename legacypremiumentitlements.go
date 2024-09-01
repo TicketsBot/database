@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
@@ -13,6 +14,7 @@ type LegacyPremiumEntitlement struct {
 	UserId    uint64    `json:"user_id"`
 	TierId    int32     `json:"tier_id"`
 	SkuLabel  string    `json:"sku_label"`
+	SkuId     uuid.UUID `json:"sku_id"`
 	IsLegacy  bool      `json:"is_legacy"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
@@ -31,7 +33,7 @@ var (
 	//go:embed sql/legacy_premium_entitlements/schema.sql
 	legacyPremiumEntitlementsSchema string
 
-	//go:embed sql/legacy_premium_entitlements/list_expired.sql
+	//go:embed sql/legacy_premium_entitlements/list_all.sql
 	legacyPremiumEntitlementsListAll string
 
 	//go:embed sql/legacy_premium_entitlements/get_guild_tier.sql
@@ -66,6 +68,7 @@ func (e *LegacyPremiumEntitlements) ListAll(ctx context.Context, tx pgx.Tx) ([]L
 			&entitlement.UserId,
 			&entitlement.TierId,
 			&entitlement.SkuLabel,
+			&entitlement.SkuId,
 			&entitlement.IsLegacy,
 			&entitlement.ExpiresAt,
 		); err != nil {
@@ -97,6 +100,7 @@ func (e *LegacyPremiumEntitlements) GetUserTier(ctx context.Context, userId uint
 		&entitlement.UserId,
 		&entitlement.TierId,
 		&entitlement.SkuLabel,
+		&entitlement.SkuId,
 		&entitlement.IsLegacy,
 		&entitlement.ExpiresAt,
 	); err != nil {
@@ -115,6 +119,7 @@ func (e *LegacyPremiumEntitlements) SetEntitlement(ctx context.Context, tx pgx.T
 		entitlement.UserId,
 		entitlement.TierId,
 		entitlement.SkuLabel,
+		entitlement.SkuId,
 		entitlement.IsLegacy,
 		entitlement.ExpiresAt,
 	)
@@ -122,7 +127,7 @@ func (e *LegacyPremiumEntitlements) SetEntitlement(ctx context.Context, tx pgx.T
 	return err
 }
 
-func (e *LegacyPremiumEntitlements) Delete(ctx context.Context, tx pgx.Tx, userId uint64, skuLabel string) error {
-	_, err := tx.Exec(ctx, legacyPremiumEntitlementsDelete, userId, skuLabel)
+func (e *LegacyPremiumEntitlements) Delete(ctx context.Context, tx pgx.Tx, userId uint64) error {
+	_, err := tx.Exec(ctx, legacyPremiumEntitlementsDelete, userId)
 	return err
 }
