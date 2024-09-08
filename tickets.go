@@ -694,6 +694,63 @@ ORDER BY id DESC;`
 	return
 }
 
+type TicketWithMetadata struct {
+	Ticket
+	TicketLastMessage
+	ClaimedBy *uint64 `json:"claimed_by"`
+}
+
+func (t *TicketTable) GetGuildOpenTicketsWithMetadata(ctx context.Context, guildId uint64) ([]TicketWithMetadata, error) {
+	query := `
+SELECT 
+    tickets.id, tickets.guild_id, tickets.channel_id, tickets.user_id, tickets.open, tickets.open_time, tickets.welcome_message_id, tickets.panel_id, tickets.has_transcript, tickets.close_time, tickets.is_thread, tickets.join_message_id, tickets.notes_thread_id,
+    ticket_claims.user_id,
+    ticket_last_message.last_message_id, ticket_last_message.last_message_time, ticket_last_message.user_id, ticket_last_message.user_is_staff
+FROM tickets
+LEFT OUTER JOIN ticket_claims ON tickets.id = ticket_claims.ticket_id AND tickets.guild_id = ticket_claims.guild_id
+LEFT OUTER JOIN ticket_last_message ON tickets.id = ticket_last_message.ticket_id AND tickets.guild_id = ticket_last_message.guild_id
+WHERE tickets.guild_id = $1 AND tickets.open = true
+ORDER BY tickets.id DESC;`
+
+	rows, err := t.Query(ctx, query, guildId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var tickets []TicketWithMetadata
+	for rows.Next() {
+		var ticket TicketWithMetadata
+		if err := rows.Scan(
+			&ticket.Id,
+			&ticket.GuildId,
+			&ticket.ChannelId,
+			&ticket.Ticket.UserId,
+			&ticket.Open,
+			&ticket.OpenTime,
+			&ticket.WelcomeMessageId,
+			&ticket.PanelId,
+			&ticket.HasTranscript,
+			&ticket.CloseTime,
+			&ticket.IsThread,
+			&ticket.JoinMessageId,
+			&ticket.NotesThreadId,
+			&ticket.ClaimedBy,
+			&ticket.LastMessageId,
+			&ticket.LastMessageTime,
+			&ticket.TicketLastMessage.UserId,
+			&ticket.TicketLastMessage.UserIsStaff,
+		); err != nil {
+			return nil, err
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return tickets, nil
+}
+
 func (t *TicketTable) GetGuildOpenTicketsExcludeThreads(ctx context.Context, guildId uint64) (tickets []Ticket, e error) {
 	query := `
 SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id

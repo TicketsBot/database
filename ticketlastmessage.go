@@ -12,10 +12,10 @@ type TicketLastMessageTable struct {
 }
 
 type TicketLastMessage struct {
-	LastMessageId   *uint64
-	LastMessageTime *time.Time
-	UserId          *uint64
-	UserIsStaff     bool
+	LastMessageId   *uint64    `json:"last_message_id"`
+	LastMessageTime *time.Time `json:"last_message_time"`
+	UserId          *uint64    `json:"last_message_user_id"`
+	UserIsStaff     *bool      `json:"last_message_user_is_staff"`
 }
 
 func newTicketLastMessageTable(db *pgxpool.Pool) *TicketLastMessageTable {
