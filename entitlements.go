@@ -40,6 +40,9 @@ var (
 	//go:embed sql/entitlements/list_user_subscriptions.sql
 	entitlementsListUserSubscriptions string
 
+	//go:embed sql/entitlements/list_all_user_subscriptions.sql
+	entitlementsListAllUserSubscriptions string
+
 	//go:embed sql/entitlements/increase_expiry.sql
 	entitlementsIncreaseExpiry string
 )
@@ -192,6 +195,35 @@ func (e *Entitlements) ListGuildSubscriptions(ctx context.Context, guildId, owne
 
 func (e *Entitlements) ListUserSubscriptions(ctx context.Context, userId uint64, gracePeriod time.Duration) ([]model.GuildEntitlementEntry, error) {
 	rows, err := e.Query(ctx, entitlementsListUserSubscriptions, userId, gracePeriod)
+	if err != nil {
+		return nil, err
+	}
+
+	var entries []model.GuildEntitlementEntry
+	for rows.Next() {
+		var entry model.GuildEntitlementEntry
+		if err := rows.Scan(
+			&entry.Id,
+			&entry.UserId,
+			&entry.Source,
+			&entry.ExpiresAt,
+			&entry.SkuId,
+			&entry.SkuLabel,
+			&entry.Tier,
+			&entry.SkuPriority,
+		); err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func (e *Entitlements) ListAllUserSubscriptions(ctx context.Context, gracePeriod time.Duration) ([]model.GuildEntitlementEntry, error) {
+	// TODO: Pagination
+	rows, err := e.Query(ctx, entitlementsListAllUserSubscriptions, gracePeriod)
 	if err != nil {
 		return nil, err
 	}
