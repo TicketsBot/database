@@ -31,6 +31,7 @@ type Panel struct {
 	ForceDisabled       bool    `json:"force_disabled"`
 	Disabled            bool    `json:"disabled"`
 	ExitSurveyFormId    *int    `json:"exit_survey_form_id"`
+	PendingCategory     *uint64 `json:"pending_category,string"`
 }
 
 type PanelWithWelcomeMessage struct {
@@ -74,6 +75,7 @@ CREATE TABLE IF NOT EXISTS panels(
 	"force_disabled" bool NOT NULL DEFAULT false,
 	"disabled" bool NOT NULL DEFAULT false,
 	"exit_survey_form_id" int DEFAULT NULL,
+	"pending_category" int8 DEFAULT NULL,
 	FOREIGN KEY ("welcome_message") REFERENCES embeds("id") ON DELETE SET NULL,
 	FOREIGN KEY ("form_id") REFERENCES forms("form_id"),
 	FOREIGN KEY ("exit_survey_form_id") REFERENCES forms("form_id"),
@@ -110,7 +112,8 @@ SELECT
 	naming_scheme,
 	force_disabled,
 	disabled,
-	exit_survey_form_id
+	exit_survey_form_id,
+	pending_category
 FROM panels
 WHERE "message_id" = $1;
 `
@@ -147,7 +150,8 @@ SELECT
 	naming_scheme,
 	force_disabled,
 	disabled,
-	exit_survey_form_id
+	exit_survey_form_id,
+	pending_category
 FROM panels
 WHERE "panel_id" = $1;
 `
@@ -184,7 +188,8 @@ SELECT
 	naming_scheme,
 	force_disabled,
 	disabled,
-	exit_survey_form_id
+	exit_survey_form_id,
+	pending_category
 FROM panels
 WHERE "guild_id" = $1 AND "custom_id" = $2;
 `
@@ -224,7 +229,8 @@ SELECT
 	naming_scheme,
 	force_disabled,
 	disabled,
-	exit_survey_form_id
+	exit_survey_form_id,
+	pending_category
 FROM panels
 WHERE "guild_id" = $1 AND "form_id" = $2;
 `
@@ -264,7 +270,8 @@ SELECT
 	panels.naming_scheme,
 	panels.force_disabled,
 	panels.disabled,
-	panels.exit_survey_form_id
+	panels.exit_survey_form_id,
+	panels.pending_category
 FROM panels
 INNER JOIN forms
 ON forms.form_id = panels.form_id
@@ -306,7 +313,8 @@ SELECT
 	naming_scheme,
 	force_disabled,
 	disabled,
-	exit_survey_form_id
+	exit_survey_form_id,
+	pending_category
 FROM panels
 WHERE "guild_id" = $1
 ORDER BY "panel_id" ASC;`
@@ -354,6 +362,7 @@ SELECT
 	panels.force_disabled,
 	panels.disabled,
 	panels.exit_survey_form_id,
+	panels.pending_category,
 	embeds.id,
 	embeds.guild_id,
 	embeds.title,
@@ -469,9 +478,10 @@ INSERT INTO panels(
 	"naming_scheme",
     "force_disabled",
 	"disabled",
-    "exit_survey_form_id"
+    "exit_survey_form_id",
+	"pending_category"
 )
-VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
 ON CONFLICT("message_id") DO NOTHING
 RETURNING "panel_id";`
 
@@ -497,6 +507,7 @@ RETURNING "panel_id";`
 		panel.ForceDisabled,
 		panel.Disabled,
 		panel.ExitSurveyFormId,
+		panel.PendingCategory,
 	).Scan(&panelId)
 
 	return
@@ -539,7 +550,8 @@ UPDATE panels
 		"naming_scheme" = $18,
 	    "force_disabled" = $19,
 	    "disabled" = $20,
-	    "exit_survey_form_id" = $21
+	    "exit_survey_form_id" = $21,
+	    "pending_category" = $22
 	WHERE
 		"panel_id" = $1
 ;`
@@ -566,6 +578,7 @@ UPDATE panels
 		panel.ForceDisabled,
 		panel.Disabled,
 		panel.ExitSurveyFormId,
+		panel.PendingCategory,
 	)
 
 	return err
@@ -679,5 +692,6 @@ func (p *Panel) fieldPtrs() []interface{} {
 		&p.ForceDisabled,
 		&p.Disabled,
 		&p.ExitSurveyFormId,
+		&p.PendingCategory,
 	}
 }

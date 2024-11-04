@@ -18,6 +18,7 @@ type Database struct {
 	AutoCloseExclude               *AutoCloseExclude
 	Blacklist                      *Blacklist
 	BotStaff                       *BotStaff
+	CategoryUpdateQueue            *CategoryUpdateQueue
 	ChannelCategory                *ChannelCategory
 	ClaimSettings                  *ClaimSettingsTable
 	CloseConfirmation              *CloseConfirmation
@@ -104,6 +105,7 @@ func NewDatabase(pool *pgxpool.Pool) *Database {
 		AutoCloseExclude:               newAutoCloseExclude(pool),
 		Blacklist:                      newBlacklist(pool),
 		BotStaff:                       newBotStaff(pool),
+		CategoryUpdateQueue:            newCategoryUpdateQueueTable(pool),
 		ChannelCategory:                newChannelCategory(pool),
 		ClaimSettings:                  newClaimSettingsTable(pool),
 		CloseConfirmation:              newCloseConfirmation(pool),
@@ -274,6 +276,7 @@ func (d *Database) CreateTables(ctx context.Context, pool *pgxpool.Pool) {
 		d.ServiceRatings,      // Must be created after Tickets table
 		d.ExitSurveyResponses, // Must be created after Tickets table
 		d.ArchiveMessages,     // Must be created after Tickets table
+		d.CategoryUpdateQueue, // Must be created after Tickets table
 		d.FirstResponseTime,
 		d.TicketMembers,
 		d.TicketClaims,

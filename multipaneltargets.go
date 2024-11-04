@@ -52,7 +52,8 @@ SELECT
 	panels.naming_scheme,
 	panels.force_disabled,
 	panels.disabled,
-	panels.exit_survey_form_id
+	panels.exit_survey_form_id,
+	panels.pending_category
 FROM multi_panel_targets
 INNER JOIN panels
 ON panels.panel_id = multi_panel_targets.panel_id
