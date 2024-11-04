@@ -5,4 +5,4 @@ WITH cte AS (
 )
 SELECT cte.guild_id, cte.ticket_id, cte.new_status, tickets.channel_id, tickets.panel_id
 FROM cte
-INNER JOIN tickets ON cte.guild_id = tickets.guild_id AND cte.ticket_id = tickets.ticket_id;
+INNER JOIN tickets ON cte.guild_id = tickets.guild_id AND cte.ticket_id = tickets.id;
