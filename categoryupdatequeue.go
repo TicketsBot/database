@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"github.com/TicketsBot/common/model"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"time"
 )
 
 type CategoryUpdateQueue struct {
@@ -45,8 +46,8 @@ func (q *CategoryUpdateQueue) Add(ctx context.Context, guildId uint64, ticketId 
 	return err
 }
 
-func (q *CategoryUpdateQueue) GetReadyForUpdate(ctx context.Context) ([]CategoryUpdateQueueItem, error) {
-	rows, err := q.Query(ctx, categoryUpdateQueueGetReadyForUpdate)
+func (q *CategoryUpdateQueue) GetReadyForUpdate(ctx context.Context, delayInterval time.Duration) ([]CategoryUpdateQueueItem, error) {
+	rows, err := q.Query(ctx, categoryUpdateQueueGetReadyForUpdate, delayInterval)
 	if err != nil {
 		return nil, err
 	}
