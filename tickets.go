@@ -321,6 +321,7 @@ WHERE "channel_id" = $1;`
 		&ticket.IsThread,
 		&ticket.JoinMessageId,
 		&ticket.NotesThreadId,
+		&ticket.Status,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Ticket{}, false, nil
