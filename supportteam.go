@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -114,6 +115,24 @@ func (s *SupportTeamTable) GetById(ctx context.Context, guildId uint64, id int) 
 
 	if err := s.QueryRow(ctx, query, guildId, id).Scan(&team.Name, &team.OnCallRole); err != nil {
 		if err == pgx.ErrNoRows {
+			return SupportTeam{}, false, nil
+		} else {
+			return SupportTeam{}, false, err
+		}
+	}
+
+	return team, true, nil
+}
+
+func (s *SupportTeamTable) GetByName(ctx context.Context, guildId uint64, name string) (SupportTeam, bool, error) {
+	query := `SELECT "id", "name", "on_call_role_id" from support_team WHERE "guild_id" = $1 AND "name" = $2;`
+
+	team := SupportTeam{
+		GuildId: guildId,
+	}
+
+	if err := s.QueryRow(ctx, query, guildId, name).Scan(&team.Id, &team.Name, &team.OnCallRole); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return SupportTeam{}, false, nil
 		} else {
 			return SupportTeam{}, false, err
