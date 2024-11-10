@@ -35,6 +35,26 @@ SELECT EXISTS(
 	return
 }
 
+func (b *GlobalBlacklist) ListALl(ctx context.Context) (users []uint64, err error) {
+	query := `SELECT "user_id" FROM global_blacklist;`
+
+	rows, err := b.Query(ctx, query)
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var userId uint64
+		if err = rows.Scan(&userId); err != nil {
+			return
+		}
+
+		users = append(users, userId)
+	}
+
+	return
+}
+
 func (b *GlobalBlacklist) Add(ctx context.Context, userId uint64) (err error) {
 	_, err = b.Exec(ctx, `INSERT INTO global_blacklist("user_id") VALUES($1) ON CONFLICT("user_id") DO NOTHING;`, userId)
 	return
