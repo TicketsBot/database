@@ -35,7 +35,7 @@ SELECT EXISTS(
 	return
 }
 
-func (b *GlobalBlacklist) ListALl(ctx context.Context) (users []uint64, err error) {
+func (b *GlobalBlacklist) ListAll(ctx context.Context) (users []uint64, err error) {
 	query := `SELECT "user_id" FROM global_blacklist;`
 
 	rows, err := b.Query(ctx, query)
