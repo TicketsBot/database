@@ -8,11 +8,11 @@ import (
 )
 
 type UserGuild struct {
-	GuildId         uint64
-	Name            string
-	Owner           bool
-	UserPermissions uint64
-	Icon            string
+	GuildId         uint64 `json:"guild_id"`
+	Name            string `json:"name"`
+	Owner           bool   `json:"owner"`
+	UserPermissions uint64 `json:"user_permissions"`
+	Icon            string `json:"icon"`
 }
 
 type UserGuildsTable struct {
