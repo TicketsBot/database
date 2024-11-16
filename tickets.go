@@ -361,7 +361,7 @@ WHERE "channel_id" = $1 AND "guild_id" = $2;`
 
 func (t *TicketTable) GetAllByUser(ctx context.Context, guildId, userId uint64) (tickets []Ticket, e error) {
 	query := `
-SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id
+SELECT id, guild_id, channel_id, user_id, open, open_time, welcome_message_id, panel_id, has_transcript, close_time, is_thread, join_message_id, notes_thread_id, status
 FROM tickets
 WHERE "guild_id" = $1 AND "user_id" = $2;`
 
