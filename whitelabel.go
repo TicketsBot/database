@@ -68,10 +68,19 @@ ON CONFLICT("user_id") DO UPDATE SET "bot_id" = $2, "public_key" = $3, "token" =
 	return err
 }
 
-func (w *WhitelabelBotTable) Delete(ctx context.Context, userId uint64) error {
-	query := `DELETE FROM whitelabel WHERE "user_id"=$1;`
-	_, err := w.Exec(ctx, query, userId)
-	return err
+func (w *WhitelabelBotTable) Delete(ctx context.Context, userId uint64) (*uint64, error) {
+	query := `DELETE FROM whitelabel WHERE "user_id"=$1 RETURNING "bot_id";`
+
+	var botId uint64
+	if err := w.QueryRow(ctx, query, userId).Scan(&botId); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return &botId, nil
 }
 
 func (w *WhitelabelBotTable) DeleteByToken(ctx context.Context, token string) error {
