@@ -8,8 +8,8 @@ import (
 )
 
 type CustomEmbed struct {
-	Id            int        `json:"-"`
-	GuildId       uint64     `json:"-"`
+	Id            int        `json:"id"`
+	GuildId       uint64     `json:"guild_id"`
 	Title         *string    `json:"title,omitempty"`
 	Description   *string    `json:"description,omitempty"`
 	Url           *string    `json:"url,omitempty"`

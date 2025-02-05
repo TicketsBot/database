@@ -12,7 +12,7 @@ type FormInput struct {
 	Id          int     `json:"id"`
 	FormId      int     `json:"form_id"`
 	Position    int     `json:"position"`
-	CustomId    string  `json:"-"`
+	CustomId    string  `json:"custom_id"`
 	Style       uint8   `json:"style"`
 	Label       string  `json:"label"`
 	Placeholder *string `json:"placeholder,omitempty"`

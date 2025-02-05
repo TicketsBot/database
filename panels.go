@@ -21,7 +21,7 @@ type Panel struct {
 	EmojiId             *uint64 `json:"emoji_id,string"`
 	WelcomeMessageEmbed *int    `json:"welcome_message_embed"`
 	WithDefaultTeam     bool    `json:"default_team"`
-	CustomId            string  `json:"-"`
+	CustomId            string  `json:"custom_id"`
 	ImageUrl            *string `json:"image_url,omitempty"`
 	ThumbnailUrl        *string `json:"thumbnail_url,omitempty"`
 	ButtonStyle         int     `json:"button_style"`
